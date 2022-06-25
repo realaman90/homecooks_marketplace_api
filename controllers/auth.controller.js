@@ -31,7 +31,8 @@ const register = async(req, res) => {
         phone,
         sex,
         location,
-        notificationSettings
+        notificationSettings,
+        role
     });
     const tokenUser = createUserToken(user);
 

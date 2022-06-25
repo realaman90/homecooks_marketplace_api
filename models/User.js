@@ -53,7 +53,7 @@ const UserSchema = mongoose.Schema({
         default: 'user'
     },
     businessName: String,
-    licences: {
+    licenses: {
         type: [String]
     },
 

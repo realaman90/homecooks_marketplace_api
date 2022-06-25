@@ -22,6 +22,8 @@ const connectDB = require('./db/connect');
 
 // router
 const authRouter = require('./route/authRoutes');
+const suppliersRouter = require('./route/suppliers.routes');
+const customersRouter = require('./route/customers.route');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -47,6 +49,9 @@ app.use(expressFileUpload());
 
 //apis
 app.use('/api/v1/admin/auth', authRouter);
+app.use('/api/v1/admin/supplier', suppliersRouter);
+app.use('/api/v1/admin/customer', customersRouter);
+
 
 
 app.get('/api/v1/admin', (req, res) => {
