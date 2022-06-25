@@ -1,5 +1,5 @@
 const { createJWT, isTokenValid, attachedCookiesToResponse } = require('./jwt');
-const createUserToken = require('./createTokenUser');
+const createUserToken = require('./createToken');
 const checkPermissions = require('./checkPermissions')
 
 module.exports = {
