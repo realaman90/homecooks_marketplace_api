@@ -141,7 +141,7 @@ const updateUserPassword = async(req, res) => {
 const deleteUser = async(req, res) => {
     const user = await User.findOneAndDelete({ _id: req.params.id });
     if (!user) {
-        throw new CustomError.NotFoundError(`user with id: ${userId} not found`)
+        throw new CustomError.NotFoundError(`user with id: ${req.params.id } not found`)
     }
     res.status(StatusCodes.OK).json({ message: "user permanently deleted" })
 
