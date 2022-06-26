@@ -12,6 +12,8 @@ const xss = require('xss-clean');
 const cors = require('cors');
 const mongoSanatize = require('express-mongo-sanitize');
 
+const { authenticateUser, authorizePermissions } = require('./middleware/authentication');
+
 
 //Express 
 
@@ -24,6 +26,8 @@ const connectDB = require('./db/connect');
 const authRouter = require('./route/authRoutes');
 const suppliersRouter = require('./route/suppliers.routes');
 const usersRouter = require('./route/users.route');
+const groupRouter = require('./route/group.routes');
+
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -51,6 +55,7 @@ app.use(expressFileUpload());
 app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
+app.use('/api/v1/admin/group',authenticateUser,authorizePermissions('admin'),groupRouter);
 
 
 
