@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const {groupStatus} = require('../constants');
 
 const GroupSchema = mongoose.Schema({
     supplier: {
@@ -16,8 +17,8 @@ const GroupSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [pending, active, cancelled, fulfilled, delivered],
-        default: "pending"
+        enum: [groupStatus.PENDING, groupStatus.ACTIVE, groupStatus.DELIVERED, groupStatus.CANCELLED, groupStatus.FULFILLED],
+        default: groupStatus.PENDING
     },
     minOrders: Number,
     maxOrders: Number,
@@ -26,37 +27,32 @@ const GroupSchema = mongoose.Schema({
         required: true,
     },
     deliveryDate: Date,
-    deliveryTime: Date,
+    deliveryTime: String,
     pricePerOrder: {
-        type: Number,
+        type: String,
         required: [true, "Please enter price"]
     },
     costToSupplierPerOrder: {
-        type: Number,
+        type: String,
         required: [true, "Please enter cost to supplier"]
     },
     pickupLocation: {
         street: String,
-        appartment_house: String,
+        apartment_house: String,
         city: String,
         state: String,
         zipCode: Number,
         country: String,
-
     },
-    cuisine: [String],
+    cuisine: String,
     category: {
         type: String,
         required: [true, 'Please provide product category'],
         enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
     },
-
-
-
-
 }, {
     timestamps: true,
-
+    strict: true
 });
 
 module.exports = mongoose.model('Group', GroupSchema)
