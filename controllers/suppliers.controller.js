@@ -43,7 +43,6 @@ const updateSupplier = async(req, res) => {
         businessImages,
         address,
         contactInfo,
-        location
     } = req.body;
     if (!businessName || !address) {
         throw new CustomError.BadRequestError('Business Name and Address mandatory')
@@ -59,7 +58,7 @@ const updateSupplier = async(req, res) => {
     supplier.address = address;
     supplier.businessImages = businessImages;
     supplier.contactInfo = contactInfo;
-    supplier.location = location;
+
     await supplier.save()
     res.status(StatusCodes.OK).json({ supplier })
 }
