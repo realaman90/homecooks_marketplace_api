@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bycrypt = require('bcryptjs');
-const { func } = require('joi');
+const { func, number } = require('joi');
 const bcrypt = require('bcryptjs/dist/bcrypt');
 
 const UserSchema = mongoose.Schema({
@@ -34,13 +34,15 @@ const UserSchema = mongoose.Schema({
 
     },
     sex: String,
-    location: {
+    address: {
         street: String,
         appartment_house: String,
         city: String,
         state: String,
         zipCode: Number,
-        country: String
+        country: String,
+        latitude: Number,
+        longitude: Number,
 
     },
     notificationSettings: {
@@ -52,15 +54,12 @@ const UserSchema = mongoose.Schema({
         enum: ['admin', 'user', 'supplier'],
         default: 'user'
     },
-    businessName: String,
-    licenses: {
-        type: [String]
-    },
 
-    businessImages: {
-        type: [String]
-    },
-});
+    supplier: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Supplier'
+    }
+}, { timestamps: true });
 UserSchema.pre('save', async function() {
 
     if (!this.isModified('password')) return;
