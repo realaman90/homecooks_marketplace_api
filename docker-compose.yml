@@ -1,0 +1,34 @@
+version: '3.5'
+services:
+  api:
+    build:      
+      context: ./
+      dockerfile: Dockerfile
+    command: dev
+    ports:
+      - '3000:3000'
+    depends_on:
+      - mongo
+    volumes:
+      - .:/app:delegated
+      - ./package.json:/app/package.json:delegated      
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/noudada
+      - JWT_SECRET=v9y$B&E)H@McQfTjWmZq4t7w!z%C*F-J
+      - JWT_LIFETIME=30d
+    networks:
+      - noudata_net
+
+  mongo:
+    image: mongo:latest
+    networks:
+      - noudata_net
+    logging:
+      options:
+        max-size: 10m
+    ports:
+      - '27017:27017'
+
+networks:
+  noudata_net:
+    driver: bridge
