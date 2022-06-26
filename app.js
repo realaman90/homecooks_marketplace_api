@@ -23,7 +23,7 @@ const connectDB = require('./db/connect');
 // router
 const authRouter = require('./route/authRoutes');
 const suppliersRouter = require('./route/suppliers.routes');
-const customersRouter = require('./route/customers.route');
+const usersRouter = require('./route/users.route');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -50,7 +50,7 @@ app.use(expressFileUpload());
 //apis
 app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/supplier', suppliersRouter);
-app.use('/api/v1/admin/customer', customersRouter);
+app.use('/api/v1/admin/user', usersRouter);
 
 
 

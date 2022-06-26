@@ -11,13 +11,13 @@ const {
     registerUser,
     updateUser,
     updateUserPhone,
-    updateUserLocation,
+    updateUserAddress,
     updateUserNotificationSettings,
     updateUserPassword,
     deleteUser,
     getAllUsers,
     getSingleUser,
-} = require('../controllers/customer.controller');
+} = require('../controllers/user.controller');
 
 router
     .route('/create')
@@ -38,8 +38,8 @@ router
     .patch([authenticateUser, authorizePermissions('admin')], updateUserPhone);
 
 router
-    .route('/:id/updatelocation')
-    .patch([authenticateUser, authorizePermissions('admin')], updateUserLocation);
+    .route('/:id/updateaddress')
+    .patch([authenticateUser, authorizePermissions('admin')], updateUserAddress, );
 
 router
     .route('/:id/updatenotifysettings')

@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const GroupSchema = mongoose.Schema({
     supplier: {
         type: mongoose.Types.ObjectId,
-        ref: 'User',
+        ref: 'Supplier',
         required: true
     },
     itemName: {
@@ -45,7 +45,12 @@ const GroupSchema = mongoose.Schema({
 
     },
     cuisine: [String],
-    meal: [String],
+    category: {
+        type: String,
+        required: [true, 'Please provide product category'],
+        enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
+    },
+
 
 
 

@@ -9,10 +9,12 @@ const registerUser = async(req, res) => {
         email,
         password,
         phone,
-        location,
+        address,
         notificationSettings,
         profileImg,
         sex,
+        role,
+        supplier
     } = req.body;
 
     const emailAlreadyExists = await User.findOne({ email });
@@ -22,17 +24,17 @@ const registerUser = async(req, res) => {
 
     // registered user is an admin
 
-    const role = 'user'
     const user = await User.create({
         fullName,
         email,
         password,
         role,
         phone,
-        location,
+        address,
         notificationSettings,
         profileImg,
         sex,
+        supplier
 
     });
 
@@ -79,17 +81,17 @@ const updateUserPhone = async(req, res) => {
 };
 
 // update user's location
-const updateUserLocation = async(req, res) => {
+const updateUserAddress = async(req, res) => {
     const { id: userId } = req.params;
-    const { location } = req.body;
-    if (!location) {
-        throw new CustomError.BadRequestError("Please provide user's location ")
+    const { address } = req.body;
+    if (!address) {
+        throw new CustomError.BadRequestError("Please provide user's address ")
     };
     const user = await User.findOne({ _id: userId }).select('-password');
     if (!user) {
         throw new CustomError.NotFoundError(`user with id: ${userId} not found`)
     }
-    user.location = location;
+    user.address = address;
     await user.save()
 
     res.status(StatusCodes.OK).json({ user })
@@ -169,7 +171,7 @@ module.exports = {
     registerUser,
     updateUser,
     updateUserPhone,
-    updateUserLocation,
+    updateUserAddress,
     updateUserNotificationSettings,
     updateUserPassword,
     deleteUser,
