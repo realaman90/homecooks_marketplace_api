@@ -35,7 +35,7 @@ const GroupSchema = mongoose.Schema({
         type: Number,
         required: [true, "Please enter cost to supplier"]
     },
-    location: {
+    pickupLocation: {
         street: String,
         appartment_house: String,
         city: String,
