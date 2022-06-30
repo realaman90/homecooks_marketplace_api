@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const SupplierSchema = mongoose.Schema({
 
     businessName: String,
+    speciality: String,
     licenses: [String],
     address: {
         street: String,
@@ -36,7 +37,7 @@ const SupplierSchema = mongoose.Schema({
         venmo: String,
         zellz: String,
         cashApp: String
-    }
+    },
 
 }, { timestamps: true });
 module.exports = mongoose.model('Supplier', SupplierSchema)
