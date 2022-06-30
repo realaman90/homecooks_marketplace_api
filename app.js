@@ -14,7 +14,6 @@ const mongoSanatize = require('express-mongo-sanitize');
 
 const { authenticateUser, authorizePermissions } = require('./middleware/authentication');
 
-
 //Express 
 
 const app = express();
@@ -27,7 +26,7 @@ const authRouter = require('./route/authRoutes');
 const suppliersRouter = require('./route/suppliers.routes');
 const usersRouter = require('./route/users.route');
 const groupRouter = require('./route/group.routes');
-
+const productRouter = require('./route/product.routes');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -56,7 +55,7 @@ app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
 app.use('/api/v1/admin/group',authenticateUser,authorizePermissions('admin'),groupRouter);
-
+app.use('/api/v1/admin/product',authenticateUser,authorizePermissions('admin'),productRouter);
 
 
 app.get('/api/v1/admin', (req, res) => {
