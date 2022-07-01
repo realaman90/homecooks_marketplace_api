@@ -7,6 +7,11 @@ const GroupSchema = mongoose.Schema({
         ref: 'Supplier',
         required: true
     },
+    product: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Product',
+        required: true
+    },
     itemName: {
         type: String,
         required: [true, 'Please Enter item name']

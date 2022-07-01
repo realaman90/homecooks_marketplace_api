@@ -67,12 +67,27 @@ const getAllGroups = async (req, res)=> {
     })
     aggreagatePipelineQueries.push({"$unwind": '$supplier'})
     aggreagatePipelineQueries.push({
+        "$lookup": {
+          "from": "products",
+          "localField": "product",
+          "foreignField": "_id",
+          "as": "product"
+        }
+    })
+    aggreagatePipelineQueries.push({"$unwind": '$product'})
+    aggreagatePipelineQueries.push({
         "$project":{
             "_id":1,
             "supplier.businessName":1,
             "supplier.businessImages":1,
             "supplier.address":1,
             "supplier.contactInfo":1,
+            "product.name":1,
+            "product.viewId":1,
+            "product.images":1,
+            "product.description":1,
+            "product.cuisine":1,
+            "product.category":1,
             "itemName":1,
             "images":1,
             "activeTill":1,
@@ -113,12 +128,38 @@ const getSupplierGroups = async (req, res) => {
         },{
           "$limit": limit
         },{
+            "$lookup": {
+            "from": "suppliers",
+            "localField": "supplier",
+            "foreignField": "_id",
+            "as": "supplier"
+          }
+        },{
+            "$unwind": '$supplier'
+        },
+        {
+            "$lookup": {
+                "from": "products",
+                "localField": "product",
+                "foreignField": "_id",
+                "as": "product"
+          }
+        },{
+            "$unwind": '$product'
+        },
+        {
           "$project":{
             "_id":1,
             "supplier.businessName":1,
             "supplier.businessImages":1,
             "supplier.address":1,
             "supplier.contactInfo":1,
+            "product.name":1,
+            "product.viewId":1,
+            "product.images":1,
+            "product.description":1,
+            "product.cuisine":1,
+            "product.category":1,
             "itemName":1,
             "images":1,
             "activeTill":1,
@@ -149,14 +190,23 @@ const getGroupById = async (req, res)=> {
                 "_id": mongoose.Types.ObjectId(groupId)
             } 
         },{        
-          "$lookup": {
-            "from": "suppliers",
-            "localField": "supplier",
-            "foreignField": "_id",
-            "as": "supplier"
+            "$lookup": {
+                "from": "suppliers",
+                "localField": "supplier",
+                "foreignField": "_id",
+                "as": "supplier"
           }
         },{      
           "$unwind": '$supplier'      
+        },{
+            "$lookup": {
+                "from": "products",
+                "localField": "product",
+                "foreignField": "_id",
+                "as": "product"
+          }
+        },{
+            "$unwind": '$product'
         },{
           "$project":{
             "_id":1,
@@ -164,6 +214,12 @@ const getGroupById = async (req, res)=> {
             "supplier.businessImages":1,
             "supplier.address":1,
             "supplier.contactInfo":1,
+            "product.name":1,
+            "product.viewId":1,
+            "product.images":1,
+            "product.description":1,
+            "product.cuisine":1,
+            "product.category":1,
             "itemName":1,
             "images":1,
             "activeTill":1,
