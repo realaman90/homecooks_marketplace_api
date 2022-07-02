@@ -1,8 +1,11 @@
 const groupModel = require('../models/Group');
+const bikerPickupPointModel = require('../models/BikerPickupPoint');
+const clientPickupPointModel = require('../models/ClientPickupPoint');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const { groupStatus } = require('../constants');
+const { pickWith_idFromObjectArray, convertIdArrayToObjectID} = require('../utils/array');
 
 const createGroup = async (req, res)=> {
 
@@ -14,6 +17,40 @@ const createGroup = async (req, res)=> {
         throw new CustomError.BadRequestError(err.message);
     }
     return res.status(StatusCodes.CREATED).json({ group });
+
+}
+
+const AttachPickUpPointsToGroups = async (groups) => {
+
+    if (groups.length < 1){
+        return groups
+    }
+
+    // get biker and client pickup information
+    let bikerPickupIds = [];
+    groups.forEach(g=>{
+        bikerPickupIds = g.bikerPickups && g.bikerPickups.length > 0 ? g.bikerPickups.map((r)=>r.bikerPickupPoint) : [];
+    })
+    let clientPickupIds = [];
+    groups.forEach(g=>{
+        clientPickupIds = g.clientPickups && g.clientPickups.length > 0 ? g.clientPickups.map((r)=>r.clientPickupPoint): [];    
+    })
+    
+    const getBikerPickupPromise = bikerPickupPointModel.find({_id: {$in: convertIdArrayToObjectID(bikerPickupIds)}});
+    const getClientPickupPromise = clientPickupPointModel.find({_id: {$in: convertIdArrayToObjectID(clientPickupIds)}});
+    const pickPointsRes = await Promise.all([getBikerPickupPromise, getClientPickupPromise]);
+    // attach biker and client pickup information
+
+    groups.forEach((g)=>{
+        // console.log(g)
+        g.bikerPickups.forEach(b=>{
+            b.bikerPickupPoint = pickWith_idFromObjectArray(pickPointsRes[0], b.bikerPickupPoint)
+        })
+
+        g.clientPickups.forEach(b=>{
+            b.clientPickupPoint = pickWith_idFromObjectArray(pickPointsRes[1], b.clientPickupPoint)
+        })
+    })      
 
 }
 
@@ -35,13 +72,13 @@ const getAllGroups = async (req, res)=> {
             category: req.query.category
         })
     }
-    if (req.query.searchStr){
+    if (req.query.search){
         andQuery.push({
             "$or": [
-                { itemName: { $regex: req.query.searchStr, $options: 'i' },},
-                { itemDescription: { $regex: req.query.searchStr, $options: 'i' },},
-                { cuisine: { $regex: req.query.searchStr, $options: 'i' },},     
-                { category: { $regex: req.query.searchStr, $options: 'i' },},                
+                { itemName: { $regex: req.query.search, $options: 'i' },},
+                { itemDescription: { $regex: req.query.search, $options: 'i' },},
+                { cuisine: { $regex: req.query.search, $options: 'i' },},     
+                { category: { $regex: req.query.search, $options: 'i' },},                
             ]            
         })
     }
@@ -88,6 +125,8 @@ const getAllGroups = async (req, res)=> {
             "product.description":1,
             "product.cuisine":1,
             "product.category":1,
+            "bikerPickups":1,
+            "clientPickups":1,
             "itemName":1,
             "images":1,
             "activeTill":1,
@@ -106,6 +145,8 @@ const getAllGroups = async (req, res)=> {
 
     let groups = await groupModel.aggregate(aggreagatePipelineQueries)
     
+    await AttachPickUpPointsToGroups(groups);
+
     return res.status(StatusCodes.OK).json({ groups });
 
 }
@@ -160,6 +201,8 @@ const getSupplierGroups = async (req, res) => {
             "product.description":1,
             "product.cuisine":1,
             "product.category":1,
+            "bikerPickups":1,
+            "clientPickups":1,
             "itemName":1,
             "images":1,
             "activeTill":1,
@@ -170,11 +213,15 @@ const getSupplierGroups = async (req, res) => {
             "itemDescription":1,
             "maxOrders":1,
             "minOrders":1,
+            "bikerPickups":1, 
+            "clientPickups":1,
             "deliveryDate":1,
             "deliveryTime":1,
             "cuisine":1,
           }
         }])
+
+    await AttachPickUpPointsToGroups(groups);
     
     return res.status(StatusCodes.OK).json({ groups });
 
@@ -209,36 +256,40 @@ const getGroupById = async (req, res)=> {
             "$unwind": '$product'
         },{
           "$project":{
-            "_id":1,
-            "supplier.businessName":1,
-            "supplier.businessImages":1,
-            "supplier.address":1,
-            "supplier.contactInfo":1,
-            "product.name":1,
-            "product.viewId":1,
-            "product.images":1,
-            "product.description":1,
-            "product.cuisine":1,
-            "product.category":1,
-            "itemName":1,
-            "images":1,
-            "activeTill":1,
-            "pricePerOrder":1,
-            "costToSupplierPerOrder":1,
-            "pickupLocation":1,
-            "category":1,
-            "itemDescription":1,
-            "maxOrders":1,
-            "minOrders":1,
-            "deliveryDate":1,
-            "deliveryTime":1,
-            "cuisine":1,
+                "_id":1,
+                "supplier.businessName":1,
+                "supplier.businessImages":1,
+                "supplier.address":1,
+                "supplier.contactInfo":1,
+                "product.name":1,
+                "product.viewId":1,
+                "product.images":1,
+                "product.description":1,
+                "product.cuisine":1,
+                "product.category":1,
+                "bikerPickups":1,
+                "clientPickups":1,
+                "itemName":1,
+                "images":1,
+                "activeTill":1,
+                "pricePerOrder":1,
+                "costToSupplierPerOrder":1,
+                "pickupLocation":1,
+                "category":1,
+                "itemDescription":1,
+                "maxOrders":1,
+                "minOrders":1,
+                "deliveryDate":1,
+                "deliveryTime":1,
+                "cuisine":1,
           }
         }])
     
     if (groups.length < 1){
         throw new CustomError.BadRequestError('Invalid Group Id');
     }
+
+    await AttachPickUpPointsToGroups(groups);
 
     return res.status(StatusCodes.OK).json({ group: groups[0] });
 

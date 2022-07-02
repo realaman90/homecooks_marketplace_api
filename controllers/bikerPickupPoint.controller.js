@@ -1,46 +1,37 @@
-const productModel = require('../models/Product');
+const bikerPickupPointModel = require('../models/BikerPickupPoint');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 
-const createProduct = async (req, res) => {
+const createBikerPickupPoint = async (req, res) => {
 
-    const productData = req.body;    
-    let product = null;
+    const bikerPickupPointData = req.body;        
+    let bikerPickupPoint = null;
     try {
-        product = await productModel.create(productData);
+        bikerPickupPoint = await bikerPickupPointModel.create(bikerPickupPointData);
     } catch(err){
         throw new CustomError.BadRequestError(err.message);
     }
-    return res.status(StatusCodes.CREATED).json({ product });
+    return res.status(StatusCodes.CREATED).json({ bikerPickupPoint });
 }
 
-const getAllProducts = async (req, res) => {
+const getAllBikerPickupPoint = async (req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
     
     let andQuery = [];
 
-    // manage filters    
-    if (req.query.cuisine){
-        andQuery.push({
-            cuisine: { $regex: req.query.cuisine, $options: 'i' }
-        })
-    }
-    if (req.query.category){
-        andQuery.push({
-            category: req.query.category
-        })
-    }
+    // manage filters        
     if (req.query.search){
         andQuery.push({
             "$or": [
                 { name: { $regex: req.query.search, $options: 'i' },},
-                { description: { $regex: req.query.search, $options: 'i' },},
-                { viewId: { $regex: req.query.search, $options: 'i' },},     
-                { cuisine: { $regex: req.query.search, $options: 'i' },},   
-                { category: { $regex: req.query.search, $options: 'i' },},                
+                { text: { $regex: req.query.search, $options: 'i' },},
+                { 'address.street': { $regex: req.query.search, $options: 'i' },},
+                { 'address.appartment_house': { $regex: req.query.search, $options: 'i' },},     
+                { 'address.city': { $regex: req.query.search, $options: 'i' },},   
+                { 'address.state': { $regex: req.query.search, $options: 'i' },},                
             ]     
         })
     }
@@ -55,7 +46,7 @@ const getAllProducts = async (req, res) => {
     }
     aggreagatePipelineQueries.push({"$sort": {"createdAt":-1}})
     aggreagatePipelineQueries.push({"$skip": skip})
-    aggreagatePipelineQueries.push({"$limit": limit})
+    aggreagatePipelineQueries.push({"$limit": limit})    
     aggreagatePipelineQueries.push({
         "$lookup": {
           "from": "suppliers",
@@ -68,26 +59,25 @@ const getAllProducts = async (req, res) => {
     aggreagatePipelineQueries.push({
         "$project":{
             "_id":1,
+            "name":1,
             "supplier.businessName":1,
             "supplier.businessImages":1,
             "supplier.address":1,
             "supplier.contactInfo":1,
-            "name":1,
-            "images":1,
-            "category":1,
-            "cuisine":1,
-            "description":1,
+            "text":1,
+            "address":1,
+            "createdAt":1,
+            "updatedAt":1,   
           }
     })
 
-    let products = await productModel.aggregate(aggreagatePipelineQueries)
+    let bikerPickupPoints = await bikerPickupPointModel.aggregate(aggreagatePipelineQueries)
     
-    return res.status(StatusCodes.OK).json({ products });
-
+    return res.status(StatusCodes.OK).json({ bikerPickupPoints });
 
 }
 
-const getAllProductsBySupplier = async (req, res) => {
+const getAllBikerPickupPointForSupplier = async (req, res) => {
 
     const supplierId = req.params.supplierId;
 
@@ -100,25 +90,16 @@ const getAllProductsBySupplier = async (req, res) => {
         supplier: mongoose.Types.ObjectId(supplierId) 
     })
 
-    // manage filters    
-    if (req.query.cuisine){
-        andQuery.push({
-            cuisine: { $regex: req.query.cuisine, $options: 'i' }
-        })
-    }
-    if (req.query.category){
-        andQuery.push({
-            category: req.query.category
-        })
-    }
+    // manage filters        
     if (req.query.search){
         andQuery.push({
             "$or": [
                 { name: { $regex: req.query.search, $options: 'i' },},
-                { description: { $regex: req.query.search, $options: 'i' },},
-                { viewId: { $regex: req.query.search, $options: 'i' },},     
-                { cuisine: { $regex: req.query.search, $options: 'i' },},   
-                { category: { $regex: req.query.search, $options: 'i' },},                
+                { text: { $regex: req.query.search, $options: 'i' },},
+                { 'address.street': { $regex: req.query.search, $options: 'i' },},
+                { 'address.appartment_house': { $regex: req.query.search, $options: 'i' },},     
+                { 'address.city': { $regex: req.query.search, $options: 'i' },},   
+                { 'address.state': { $regex: req.query.search, $options: 'i' },},                
             ]     
         })
     }
@@ -133,7 +114,7 @@ const getAllProductsBySupplier = async (req, res) => {
     }
     aggreagatePipelineQueries.push({"$sort": {"createdAt":-1}})
     aggreagatePipelineQueries.push({"$skip": skip})
-    aggreagatePipelineQueries.push({"$limit": limit})
+    aggreagatePipelineQueries.push({"$limit": limit})    
     aggreagatePipelineQueries.push({
         "$lookup": {
           "from": "suppliers",
@@ -146,32 +127,32 @@ const getAllProductsBySupplier = async (req, res) => {
     aggreagatePipelineQueries.push({
         "$project":{
             "_id":1,
+            "name":1,
             "supplier.businessName":1,
             "supplier.businessImages":1,
             "supplier.address":1,
             "supplier.contactInfo":1,
-            "name":1,
-            "images":1,
-            "category":1,
-            "cuisine":1,
-            "description":1,
+            "text":1,
+            "address":1,
+            "createdAt":1,
+            "updatedAt":1,   
           }
     })
 
-    let products = await productModel.aggregate(aggreagatePipelineQueries)
+    let bikerPickupPoints = await bikerPickupPointModel.aggregate(aggreagatePipelineQueries)
     
-    return res.status(StatusCodes.OK).json({ products });
+    return res.status(StatusCodes.OK).json({ bikerPickupPoints });
 
 }
 
-const getProduct = async (req, res) => {
+const getBikerPickupPoint = async (req, res) => {
 
-    const productId = req.params.productId;
+    const bikerPickupPointId = req.params.bikerPickupPointId;
 
-    let products = await productModel.aggregate([
+    let bikerPickupPoints = await bikerPickupPointModel.aggregate([
         {
             "$match": {
-                "_id": mongoose.Types.ObjectId(productId)
+                "_id": mongoose.Types.ObjectId(bikerPickupPointId)
             } 
         },{        
           "$lookup": {
@@ -183,40 +164,40 @@ const getProduct = async (req, res) => {
         },{      
           "$unwind": '$supplier'      
         },{
-          "$project":{
+          "$project":{                        
             "_id":1,
+            "name":1,
             "supplier.businessName":1,
             "supplier.businessImages":1,
             "supplier.address":1,
             "supplier.contactInfo":1,
-            "name":1,
-            "images":1,
-            "category":1,
-            "cuisine":1,
-            "description":1,
+            "text":1,
+            "address":1,
+            "createdAt":1,
+            "updatedAt":1,   
           }
         }])
     
-    if (products.length < 1){
-        throw new CustomError.BadRequestError('Invalid Product Id');
+    if (bikerPickupPoints.length < 1){
+        throw new CustomError.BadRequestError('Invalid BikerPickupPoint Id');
     }
 
-    return res.status(StatusCodes.OK).json({ product: products[0] });
+    return res.status(StatusCodes.OK).json({ bikerPickupPoint: bikerPickupPoints[0] });
 
 }
 
-const editProduct = async (req, res) => {
+const editBikerPickupPoint = async (req, res) => {
 
-    const productId = req.params.productId;
-    const updateProductData = req.body;
+    const bikerPickupPointId = req.params.bikerPickupPointId;
+    const updateBikerPickupPointData = req.body;
 
     let updateResp = null;
 
     try {
-        updateResp = await productModel.updateOne({
-            _id: productId
+        updateResp = await bikerPickupPointModel.updateOne({
+            _id: bikerPickupPointId
         }, {
-            $set: updateProductData
+            $set: updateBikerPickupPointData
         });
     } catch(err) {
         throw new CustomError.BadRequestError(err.message);
@@ -226,19 +207,19 @@ const editProduct = async (req, res) => {
         throw new CustomError.BadRequestError('Failed to update data');
     }
 
-    return res.status(StatusCodes.OK).json({ msg: `Product data updated!` });
+    return res.status(StatusCodes.OK).json({ msg: `Biker Pickup point data updated!` });
 }
 
-const deleteProduct = async (req, res) => {
+const deleteBikerPickupPoint = async (req, res) => {
 
-    const productId = req.params.productId;
+    const bikerPickupPointId = req.params.bikerPickupPointId;
 
     let deleteResp = null;
 
     try {
-        deleteResp = await productModel.deleteOne({
+        deleteResp = await bikerPickupPointModel.deleteOne({
             $and : [
-                {_id: productId}                
+                {_id: bikerPickupPointId}                
             ]
         });
     } catch(err) {
@@ -246,18 +227,18 @@ const deleteProduct = async (req, res) => {
     }
 
     if (!deleteResp.deletedCount){
-        throw new CustomError.BadRequestError('Failed remove the product');
+        throw new CustomError.BadRequestError('Failed remove the biker pickup point');
     }
 
-    return res.status(StatusCodes.OK).json({ msg: `Product removed!` });
+    return res.status(StatusCodes.OK).json({ msg: `Biker pickup point removed!` });
 
 }
 
 module.exports = {
-    createProduct,
-    getAllProducts,
-    getAllProductsBySupplier,
-    getProduct,
-    editProduct,
-    deleteProduct,
+    createBikerPickupPoint,
+    getAllBikerPickupPoint,
+    getAllBikerPickupPointForSupplier,
+    getBikerPickupPoint,
+    editBikerPickupPoint,
+    deleteBikerPickupPoint
 }

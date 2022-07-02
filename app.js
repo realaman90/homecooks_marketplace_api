@@ -27,6 +27,8 @@ const suppliersRouter = require('./route/suppliers.routes');
 const usersRouter = require('./route/users.route');
 const groupRouter = require('./route/group.routes');
 const productRouter = require('./route/product.routes');
+const bikerPickupPoint = require('./route/bikerPickupPoint.routes');
+const clientPickupPointRouter = require('./route/clientPickupPoint.routes');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -49,7 +51,6 @@ app.use(cookieParser(process.env.JWT_SECRET));
 app.use(express.static('./public'));
 app.use(expressFileUpload());
 
-
 //apis
 app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/supplier', suppliersRouter);
@@ -57,6 +58,11 @@ app.use('/api/v1/admin/user', usersRouter);
 app.use('/api/v1/admin/group',authenticateUser,authorizePermissions('admin'),groupRouter);
 app.use('/api/v1/admin/product',authenticateUser,authorizePermissions('admin'),productRouter);
 
+// for suppliers
+app.use('/api/v1/admin/bikerPickupPoint',authenticateUser,authorizePermissions('admin'),bikerPickupPoint);
+
+// for clients
+app.use('/api/v1/admin/clientPickupPoint',authenticateUser,authorizePermissions('admin'),clientPickupPointRouter);
 
 app.get('/api/v1/admin', (req, res) => {
     res.send('Noudada Admin Apis')
