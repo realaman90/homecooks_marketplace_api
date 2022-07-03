@@ -55,6 +55,23 @@ const GroupSchema = mongoose.Schema({
         required: [true, 'Please provide product category'],
         enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
     },
+    bikerPickups: [{
+        bikerPickupPoint: {
+            type: mongoose.Types.ObjectId,
+            ref: 'BikerPickupPoint',
+            required: true
+        },
+        timings: [String]
+    }],
+    clientPickups: [{
+        clientPickupPoint: {
+            type: mongoose.Types.ObjectId,
+            ref: 'ClientPickupPoint',
+            required: true
+        },
+        timings: [String]
+    }]
+
 }, {
     timestamps: true,
     strict: true
