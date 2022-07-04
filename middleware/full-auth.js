@@ -9,10 +9,9 @@ const authenticateUser = async(req, res, next) => {
         token = authHeader.split(' ')[1];
     }
     // check cookies
-    else if (req.cookies.token) {
-        token = req.cookies.token;
-    }
-
+    // else if (req.cookies.token) {
+    //     token = req.cookies.token;
+    // }
     if (!token) {
         throw new CustomError.UnauthenticatedError('Authentication invalid');
     }
@@ -21,8 +20,8 @@ const authenticateUser = async(req, res, next) => {
 
         // Attach the user and his permissions to the req object
         req.user = {
-            userId: payload.user.userId,
-            role: payload.user.role,
+            userId: payload.userId,
+            role: payload.role,
         };
 
         next();
@@ -31,7 +30,7 @@ const authenticateUser = async(req, res, next) => {
     }
 };
 
-const authorizeRoles = (...roles) => {
+const authorizePermissions = (...roles) => {
     return (req, res, next) => {
         if (!roles.includes(req.user.role)) {
             throw new CustomError.UnauthorizedError(
@@ -42,4 +41,4 @@ const authorizeRoles = (...roles) => {
     };
 };
 
-module.exports = { authenticateUser, authorizeRoles };
+module.exports = { authenticateUser, authorizePermissions };

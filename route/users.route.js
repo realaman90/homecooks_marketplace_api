@@ -3,7 +3,7 @@ const express = require('express');
 const {
     authenticateUser,
     authorizePermissions
-} = require('../middleware/authentication');
+} = require('../middleware/full-auth');
 
 const router = express.Router();
 

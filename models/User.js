@@ -14,11 +14,7 @@ const UserSchema = mongoose.Schema({
     profileImg: String,
     email: {
         type: String,
-        required: [true, 'Please provide email'],
-        validate: {
-            validator: validator.isEmail,
-            message: 'Please provide a valid email'
-        },
+
 
     },
     password: {
@@ -46,8 +42,8 @@ const UserSchema = mongoose.Schema({
 
     },
     notificationSettings: {
-        email: { type: Boolean, default: true },
-        phone: Boolean,
+        email: Boolean,
+        phone: { type: Boolean, default: true },
     },
     role: {
         type: String,
