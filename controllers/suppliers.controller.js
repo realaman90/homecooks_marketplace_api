@@ -10,11 +10,13 @@ const CustomError = require('../errors');
 const createSupplier = async(req, res) => {
     const {
         businessName,
+        speciality,
         licenses,
         businessImages,
         address,
         contactInfo,
-        location
+        pickupAddress,
+        bankInfo
     } = req.body;
     if (!businessName || !address) {
         throw new CustomError.BadRequestError('businessName and address mandatory')
@@ -24,11 +26,13 @@ const createSupplier = async(req, res) => {
     // registered user is an admin
     const supplier = await Supplier.create({
         businessName,
+        speciality,
         licenses,
         businessImages,
         address,
         contactInfo,
-        location
+        pickupAddress,
+        bankInfo
     });
 
     res.status(StatusCodes.CREATED).json({ supplier });
@@ -39,10 +43,13 @@ const updateSupplier = async(req, res) => {
     const { id: supplierId } = req.params;
     const {
         businessName,
+        speciality,
         licenses,
         businessImages,
         address,
         contactInfo,
+        pickupAddress,
+        bankInfo
     } = req.body;
     if (!businessName || !address) {
         throw new CustomError.BadRequestError('Business Name and Address mandatory')
@@ -58,6 +65,9 @@ const updateSupplier = async(req, res) => {
     supplier.address = address;
     supplier.businessImages = businessImages;
     supplier.contactInfo = contactInfo;
+    supplier.speciality = speciality;
+    supplier.pickupAddress = pickupAddress;
+    supplier.bankInfo = bankInfo;
 
     await supplier.save()
     res.status(StatusCodes.OK).json({ supplier })
