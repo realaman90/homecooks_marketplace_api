@@ -36,8 +36,8 @@ const register = async(req, res) => {
     });
     const tokenUser = createUserToken(user);
 
-    attachedCookiesToResponse({ res, user: tokenUser });
-    res.status(StatusCodes.CREATED).json({ user });
+
+    res.status(StatusCodes.CREATED).json({ user, token: tokenUser });
 };
 
 const login = async(req, res) => {
@@ -54,18 +54,31 @@ const login = async(req, res) => {
     if (!isPasswordCorrect) {
         throw new customError.UnauthenticatedError('Invalid Credentials')
     }
+
     const tokenUser = createUserToken(user);
-    attachedCookiesToResponse({ res, user: tokenUser });
-    res.status(StatusCodes.OK).json({ user });
+    res.status(StatusCodes.OK).json({ user, token: tokenUser });
 };
 
 const logout = async(req, res) => {
-    res.cookie('token', 'logout', {
+    let token;
+    // check header
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer')) {
+        token = authHeader.split(' ')[1];
+    }
+    res.headers('token', 'logout', {
         httpOnly: true,
         expires: new Date(Date.now()),
-    });
+    })
+
     res.status(StatusCodes.OK).json({ message: 'logged out' })
 }
+
+//reset Password initate send otp on the phone number
+// create model
+//user
+//otp, expiry date, reason
+// verify otp and reset password use phone no.
 module.exports = {
     register,
     login,
