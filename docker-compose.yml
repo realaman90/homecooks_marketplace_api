@@ -13,7 +13,7 @@ services:
       - .:/app:delegated
       - ./package.json:/app/package.json:delegated      
     environment:
-      - MONGO_URL=mongodb://mongo:27017/noudada
+      - MONGO_URL=mongodb+srv://admin_noudada:6_QmtB3UYCXfLkr@noudada.cwkxv.mongodb.net/noudada_Admin?retryWrites=true&w=majority
       - JWT_SECRET=v9y$B&E)H@McQfTjWmZq4t7w!z%C*F-J
       - JWT_LIFETIME=30d
     networks:
