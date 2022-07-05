@@ -2,7 +2,7 @@ const { createJWT } = require("./jwt");
 
 const createUserToken = (userFromDB) => {
     const user = {
-        name: userFromDB.name,
+        name: userFromDB.fulName,
         userId: userFromDB._id,
         role: userFromDB.role
     }

@@ -22,6 +22,7 @@ const {
 router
     .route('/create')
     .post([authenticateUser, authorizePermissions('admin')], registerUser);
+
 router.route('/').get([authenticateUser, authorizePermissions('admin')], getAllUsers);
 
 

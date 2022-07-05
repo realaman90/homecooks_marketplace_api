@@ -137,7 +137,6 @@ const updateUserPassword = async(req, res) => {
     res.status(StatusCodes.OK).json({ message: 'Success! Password Updated' })
 };
 
-
 // delete a User
 
 const deleteUser = async(req, res) => {

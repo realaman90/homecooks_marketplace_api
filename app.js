@@ -12,7 +12,7 @@ const xss = require('xss-clean');
 const cors = require('cors');
 const mongoSanatize = require('express-mongo-sanitize');
 
-const { authenticateUser, authorizePermissions } = require('./middleware/authentication');
+const { authenticateUser, authorizePermissions } = require('./middleware/full-auth');
 
 //Express 
 
@@ -29,6 +29,7 @@ const groupRouter = require('./route/group.routes');
 const productRouter = require('./route/product.routes');
 const bikerPickupPoint = require('./route/bikerPickupPoint.routes');
 const clientPickupPointRouter = require('./route/clientPickupPoint.routes');
+const verificationOTP = require('./route/verification.otp.route')
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -55,18 +56,21 @@ app.use(expressFileUpload());
 app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
-app.use('/api/v1/admin/group',authenticateUser,authorizePermissions('admin'),groupRouter);
-app.use('/api/v1/admin/product',authenticateUser,authorizePermissions('admin'),productRouter);
+app.use('/api/v1/admin/group', authenticateUser, authorizePermissions('admin'), groupRouter);
+app.use('/api/v1/admin/product', authenticateUser, authorizePermissions('admin'), productRouter);
 
 // for suppliers
-app.use('/api/v1/admin/bikerPickupPoint',authenticateUser,authorizePermissions('admin'),bikerPickupPoint);
+app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions('admin'), bikerPickupPoint);
 
 // for clients
-app.use('/api/v1/admin/clientPickupPoint',authenticateUser,authorizePermissions('admin'),clientPickupPointRouter);
+app.use('/api/v1/admin/clientPickupPoint', authenticateUser, authorizePermissions('admin'), clientPickupPointRouter);
 
 app.get('/api/v1/admin', (req, res) => {
     res.send('Noudada Admin Apis')
 });
+
+//OTP verification
+app.use('/api/v1/admin/', verificationOTP)
 
 //Error Middlewares
 app.use(notFoundMiddleware);

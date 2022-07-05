@@ -59,20 +59,6 @@ const login = async(req, res) => {
     res.status(StatusCodes.OK).json({ user, token: tokenUser });
 };
 
-const logout = async(req, res) => {
-    let token;
-    // check header
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer')) {
-        token = authHeader.split(' ')[1];
-    }
-    res.headers('token', 'logout', {
-        httpOnly: true,
-        expires: new Date(Date.now()),
-    })
-
-    res.status(StatusCodes.OK).json({ message: 'logged out' })
-}
 
 //reset Password initate send otp on the phone number
 // create model
@@ -82,5 +68,5 @@ const logout = async(req, res) => {
 module.exports = {
     register,
     login,
-    logout
+
 }
