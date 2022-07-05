@@ -29,6 +29,9 @@ const UserSchema = mongoose.Schema({
         maxlength: 11
 
     },
+    isPhoneVerified: { type: Boolean, default: false },
+    isEmailVerified: { type: Boolean, default: false },
+
     sex: String,
     address: {
         street: String,
