@@ -35,19 +35,19 @@ const register = async(req, res) => {
         role
     });
 
-    const reason = 'First verification';
+    const reason = 'Signup verification';
     sendOTP(user, reason);
 
     res.status(StatusCodes.CREATED).json({ msg: "OTP sent on your phone" });
 };
 
 const login = async(req, res) => {
-    const { email, password } = req.body;
+    const { phone, password } = req.body;
 
-    if (!email || !password) {
-        throw new customError.BadRequestError('Please provide email and password')
+    if (!phone || !password) {
+        throw new customError.BadRequestError('Please provide phone and password')
     }
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ phone });
     if (!user) {
         throw new customError.UnauthenticatedError('Invalid Credentials')
     }

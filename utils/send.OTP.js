@@ -1,7 +1,7 @@
 const twilioClient = require('./twilio.client');
 const OTP = require('../models/OTP');
 const sendOTP = async(userFromDB, reason) => {
-    const fourDigitOTP = Math.floor(Math.random() * 9000);
+    const fourDigitOTP = Math.floor(1000 + Math.random() * 9000);
 
     const message = `Hi! ${userFromDB.fullName}! Your verificaton code is ${fourDigitOTP}`;
     const otp = await OTP.create({
