@@ -49,7 +49,7 @@ const login = async(req, res) => {
     }
     const user = await User.findOne({ phone });
     if (!user) {
-        throw new customError.UnauthenticatedError('Invalid Credentials')
+        throw new customError.BadRequestError('User not registerd')
     }
     const isPasswordCorrect = await user.comparePassword(password);
     if (!isPasswordCorrect) {
@@ -58,10 +58,33 @@ const login = async(req, res) => {
     if (!user.isPhoneVerified) {
         sendOTP(user, 'first verification');
         res.status(StatusCodes.OK).json({ msg: 'Please verify phone number' })
+        return
     }
     const tokenUser = createUserToken(user);
     res.status(StatusCodes.OK).json({ user, token: tokenUser });
 };
+
+const resetPasswordOTP = async(req, res) => {
+    const { phone } = req.body;
+    const user = await User.findOne({ phone });
+    if (!user) {
+        throw new customError.BadRequestError('User not registerd')
+    }
+    sendOTP(user, 'Reset Password');
+    res.status(StatusCodes.OK).json({ msg: 'Otp sent! Please verify' })
+}
+const resetPassword = async(req, res) => {
+    const { phone, password } = req.body;
+    const user = await User.findOne({ phone });
+    if (!user) {
+        throw new customError.BadRequestError('User not registerd')
+    }
+    user.password = password;
+    await user.save();
+    const token = createUserToken(user)
+    res.status(StatusCodes.OK).json({ msg: 'Password changerd successfully', token })
+}
+
 
 
 //reset Password initate send otp on the phone number
@@ -72,5 +95,7 @@ const login = async(req, res) => {
 module.exports = {
     register,
     login,
+    resetPasswordOTP,
+    resetPassword
 
 }
