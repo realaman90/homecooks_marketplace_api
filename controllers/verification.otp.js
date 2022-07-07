@@ -6,13 +6,14 @@ const OTP = require('../models/OTP');
 
 
 const sendOTPOnPhone = async(req, res) => {
-    const phone = req.body.phone;
+    const { phone, reason } = req.body;
+
     const user = await User.findOne({ phone });
 
     if (!user) {
         throw new customError.BadRequestError('User Not found')
     }
-    const reason = 'First verification';
+
     sendOTP(user, reason);
 
     res.status(StatusCodes.OK).json({ msg: "OTP sent on your phone" })
