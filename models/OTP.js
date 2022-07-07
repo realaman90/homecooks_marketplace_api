@@ -13,7 +13,7 @@ const OtpSchema = mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now,
-        expires: 10 * 60 * 1000
+        expires: '10m'
     },
 });
 module.exports = mongoose.model('OTP', OtpSchema);
