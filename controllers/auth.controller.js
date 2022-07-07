@@ -59,7 +59,6 @@ const login = async(req, res) => {
         sendOTP(user, 'first verification');
         res.status(StatusCodes.OK).json({ msg: 'Please verify phone number' })
     }
-
     const tokenUser = createUserToken(user);
     res.status(StatusCodes.OK).json({ user, token: tokenUser });
 };
