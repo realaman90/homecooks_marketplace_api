@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const { StatusCodes } = require('http-status-codes');
 const customError = require('../errors');
-const { attachedCookiesToResponse, createUserToken } = require('../utils');
+const { sendOTP, createUserToken } = require('../utils');
 
 const register = async(req, res) => {
     const {
@@ -34,10 +34,11 @@ const register = async(req, res) => {
         notificationSettings,
         role
     });
-    const tokenUser = createUserToken(user);
 
+    const reason = 'First verification';
+    sendOTP(user, reason);
 
-    res.status(StatusCodes.CREATED).json({ user, token: tokenUser });
+    res.status(StatusCodes.CREATED).json({ msg: "OTP sent on your phone" });
 };
 
 const login = async(req, res) => {
