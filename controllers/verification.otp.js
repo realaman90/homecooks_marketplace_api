@@ -29,7 +29,7 @@ const verfyOTP = async(req, res) => {
     if (!user) {
         throw new customError.BadRequestError('user not found')
     }
-    console.log(user._id)
+
 
     const dBOTP = await OTP.findOne({ user: user });
     if (!dBOTP) {
@@ -38,7 +38,7 @@ const verfyOTP = async(req, res) => {
     if (!dBOTP.otp === otp) {
         throw new customError.BadRequestError('Invalid OTP')
     }
-    user.isPhoneverified = true;
+    user.isPhoneVerified = true;
     await user.save();
     const token = createUserToken(user)
     res.status(StatusCodes.OK).json({ msg: "OTP verified", token })

@@ -15,9 +15,9 @@ const register = async(req, res) => {
         notificationSettings
     } = req.body;
 
-    const emailAlreadyExists = await User.findOne({ email });
-    if (emailAlreadyExists) {
-        throw new customError.BadRequestError('Email in use')
+    const phoneAlreadyExists = await User.findOne({ phone });
+    if (phoneAlreadyExists) {
+        throw new customError.BadRequestError('Phone Number already registered')
     }
 
     // registered user is an admin
@@ -55,7 +55,10 @@ const login = async(req, res) => {
     if (!isPasswordCorrect) {
         throw new customError.UnauthenticatedError('Invalid Credentials')
     }
-
+    if (!user.isPhoneVerified) {
+        sendOTP(user, 'first verification');
+        res.status(StatusCodes.OK).json({ msg: 'Please verify phone number' })
+    }
     const tokenUser = createUserToken(user);
     res.status(StatusCodes.OK).json({ user, token: tokenUser });
 };
