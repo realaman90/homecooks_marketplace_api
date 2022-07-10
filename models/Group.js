@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const {groupStatus} = require('../constants');
+const { groupStatus } = require('../constants');
 
 const GroupSchema = mongoose.Schema({
     supplier: {
@@ -7,11 +7,11 @@ const GroupSchema = mongoose.Schema({
         ref: 'Supplier',
         required: true
     },
-    product: {
+    products: [{
         type: mongoose.Types.ObjectId,
         ref: 'Product',
         required: true
-    },
+    }],
     itemName: {
         type: String,
         required: [true, 'Please Enter item name']
@@ -41,14 +41,7 @@ const GroupSchema = mongoose.Schema({
         type: String,
         required: [true, "Please enter cost to supplier"]
     },
-    pickupLocation: {
-        street: String,
-        apartment_house: String,
-        city: String,
-        state: String,
-        zipCode: Number,
-        country: String,
-    },
+
     cuisine: String,
     category: {
         type: String,

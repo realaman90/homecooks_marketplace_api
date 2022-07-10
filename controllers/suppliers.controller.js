@@ -90,7 +90,7 @@ const deleteSupplier = async(req, res) => {
 //get all suppliers
 
 const getAllSuppliers = async(req, res) => {
-    const suppliers = await Supplier.find({ role: 'supplier' });
+    const suppliers = await Supplier.find();
     res.status(StatusCodes.OK).json({ suppliers });
 }
 
