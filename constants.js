@@ -6,7 +6,14 @@ const groupStatus = {
   DELIVERED: "delivered",
 };
 
+const orderStatus = {
+  PENDING: "pending",  
+  CONFIRMED: "confirmed",
+  CANCELLED: "cancelled",
+  DELIVERED: "delivered",  
+};
 
 module.exports = {
-    groupStatus
+    groupStatus,
+    orderStatus
 }

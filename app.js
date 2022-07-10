@@ -26,6 +26,7 @@ const authRouter = require('./route/authRoutes');
 const suppliersRouter = require('./route/suppliers.routes');
 const usersRouter = require('./route/users.route');
 const groupRouter = require('./route/group.routes');
+const orderRouter = require('./route/order.routes');
 const productRouter = require('./route/product.routes');
 const bikerPickupPoint = require('./route/bikerPickupPoint.routes');
 const clientPickupPointRouter = require('./route/clientPickupPoint.routes');
@@ -58,6 +59,7 @@ app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
 app.use('/api/v1/admin/group', authenticateUser, authorizePermissions('admin'), groupRouter);
 app.use('/api/v1/admin/product', authenticateUser, authorizePermissions('admin'), productRouter);
+app.use('/api/v1/admin/order', authenticateUser, authorizePermissions('admin'), orderRouter);
 
 // for suppliers
 app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions('admin'), bikerPickupPoint);

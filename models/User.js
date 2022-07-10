@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bycrypt = require('bcryptjs');
-const { func, number } = require('joi');
-const bcrypt = require('bcryptjs/dist/bcrypt');
 
 const UserSchema = mongoose.Schema({
     fullName: {
@@ -14,8 +12,6 @@ const UserSchema = mongoose.Schema({
     profileImg: String,
     email: {
         type: String,
-
-
     },
     password: {
         type: String,
@@ -31,7 +27,6 @@ const UserSchema = mongoose.Schema({
     },
     isPhoneVerified: { type: Boolean, default: false },
     isEmailVerified: { type: Boolean, default: false },
-
     sex: String,
     address: {
         street: String,
@@ -53,12 +48,14 @@ const UserSchema = mongoose.Schema({
         enum: ['admin', 'user', 'supplier'],
         default: 'user'
     },
-
     supplier: {
         type: mongoose.Types.ObjectId,
         ref: 'Supplier'
     }
-}, { timestamps: true });
+}, 
+{ timestamps: true }
+);
+
 UserSchema.pre('save', async function() {
 
     if (!this.isModified('password')) return;
@@ -67,7 +64,8 @@ UserSchema.pre('save', async function() {
 });
 
 UserSchema.methods.comparePassword = async function(enteredPassword) {
-    const isMatch = await bcrypt.compare(enteredPassword, this.password);
+    const isMatch = await bycrypt.compare(enteredPassword, this.password);
     return isMatch
 }
+
 module.exports = mongoose.model('User', UserSchema);
