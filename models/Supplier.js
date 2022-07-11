@@ -4,6 +4,9 @@ const SupplierSchema = mongoose.Schema({
 
     businessName: String,
     speciality: String,
+    description: {
+        type: String
+    },
     licenses: [String],
     address: {
         street: String,
@@ -35,9 +38,10 @@ const SupplierSchema = mongoose.Schema({
         accountNumber: Number,
         routingNumber: Number,
         venmo: String,
-        zellz: String,
+        zelle: String,
         cashApp: String
     },
+
 
 }, { timestamps: true });
 module.exports = mongoose.model('Supplier', SupplierSchema)
