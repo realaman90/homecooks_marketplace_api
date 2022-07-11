@@ -182,7 +182,16 @@ const getSingleCustomer = async(req, res) => {
     }
     res.status(StatusCodes.OK).json({ user });
 
-}
+};
+const getUserBySupplierId = async(req, res) => {
+
+    const user = await User.findOne({ supplier: req.params.id });
+    if (!user) {
+        throw new CustomError.NotFoundError(`user with id: ${req.params.id} not found`)
+    }
+    res.status(StatusCodes.OK).json({ user });
+};
+
 
 module.exports = {
     registerUser,
@@ -196,4 +205,5 @@ module.exports = {
     getSingleUser,
     getAllCustomers,
     getSingleCustomer,
+    getUserBySupplierId,
 }
