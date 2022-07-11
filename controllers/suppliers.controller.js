@@ -43,6 +43,7 @@ const updateSupplier = async(req, res) => {
     const { id: supplierId } = req.params;
     const {
         businessName,
+        description,
         speciality,
         licenses,
         businessImages,
@@ -68,6 +69,7 @@ const updateSupplier = async(req, res) => {
     supplier.speciality = speciality;
     supplier.pickupAddress = pickupAddress;
     supplier.bankInfo = bankInfo;
+    supplier.description = description;
 
     await supplier.save()
     res.status(StatusCodes.OK).json({ supplier })
@@ -90,7 +92,7 @@ const deleteSupplier = async(req, res) => {
 //get all suppliers
 
 const getAllSuppliers = async(req, res) => {
-    const suppliers = await Supplier.find({ role: 'supplier' });
+    const suppliers = await Supplier.find();
     res.status(StatusCodes.OK).json({ suppliers });
 }
 

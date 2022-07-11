@@ -166,6 +166,24 @@ const getSingleUser = async(req, res) => {
     res.status(StatusCodes.OK).json({ user });
 };
 
+const getAllCustomers = async(req, res) => {
+    const users = await User.find({ role: "user" });
+    if (!users) {
+        throw new CustomError.NotFoundError(`users not found`)
+    }
+    res.status(StatusCodes.OK).json({ users });
+
+};
+const getSingleCustomer = async(req, res) => {
+    const { id } = req.params;
+    const user = await User.findOne({ _id: id });
+    if (!user) {
+        throw new CustomError.NotFoundError(`user with id: ${req.params.id} not found`)
+    }
+    res.status(StatusCodes.OK).json({ user });
+
+}
+
 module.exports = {
     registerUser,
     updateUser,
@@ -176,4 +194,6 @@ module.exports = {
     deleteUser,
     getAllUsers,
     getSingleUser,
+    getAllCustomers,
+    getSingleCustomer,
 }

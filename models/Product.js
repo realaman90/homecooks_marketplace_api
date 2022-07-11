@@ -14,13 +14,14 @@ const ProductSchema = mongoose.Schema({
     images: {
         type: [String]
     },
-    description: String,    
+    description: String,
     cuisine: String,
     category: {
         type: String,
         required: [true, 'Please provide product category'],
         enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
     },
+    suitableTimings: [String],
 }, {
     timestamps: true,
     strict: true
