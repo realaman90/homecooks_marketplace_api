@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const {eventStatus} = require('../constants');
-const EventTemplate = require("./EventTemplate");
 
 const EventSchema = mongoose.Schema({
     supplier: {
@@ -38,14 +37,7 @@ const EventSchema = mongoose.Schema({
         type: String,
         required: [true, "Please enter cost to supplier"]
     },
-    pickupLocation: {
-        street: String,
-        apartment_house: String,
-        city: String,
-        state: String,
-        zipCode: Number,
-        country: String,
-    },
+
     cuisine: String,
     category: {
         type: String,

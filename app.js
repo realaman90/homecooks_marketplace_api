@@ -26,6 +26,7 @@ const authRouter = require('./route/authRoutes');
 const suppliersRouter = require('./route/suppliers.routes');
 const usersRouter = require('./route/users.route');
 const eventRouter = require('./route/event.routes');
+const customerRouter = require('./route/customers.routes');
 const orderRouter = require('./route/order.routes');
 const dishRouter = require('./route/dish.routes');
 const bikerPickupPoint = require('./route/bikerPickupPoint.routes');
@@ -59,6 +60,7 @@ app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
 app.use('/api/v1/admin/event', authenticateUser, authorizePermissions('admin'), eventRouter);
 app.use('/api/v1/admin/dish', authenticateUser, authorizePermissions('admin'), dishRouter);
+app.use('/api/v1/admin/customer', customerRouter);
 app.use('/api/v1/admin/order', authenticateUser, authorizePermissions('admin'), orderRouter);
 
 // for suppliers

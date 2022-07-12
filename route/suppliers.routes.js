@@ -15,6 +15,8 @@ const {
     getSingleSupplier,
 } = require('../controllers/suppliers.controller');
 
+const { getUserBySupplierId } = require('../controllers/user.controller');
+
 router
     .route('/create')
     .post([authenticateUser, authorizePermissions('admin')], createSupplier, );
@@ -29,5 +31,6 @@ router
     )
     .delete([authenticateUser, authorizePermissions('admin')], deleteSupplier)
     .get([authenticateUser, authorizePermissions('admin')], getSingleSupplier);
+router.route('/getUserBySupplierId/:id').get([authenticateUser, authorizePermissions('admin')], getUserBySupplierId)
 
 module.exports = router
