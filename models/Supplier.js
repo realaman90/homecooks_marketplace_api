@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const SupplierSchema = mongoose.Schema({
-
     businessName: String,
     speciality: String,
     licenses: [String],

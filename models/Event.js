@@ -1,17 +1,18 @@
 const mongoose = require("mongoose");
-const {groupStatus} = require('../constants');
+const {eventStatus} = require('../constants');
+const EventTemplate = require("./EventTemplate");
 
-const GroupSchema = mongoose.Schema({
+const EventSchema = mongoose.Schema({
     supplier: {
         type: mongoose.Types.ObjectId,
         ref: 'Supplier',
         required: true
     },
-    product: {
+    dishes: [{
         type: mongoose.Types.ObjectId,
-        ref: 'Product',
+        ref: 'Dish',
         required: true
-    },
+    }],
     itemName: {
         type: String,
         required: [true, 'Please Enter item name']
@@ -22,17 +23,13 @@ const GroupSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [groupStatus.PENDING, groupStatus.ACTIVE, groupStatus.DELIVERED, groupStatus.CANCELLED, groupStatus.FULFILLED],
-        default: groupStatus.PENDING
+        enum: [eventStatus.PENDING, eventStatus.ACTIVE, eventStatus.DELIVERED, eventStatus.CANCELLED, eventStatus.FULFILLED],
+        default: eventStatus.PENDING
     },
     minOrders: Number,
-    maxOrders: Number,
-    activeTill: {
-        type: Date,
-        required: true,
-    },
-    deliveryDate: Date,
-    deliveryTime: String,
+    maxOrders: Number,    
+    eventDate: Date,
+    eventVisibilityDate: Date,
     pricePerOrder: {
         type: String,
         required: [true, "Please enter price"]
@@ -52,7 +49,7 @@ const GroupSchema = mongoose.Schema({
     cuisine: String,
     category: {
         type: String,
-        required: [true, 'Please provide product category'],
+        required: [true, 'Please provide dish category'],
         enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
     },
     bikerPickups: [{
@@ -70,11 +67,15 @@ const GroupSchema = mongoose.Schema({
             required: true
         },
         timings: [String]
-    }]
-
+    }],
+    eventTemplate: {
+        type: mongoose.Types.ObjectId,
+        ref: 'EventTemplate',
+        required: true
+    }
 }, {
     timestamps: true,
     strict: true
 });
 
-module.exports = mongoose.model('Group', GroupSchema)
+module.exports = mongoose.model('Event', EventSchema)

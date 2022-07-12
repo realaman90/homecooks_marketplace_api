@@ -17,7 +17,6 @@ const attachedCookiesToResponse = ({ res, user }) => {
         expires: new Date(Date.now() + oneDay * 3),
         secure: process.env.NODE_ENV === 'production',
         signed: true
-
     });
 
 

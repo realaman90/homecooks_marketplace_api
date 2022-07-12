@@ -10,9 +10,9 @@ const createOrder = async (req, res)=> {
 
     const orderData = req.body;    
 
-    // check if the group has not reached max orders ??
+    // check if the event has not reached max orders ??
 
-    // check if the group is still accepting orders ??
+    // check if the event is still accepting orders ??
 
     orderData.status = orderStatus.PENDING;
     orderData.isPaid = false;
@@ -81,31 +81,30 @@ const getAllOrders = async (req, res) => {
     aggreagatePipelineQueries.push({"$unwind": '$customer'})    
     aggreagatePipelineQueries.push({
         "$lookup": {
-        "from": "groups",
-        "localField": "group",
+        "from": "events",
+        "localField": "event",
         "foreignField": "_id",
-        "as": "group"
+        "as": "event"
         }
     })
-    aggreagatePipelineQueries.push({"$unwind": '$group'})
+    aggreagatePipelineQueries.push({"$unwind": '$event'})
     aggreagatePipelineQueries.push({
         "$lookup": {
-          "from": "products",
-          "localField": "group.product",
+          "from": "dishes",
+          "localField": "event.dishes",
           "foreignField": "_id",
-          "as": "group.product"
+          "as": "event.dishes"
         }
     })
-    aggreagatePipelineQueries.push({"$unwind": '$group.product'})
     aggreagatePipelineQueries.push({
         "$lookup": {
         "from": "suppliers",
-        "localField": "group.supplier",
+        "localField": "event.supplier",
         "foreignField": "_id",
-        "as": "group.supplier"
+        "as": "event.supplier"
         }
     })
-    aggreagatePipelineQueries.push({"$unwind": '$group.supplier'})
+    aggreagatePipelineQueries.push({"$unwind": '$event.supplier'})
     aggreagatePipelineQueries.push({
         "$lookup": {
         "from": "clientpickuppoints",
@@ -118,23 +117,23 @@ const getAllOrders = async (req, res) => {
     aggreagatePipelineQueries.push({
         "$project":{
             "_id":1,
-            "group.itemName":1,
-            "group.itemDescription":1,
-            "group.activeTill":1,
-            "group.deliveryDate":1,
-            "group.deliveryTime":1,
-            "group.cuisine":1,
-            "group.category":1,
-            "group.supplier.businessName":1,
-            "group.supplier.businessImages":1,
-            "group.supplier.address":1,
-            "group.supplier.contactInfo":1,            
-            "group.product.name":1,
-            "group.product.viewId":1,
-            "group.product.images":1,
-            "group.product.description":1,
-            "group.product.cuisine":1,
-            "group.product.category":1,  
+            "event.itemName":1,
+            "event.itemDescription":1,
+            "event.activeTill":1,
+            "event.deliveryDate":1,
+            "event.deliveryTime":1,
+            "event.cuisine":1,
+            "event.category":1,
+            "event.supplier.businessName":1,
+            "event.supplier.businessImages":1,
+            "event.supplier.address":1,
+            "event.supplier.contactInfo":1,            
+            "event.dishes.name":1,
+            "event.dishes.viewId":1,
+            "event.dishes.images":1,
+            "event.dishes.description":1,
+            "event.dishes.cuisine":1,
+            "event.dishes.category":1,  
             "customer.fullName":1,
             "customer.profileImg":1,
             "customer.email":1,
@@ -174,31 +173,29 @@ const getOrderById = async (req, res) => {
             "$unwind": '$customer'
         },{
             "$lookup": {
-                "from": "groups",
-                "localField": "group",
+                "from": "events",
+                "localField": "event",
                 "foreignField": "_id",
-                "as": "group"
+                "as": "event"
                 }
         },{
-            "$unwind": '$group'            
+            "$unwind": '$event'            
         },{
             "$lookup": {
-                "from": "products",
-                "localField": "group.product",
+                "from": "dishes",
+                "localField": "event.dishes",
                 "foreignField": "_id",
-                "as": "group.product"
+                "as": "event.dishes"
               }
-        },{
-            "$unwind": '$group.product'
         }, {
             "$lookup": {
                 "from": "suppliers",
-                "localField": "group.supplier",
+                "localField": "event.supplier",
                 "foreignField": "_id",
-                "as": "group.supplier"
+                "as": "event.supplier"
                 }
         }, {
-            "$unwind": '$group.supplier'
+            "$unwind": '$event.supplier'
         }, {
             "$lookup": {
                 "from": "clientpickuppoints",
@@ -211,23 +208,23 @@ const getOrderById = async (req, res) => {
         }, {
             "$project":{
                 "_id":1,
-                "group.itemName":1,
-                "group.itemDescription":1,
-                "group.activeTill":1,
-                "group.deliveryDate":1,
-                "group.deliveryTime":1,
-                "group.cuisine":1,
-                "group.category":1,
-                "group.supplier.businessName":1,
-                "group.supplier.businessImages":1,
-                "group.supplier.address":1,
-                "group.supplier.contactInfo":1,            
-                "group.product.name":1,
-                "group.product.viewId":1,
-                "group.product.images":1,
-                "group.product.description":1,
-                "group.product.cuisine":1,
-                "group.product.category":1,  
+                "event.itemName":1,
+                "event.itemDescription":1,
+                "event.activeTill":1,
+                "event.deliveryDate":1,
+                "event.deliveryTime":1,
+                "event.cuisine":1,
+                "event.category":1,
+                "event.supplier.businessName":1,
+                "event.supplier.businessImages":1,
+                "event.supplier.address":1,
+                "event.supplier.contactInfo":1,            
+                "event.dish.name":1,
+                "event.dish.viewId":1,
+                "event.dish.images":1,
+                "event.dish.description":1,
+                "event.dish.cuisine":1,
+                "event.dish.category":1,  
                 "customer.fullName":1,
                 "customer.profileImg":1,
                 "customer.email":1,

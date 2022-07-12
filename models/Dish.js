@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const ProductSchema = mongoose.Schema({
+const DishSchema = mongoose.Schema({
     supplier: {
         type: mongoose.Types.ObjectId,
         ref: 'Supplier',
@@ -18,7 +18,7 @@ const ProductSchema = mongoose.Schema({
     cuisine: String,
     category: {
         type: String,
-        required: [true, 'Please provide product category'],
+        required: [true, 'Please provide dish category'],
         enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
     },
 }, {
@@ -26,4 +26,4 @@ const ProductSchema = mongoose.Schema({
     strict: true
 });
 
-module.exports = mongoose.model('Product', ProductSchema)
+module.exports = mongoose.model('Dish', DishSchema)
