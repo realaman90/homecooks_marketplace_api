@@ -1,21 +1,22 @@
-const productModel = require('../models/Product');
+const dishModel = require('../models/Dish');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 
-const createProduct = async (req, res) => {
+const createDish = async (req, res) => {
 
-    const productData = req.body;    
-    let product = null;
+    const dishData = req.body;    
+    console.log(dishData)
+    let dish = null;
     try {
-        product = await productModel.create(productData);
+        dish = await dishModel.create(dishData);
     } catch(err){
         throw new CustomError.BadRequestError(err.message);
     }
-    return res.status(StatusCodes.CREATED).json({ product });
+    return res.status(StatusCodes.CREATED).json({ dish });
 }
 
-const getAllProducts = async (req, res) => {
+const getAllDishs = async (req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
@@ -80,14 +81,14 @@ const getAllProducts = async (req, res) => {
           }
     })
 
-    let products = await productModel.aggregate(aggreagatePipelineQueries)
+    let dishes = await dishModel.aggregate(aggreagatePipelineQueries)
     
-    return res.status(StatusCodes.OK).json({ products });
+    return res.status(StatusCodes.OK).json({ dishes });
 
 
 }
 
-const getAllProductsBySupplier = async (req, res) => {
+const getAllDishsBySupplier = async (req, res) => {
 
     const supplierId = req.params.supplierId;
 
@@ -158,20 +159,20 @@ const getAllProductsBySupplier = async (req, res) => {
           }
     })
 
-    let products = await productModel.aggregate(aggreagatePipelineQueries)
+    let dishes = await dishModel.aggregate(aggreagatePipelineQueries)
     
-    return res.status(StatusCodes.OK).json({ products });
+    return res.status(StatusCodes.OK).json({ dishes });
 
 }
 
-const getProduct = async (req, res) => {
+const getDish = async (req, res) => {
 
-    const productId = req.params.productId;
+    const dishId = req.params.dishId;
 
-    let products = await productModel.aggregate([
+    let dishes = await dishModel.aggregate([
         {
             "$match": {
-                "_id": mongoose.Types.ObjectId(productId)
+                "_id": mongoose.Types.ObjectId(dishId)
             } 
         },{        
           "$lookup": {
@@ -197,26 +198,26 @@ const getProduct = async (req, res) => {
           }
         }])
     
-    if (products.length < 1){
-        throw new CustomError.BadRequestError('Invalid Product Id');
+    if (dishes.length < 1){
+        throw new CustomError.BadRequestError('Invalid Dish Id');
     }
 
-    return res.status(StatusCodes.OK).json({ product: products[0] });
+    return res.status(StatusCodes.OK).json({ dish: dishes[0] });
 
 }
 
-const editProduct = async (req, res) => {
+const editDish = async (req, res) => {
 
-    const productId = req.params.productId;
-    const updateProductData = req.body;
+    const dishId = req.params.dishId;
+    const updateDishData = req.body;
 
     let updateResp = null;
 
     try {
-        updateResp = await productModel.updateOne({
-            _id: productId
+        updateResp = await dishModel.updateOne({
+            _id: dishId
         }, {
-            $set: updateProductData
+            $set: updateDishData
         });
     } catch(err) {
         throw new CustomError.BadRequestError(err.message);
@@ -226,19 +227,19 @@ const editProduct = async (req, res) => {
         throw new CustomError.BadRequestError('Failed to update data');
     }
 
-    return res.status(StatusCodes.OK).json({ msg: `Product data updated!` });
+    return res.status(StatusCodes.OK).json({ msg: `Dish data updated!` });
 }
 
-const deleteProduct = async (req, res) => {
+const deleteDish = async (req, res) => {
 
-    const productId = req.params.productId;
+    const dishId = req.params.dishId;
 
     let deleteResp = null;
 
     try {
-        deleteResp = await productModel.deleteOne({
+        deleteResp = await dishModel.deleteOne({
             $and : [
-                {_id: productId}                
+                {_id: dishId}                
             ]
         });
     } catch(err) {
@@ -246,18 +247,18 @@ const deleteProduct = async (req, res) => {
     }
 
     if (!deleteResp.deletedCount){
-        throw new CustomError.BadRequestError('Failed remove the product');
+        throw new CustomError.BadRequestError('Failed remove the dish');
     }
 
-    return res.status(StatusCodes.OK).json({ msg: `Product removed!` });
+    return res.status(StatusCodes.OK).json({ msg: `Dish removed!` });
 
 }
 
 module.exports = {
-    createProduct,
-    getAllProducts,
-    getAllProductsBySupplier,
-    getProduct,
-    editProduct,
-    deleteProduct,
+    createDish,
+    getAllDishs,
+    getAllDishsBySupplier,
+    getDish,
+    editDish,
+    deleteDish,
 }

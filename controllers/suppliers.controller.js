@@ -3,9 +3,6 @@ const Supplier = require('../models/Supplier');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 
-
-
-
 // Create a supplier
 const createSupplier = async(req, res) => {
     const {
@@ -21,7 +18,6 @@ const createSupplier = async(req, res) => {
     if (!businessName || !address) {
         throw new CustomError.BadRequestError('businessName and address mandatory')
     }
-
 
     // registered user is an admin
     const supplier = await Supplier.create({
@@ -75,8 +71,6 @@ const updateSupplier = async(req, res) => {
     res.status(StatusCodes.OK).json({ supplier })
 }
 
-
-
 // delete a supplier
 
 const deleteSupplier = async(req, res) => {
@@ -88,15 +82,33 @@ const deleteSupplier = async(req, res) => {
 
 }
 
-
-//get all suppliers
+// get all suppliers
 
 const getAllSuppliers = async(req, res) => {
-    const suppliers = await Supplier.find();
+
+    let query = {};
+
+    const skip = req.query.skip ? Number(req.query.skip) : 0;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+
+    if (req.query.search){
+        query = {
+            $or: [
+                { businessName: { $regex: blockUserData.businessName, $options: 'i' } },
+                { speciality: { $regex: blockUserData.businessName, $options: 'i' } },
+            ]
+        }
+    }
+
+    const suppliers = await Supplier
+    .find(query)
+    .skip(skip)
+    .limit(limit);
+
     res.status(StatusCodes.OK).json({ suppliers });
 }
 
-//get single supplier
+// get single supplier
 
 const getSingleSupplier = async(req, res) => {
     const supplier = await Supplier.findOne({ _id: req.params.id });

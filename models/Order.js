@@ -7,9 +7,9 @@ const OrderSchema = mongoose.Schema({
         ref: 'User',
         required: true
     },    
-    group: {
+    event: {
         type: mongoose.Types.ObjectId,
-        ref: 'Group',
+        ref: 'Event',
         required: true
     },
     quantity: {
