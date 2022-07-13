@@ -3,7 +3,9 @@ const mongoose = require("mongoose");
 const SupplierSchema = mongoose.Schema({
     businessName: String,
     speciality: String,
-    description: String,
+    description: {
+        type: String
+    },
     licenses: [String],
     address: {
         street: String,
