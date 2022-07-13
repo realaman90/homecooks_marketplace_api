@@ -8,6 +8,7 @@ const createSupplier = async(req, res) => {
     const {
         businessName,
         speciality,
+        description,
         licenses,
         businessImages,
         address,
@@ -23,6 +24,7 @@ const createSupplier = async(req, res) => {
     const supplier = await Supplier.create({
         businessName,
         speciality,
+        description,
         licenses,
         businessImages,
         address,
