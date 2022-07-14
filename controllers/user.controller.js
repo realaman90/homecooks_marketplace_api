@@ -2,7 +2,7 @@ const User = require('../models/User');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 
-// Create a supplier
+// Create a supplier or a customer
 const registerUser = async(req, res) => {
     const {
         fullName,
