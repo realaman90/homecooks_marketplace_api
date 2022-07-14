@@ -11,6 +11,9 @@ const createDish = async(req, res) => {
     let dish = null;
     try {
         dish = await dishModel.create(dishData);
+        dish.viewId = crypto.randomBytes(6).toString('base64url');
+        await dish.save();
+
     } catch (err) {
         throw new CustomError.BadRequestError(err.message);
     }
