@@ -1,4 +1,4 @@
-const groupStatus = {
+const eventStatus = {
   PENDING: "pending",
   ACTIVE: "active",
   CANCELLED: "cancelled",
@@ -6,7 +6,14 @@ const groupStatus = {
   DELIVERED: "delivered",
 };
 
+const orderStatus = {
+  PENDING: "pending",  
+  CONFIRMED: "confirmed",
+  CANCELLED: "cancelled",
+  DELIVERED: "delivered",  
+};
 
 module.exports = {
-    groupStatus
+    eventStatus,
+    orderStatus
 }
