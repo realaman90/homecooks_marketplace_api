@@ -19,8 +19,11 @@ const DishSchema = mongoose.Schema({
     category: {
         type: String,
         required: [true, 'Please provide dish category'],
-        enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
+
     },
+    quantity: Number,
+    size: String,
+    price: Number,
     suitableTimings: [String],
 }, {
     timestamps: true,
