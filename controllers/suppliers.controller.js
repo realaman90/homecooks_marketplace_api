@@ -93,7 +93,7 @@ const getAllSuppliers = async(req, res) => {
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 
-    if (req.query.search){
+    if (req.query.search) {
         query = {
             $or: [
                 { businessName: { $regex: blockUserData.businessName, $options: 'i' } },
@@ -103,9 +103,9 @@ const getAllSuppliers = async(req, res) => {
     }
 
     const suppliers = await Supplier
-    .find(query)
-    .skip(skip)
-    .limit(limit);
+        .find(query)
+        .skip(skip)
+        .limit(limit);
 
     res.status(StatusCodes.OK).json({ suppliers });
 }
