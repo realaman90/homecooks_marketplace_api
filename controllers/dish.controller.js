@@ -12,7 +12,7 @@ const createDish = async(req, res) => {
     try {
         dish = await dishModel.create(dishData);
         // Adding view ID for ease of use in Admin
-        dish.viewId = crypto.randomBytes(6).toString('base64url');
+        dish.viewId = crypto.randomBytes(6).toString('hex');
         await dish.save();
 
     } catch (err) {
