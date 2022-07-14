@@ -158,6 +158,9 @@ const getAllDishsBySupplier = async(req, res) => {
             "category": 1,
             "cuisine": 1,
             "description": 1,
+            "suitableTimings": 1,
+            "price": 1,
+            "viewId": 1,
         }
     })
 
