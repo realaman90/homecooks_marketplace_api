@@ -7,10 +7,14 @@ const crypto = require('crypto');
 const createDish = async(req, res) => {
 
     const dishData = req.body;
-    console.log(dishData)
+
     let dish = null;
     try {
         dish = await dishModel.create(dishData);
+        // Adding view ID for ease of use in Admin
+        dish.viewId = crypto.randomBytes(6).toString('base64url');
+        await dish.save();
+
     } catch (err) {
         throw new CustomError.BadRequestError(err.message);
     }
