@@ -13,7 +13,7 @@ const DishSchema = mongoose.Schema({
     },
     viewId: {
         type: String,
-        default: 'dish' + crypto.randomBytes(6).toString('hex'),
+        default: 'dish_' + crypto.randomBytes(6).toString('hex'),
     },
     images: {
         type: [String]
