@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const crypto = require('crypto');
 
 const SupplierSchema = mongoose.Schema({
     businessName: String,
@@ -14,6 +15,10 @@ const SupplierSchema = mongoose.Schema({
         country: String,
         latitude: Number,
         longitude: Number
+    },
+    viewId: {
+        type: String,
+        default: 'caterer_' + crypto.randomBytes(6).toString('hex')
     },
     pickupAddress: {
         street: String,

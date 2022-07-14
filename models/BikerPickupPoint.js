@@ -1,12 +1,17 @@
 const mongoose = require("mongoose");
+const crypto = require('crypto');
 
-const BikerPickupPointSchema = mongoose.Schema({    
+const BikerPickupPointSchema = mongoose.Schema({
     name: {
         type: String,
         required: [true, 'Please enter name']
-    },    
+    },
     text: {
-        type: String,        
+        type: String,
+    },
+    viewId: {
+        type: String,
+        default: 'pickup_' + crypto.randomBytes(6).toString('hex'),
     },
     supplier: {
         type: mongoose.Types.ObjectId,

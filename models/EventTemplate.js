@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require("mongoose");
 
 const EventTemplateSchema = mongoose.Schema({
@@ -19,11 +20,11 @@ const EventTemplateSchema = mongoose.Schema({
     images: {
         type: [String]
     },
-    
+
     // dates management
     eventFrequency: {
         type: String,
-        enum: ["one_time", "recurring"]        
+        enum: ["one_time", "recurring"]
     },
     recurringType: String, // weekly | monthly | null
     startDate: String,
@@ -32,15 +33,16 @@ const EventTemplateSchema = mongoose.Schema({
     eventDate: String,
 
     minOrders: Number,
-    maxOrders: Number,    
+    maxOrders: Number,
     pricePerOrder: {
         type: String,
         required: [true, "Please enter price"]
     },
     costToSupplierPerOrder: {
         type: String,
-        required: [true, "Please enter cost to supplier"]
-    },    
+        // Utkarsh we need to discuss this with Abla
+        // required: [true, "Please enter cost to supplier"]
+    },
     cuisine: String,
     category: {
         type: String,

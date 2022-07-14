@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const crypto = require('crypto');
 
 const DishSchema = mongoose.Schema({
     supplier: {
@@ -10,7 +11,10 @@ const DishSchema = mongoose.Schema({
         type: String,
         required: [true, 'Please enter name']
     },
-    viewId: String, // user friendly id
+    viewId: {
+        type: String,
+        default: 'dish' + crypto.randomBytes(6).toString('hex'),
+    },
     images: {
         type: [String]
     },

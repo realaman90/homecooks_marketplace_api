@@ -1,44 +1,35 @@
 const User = require('../models/User');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
+const crypto = require('crypto');
 
 // Create a supplier or a customer
 const registerUser = async(req, res) => {
-    const {
-        fullName,
-        email,
-        password,
-        phone,
-        address,
-        notificationSettings,
-        profileImg,
-        sex,
-        role,
-        supplier
-    } = req.body;
+    const userData = req.body;
+    if (userData.role === 'user') {
+        userData.viewId = 'cust_' + crypto.randomBytes(6).toString('hex');
+        const emailAlreadyExists = await User.findOne({ email: userData.email });
+        const phoneAlreadyExists = await User.findOneAndDelete({ phone: userData.phone });
+        if (emailAlreadyExists || phoneAlreadyExists) {
+            throw new CustomError.BadRequestError('Email or Phone is already registered in the platform')
+        }
+        const user = await User.create(userData);
 
-    const emailAlreadyExists = await User.findOne({ email });
-    if (emailAlreadyExists) {
-        throw new CustomError.BadRequestError('Email in use')
+        res.status(StatusCodes.CREATED).json({ user })
+
+
+    } else {
+        const emailAlreadyExists = await User.findOne({ email: userData.email });
+        const phoneAlreadyExists = await User.findOneAndDelete({ phone: userData.phone });
+        if (emailAlreadyExists || phoneAlreadyExists) {
+            throw new CustomError.BadRequestError('Email or Phone is already registered in the platform')
+        }
+        const user = await User.create(userData);
+
+        res.status(StatusCodes.CREATED).json({ user })
+
     }
 
-    // registered user is an admin
-
-    const user = await User.create({
-        fullName,
-        email,
-        password,
-        role,
-        phone,
-        address,
-        notificationSettings,
-        profileImg,
-        sex,
-        supplier
-
-    });
-
-    res.status(StatusCodes.CREATED).json({ user });
 };
 const updateUser = async(req, res) => {
     const { id: userId } = req.params;

@@ -1,11 +1,16 @@
 const mongoose = require("mongoose");
-const {eventStatus} = require('../constants');
+const { eventStatus } = require('../constants');
+const crypto = require('crypto');
 
 const EventSchema = mongoose.Schema({
     supplier: {
         type: mongoose.Types.ObjectId,
         ref: 'Supplier',
         required: true
+    },
+    viewId: {
+        type: String,
+        default: 'event_' + crypto.randomBytes(6).toString('hex'),
     },
     dishes: [{
         type: mongoose.Types.ObjectId,
@@ -26,7 +31,7 @@ const EventSchema = mongoose.Schema({
         default: eventStatus.PENDING
     },
     minOrders: Number,
-    maxOrders: Number,    
+    maxOrders: Number,
     eventDate: Date,
     eventVisibilityDate: Date,
     pricePerOrder: {

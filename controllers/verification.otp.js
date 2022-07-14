@@ -5,6 +5,7 @@ const { sendOTP, createUserToken } = require('../utils');
 const OTP = require('../models/OTP');
 
 
+
 const sendOTPOnPhone = async(req, res) => {
     const { phone, reason } = req.body;
 

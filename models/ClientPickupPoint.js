@@ -1,12 +1,17 @@
 const mongoose = require("mongoose");
+const crypto = require('crypto');
 
-const ClientPickupPointSchema = mongoose.Schema({    
+const ClientPickupPointSchema = mongoose.Schema({
     name: {
         type: String,
         required: [true, 'Please enter name']
-    },    
+    },
     text: {
-        type: String,        
+        type: String,
+    },
+    viewId: {
+        type: String,
+        default: 'custpickup_' + crypto.randomBytes(6).toString('hex'),
     },
     address: {
         street: String,

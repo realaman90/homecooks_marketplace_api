@@ -1,12 +1,17 @@
 const mongoose = require("mongoose");
-const {orderStatus} = require('../constants');
+const { orderStatus } = require('../constants');
+const crypto = require('crypto');
 
 const OrderSchema = mongoose.Schema({
     customer: {
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true
-    },    
+    },
+    viewId: {
+        type: String,
+        default: 'order_' + crypto.randomBytes(6).toString('hex')
+    },
     event: {
         type: mongoose.Types.ObjectId,
         ref: 'Event',
@@ -19,16 +24,16 @@ const OrderSchema = mongoose.Schema({
     cost: {
         type: String,
         required: [true]
-    },    
+    },
     costToSupplier: {
         type: String,
         required: [true]
-    },    
+    },
     isPaid: {
         type: Boolean,
         default: false
     },
-    status:  {
+    status: {
         type: String,
         enum: [orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.CANCELLED, orderStatus.DELIVERED],
         default: orderStatus.PENDING

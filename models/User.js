@@ -9,6 +9,7 @@ const UserSchema = mongoose.Schema({
         minlength: 3,
         maxlength: 100,
     },
+    viewId: String,
     profileImg: String,
     email: {
         type: String,
@@ -52,9 +53,7 @@ const UserSchema = mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'Supplier'
     }
-}, 
-{ timestamps: true }
-);
+}, { timestamps: true });
 
 UserSchema.pre('save', async function() {
 
