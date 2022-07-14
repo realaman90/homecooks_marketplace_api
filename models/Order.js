@@ -10,7 +10,7 @@ const OrderSchema = mongoose.Schema({
     },
     viewId: {
         type: String,
-        default: 'order_' + crypto.randomBytes(6).toString('hex')
+
     },
     event: {
         type: mongoose.Types.ObjectId,

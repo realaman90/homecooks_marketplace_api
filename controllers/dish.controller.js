@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const createDish = async(req, res) => {
 
     const dishData = req.body;
+    dishData.viewId = 'dish_' + crypto.randomBytes(6).toString('hex');
 
     let dish = null;
     try {

@@ -10,7 +10,7 @@ const EventSchema = mongoose.Schema({
     },
     viewId: {
         type: String,
-        default: 'event_' + crypto.randomBytes(6).toString('hex'),
+
     },
     dishes: [{
         type: mongoose.Types.ObjectId,

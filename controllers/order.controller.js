@@ -3,12 +3,14 @@ const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const { orderStatus } = require('../constants');
+const crypto = require('crypto');
 
 // currently manual payments require just one creat order api
 // this is will be udpate to have a checkout process one platform payments are enabled
 const createOrder = async(req, res) => {
 
     const orderData = req.body;
+    orderData.viewId = 'order_' + crypto.randomBytes(6).toString('hex');
 
     // check if the event has not reached max orders ??
 
