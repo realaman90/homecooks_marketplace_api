@@ -5,6 +5,7 @@ const CustomError = require('../errors');
 
 // Create a supplier
 const createSupplier = async(req, res) => {
+    const viewId = 'caterer_' + crypto.randomBytes(6).toString('hex');
     const {
         businessName,
         speciality,
@@ -23,6 +24,7 @@ const createSupplier = async(req, res) => {
     // registered user is an admin
     const supplier = await Supplier.create({
         businessName,
+        viewId,
         speciality,
         description,
         licenses,

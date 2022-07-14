@@ -18,7 +18,7 @@ const SupplierSchema = mongoose.Schema({
     },
     viewId: {
         type: String,
-        default: 'caterer_' + crypto.randomBytes(6).toString('hex')
+
     },
     pickupAddress: {
         street: String,
