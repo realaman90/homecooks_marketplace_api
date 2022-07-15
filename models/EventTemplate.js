@@ -59,12 +59,9 @@ const EventTemplateSchema = mongoose.Schema({
         timings: [String]
     }],
     clientPickups: [{
-        clientPickupPoint: {
-            type: mongoose.Types.ObjectId,
-            ref: 'ClientPickupPoint',
-            required: true
-        },
-        timings: [String]
+        type: mongoose.Types.ObjectId,
+        ref: 'ClientPickupPoint',
+        required: true
     }]
 }, {
     timestamps: true,
