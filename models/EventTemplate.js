@@ -31,6 +31,7 @@ const EventTemplateSchema = mongoose.Schema({
     endDate: String,
     days: [String],
     eventDate: String,
+    eventCloseDate: String,
 
     minOrders: Number,
     maxOrders: Number,
@@ -47,7 +48,7 @@ const EventTemplateSchema = mongoose.Schema({
     category: {
         type: String,
         required: [true, 'Please provide dish category'],
-        enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
+
     },
     bikerPickups: [{
         bikerPickupPoint: {
