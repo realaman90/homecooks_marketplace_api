@@ -455,7 +455,7 @@ const createEventUsingEventTemplate = async(req, res) => {
     // insert many events, create events based on those dates
     const resp = await eventModel.create(events);
 
-    return res.status(StatusCodes.OK).json({ msg: `${resp.length} event created` });
+    return res.status(StatusCodes.CREATED).json({ msg: `${resp.length} event created` });
 
 }
 
