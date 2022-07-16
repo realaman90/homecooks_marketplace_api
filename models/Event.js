@@ -44,6 +44,7 @@ const EventSchema = mongoose.Schema({
     },
 
     cuisine: String,
+    mealTags: [String],
     category: {
         type: String,
         required: [true, 'Please provide dish category'],
