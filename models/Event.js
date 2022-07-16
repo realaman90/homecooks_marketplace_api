@@ -34,6 +34,7 @@ const EventSchema = mongoose.Schema({
     maxOrders: Number,
     eventDate: Date,
     eventVisibilityDate: Date,
+    closingDate: Date,
     pricePerOrder: {
         type: String,
         required: [true, "Please enter price"]
@@ -49,21 +50,20 @@ const EventSchema = mongoose.Schema({
         required: [true, 'Please provide dish category'],
         enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
     },
-    bikerPickups: [{
-        bikerPickupPoint: {
-            type: mongoose.Types.ObjectId,
-            ref: 'BikerPickupPoint',
-            required: true
-        },
-        timings: [String]
-    }],
+    bikerPickup: {
+        street: String,
+        appartment_house: String,
+        city: String,
+        state: String,
+        zipCode: Number,
+        country: String,
+        latitude: Number,
+        longitude: Number
+    },
     clientPickups: [{
-        clientPickupPoint: {
-            type: mongoose.Types.ObjectId,
-            ref: 'ClientPickupPoint',
-            required: true
-        },
-        timings: [String]
+        type: mongoose.Types.ObjectId,
+        ref: 'ClientPickupPoint',
+        required: true
     }],
     eventTemplate: {
         type: mongoose.Types.ObjectId,

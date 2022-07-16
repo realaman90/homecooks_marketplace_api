@@ -1,4 +1,5 @@
 const eventModel = require('../models/Event');
+const supplierModel = require('../models/Supplier');
 const bikerPickupPointModel = require('../models/BikerPickupPoint');
 const clientPickupPointModel = require('../models/ClientPickupPoint');
 const { StatusCodes } = require('http-status-codes');
@@ -23,39 +24,39 @@ const createEvent = async(req, res) => {
 
 }
 
-const AttachPickUpPointsToEvents = async(events) => {
+// const AttachPickUpPointsToEvents = async(events) => {
 
-    if (events.length < 1) {
-        return events
-    }
+//     if (events.length < 1) {
+//         return events
+//     }
 
-    // get biker and client pickup information
-    let bikerPickupIds = [];
-    events.forEach(g => {
-        bikerPickupIds = g.bikerPickups && g.bikerPickups.length > 0 ? g.bikerPickups.map((r) => r.bikerPickupPoint) : [];
-    })
-    let clientPickupIds = [];
-    events.forEach(g => {
-        clientPickupIds = g.clientPickups && g.clientPickups.length > 0 ? g.clientPickups.map((r) => r.clientPickupPoint) : [];
-    })
+//     // get biker and client pickup information
+//     let bikerPickupIds = [];
+//     events.forEach(g => {
+//         bikerPickupIds = g.bikerPickups && g.bikerPickups.length > 0 ? g.bikerPickups.map((r) => r.bikerPickupPoint) : [];
+//     })
+//     let clientPickupIds = [];
+//     events.forEach(g => {
+//         clientPickupIds = g.clientPickups && g.clientPickups.length > 0 ? g.clientPickups.map((r) => r.clientPickupPoint) : [];
+//     })
 
-    const getBikerPickupPromise = bikerPickupPointModel.find({ _id: { $in: convertIdArrayToObjectID(bikerPickupIds) } });
-    const getClientPickupPromise = clientPickupPointModel.find({ _id: { $in: convertIdArrayToObjectID(clientPickupIds) } });
-    const pickPointsRes = await Promise.all([getBikerPickupPromise, getClientPickupPromise]);
-    // attach biker and client pickup information
+//     const getBikerPickupPromise = bikerPickupPointModel.find({ _id: { $in: convertIdArrayToObjectID(bikerPickupIds) } });
+//     const getClientPickupPromise = clientPickupPointModel.find({ _id: { $in: convertIdArrayToObjectID(clientPickupIds) } });
+//     const pickPointsRes = await Promise.all([getBikerPickupPromise, getClientPickupPromise]);
+//     // attach biker and client pickup information
 
-    events.forEach((g) => {
-        // console.log(g)
-        g.bikerPickups.forEach(b => {
-            b.bikerPickupPoint = pickWith_idFromObjectArray(pickPointsRes[0], b.bikerPickupPoint)
-        })
+//     events.forEach((g) => {
+//         // console.log(g)
+//         g.bikerPickups.forEach(b => {
+//             b.bikerPickupPoint = pickWith_idFromObjectArray(pickPointsRes[0], b.bikerPickupPoint)
+//         })
 
-        g.clientPickups.forEach(b => {
-            b.clientPickupPoint = pickWith_idFromObjectArray(pickPointsRes[1], b.clientPickupPoint)
-        })
-    })
+//         g.clientPickups.forEach(b => {
+//             b.clientPickupPoint = pickWith_idFromObjectArray(pickPointsRes[1], b.clientPickupPoint)
+//         })
+//     })
 
-}
+// }
 
 const getAllEvents = async(req, res) => {
 
@@ -116,6 +117,14 @@ const getAllEvents = async(req, res) => {
         })
         // aggreagatePipelineQueries.push({"$unwind": '$dish'})
     aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "clientpickuppoints",
+            "localField": "clientPickups",
+            "foreignField": "_id",
+            "as": "clientPickups"
+        }
+    })
+    aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
             "supplier.businessName": 1,
@@ -128,7 +137,9 @@ const getAllEvents = async(req, res) => {
             "dishes.description": 1,
             "dishes.cuisine": 1,
             "dishes.category": 1,
-            "bikerPickups": 1,
+            "eventDate":1,
+            "closingDate":1,
+            "bikerPickup": 1,
             "clientPickups": 1,
             "itemName": 1,
             "images": 1,
@@ -147,9 +158,7 @@ const getAllEvents = async(req, res) => {
     })
 
     let events = await eventModel.aggregate(aggreagatePipelineQueries)
-
-    await AttachPickUpPointsToEvents(events);
-
+    
     return res.status(StatusCodes.OK).json({ events });
 
 }
@@ -187,6 +196,13 @@ const getSupplierEvents = async(req, res) => {
                 "foreignField": "_id",
                 "as": "dishes"
             }
+        },{
+            "$lookup": {
+                "from": "clientpickuppoints",
+                "localField": "clientPickups",
+                "foreignField": "_id",
+                "as": "clientPickups"
+            }
         }, {
             "$project": {
                 "_id": 1,
@@ -200,8 +216,9 @@ const getSupplierEvents = async(req, res) => {
                 "dishes.description": 1,
                 "dishes.cuisine": 1,
                 "dishes.category": 1,
-                "bikerPickups": 1,
-                "clientPickups": 1,
+                "eventDate":1,
+                "closingDate":1,
+                "bikerPickup": 1,                                
                 "itemName": 1,
                 "images": 1,
                 "activeTill": 1,
@@ -212,7 +229,6 @@ const getSupplierEvents = async(req, res) => {
                 "itemDescription": 1,
                 "maxOrders": 1,
                 "minOrders": 1,
-                "bikerPickups": 1,
                 "clientPickups": 1,
                 "deliveryDate": 1,
                 "deliveryTime": 1,
@@ -220,9 +236,7 @@ const getSupplierEvents = async(req, res) => {
             }
         }
     ])
-
-    await AttachPickUpPointsToEvents(events);
-
+    
     return res.status(StatusCodes.OK).json({ events });
 
 }
@@ -251,6 +265,13 @@ const getEventById = async(req, res) => {
             "foreignField": "_id",
             "as": "dishes"
         }
+    },{
+        "$lookup": {
+            "from": "clientpickuppoints",
+            "localField": "clientPickups",
+            "foreignField": "_id",
+            "as": "clientPickups"
+        }
     }, {
         "$project": {
             "_id": 1,
@@ -264,7 +285,9 @@ const getEventById = async(req, res) => {
             "dishes.description": 1,
             "dishes.cuisine": 1,
             "dishes.category": 1,
-            "bikerPickups": 1,
+            "eventDate":1,
+            "closingDate":1,
+            "bikerPickup": 1,
             "clientPickups": 1,
             "itemName": 1,
             "images": 1,
@@ -285,8 +308,6 @@ const getEventById = async(req, res) => {
     if (events.length < 1) {
         throw new CustomError.BadRequestError('Invalid Event Id');
     }
-
-    await AttachPickUpPointsToEvents(events);
 
     return res.status(StatusCodes.OK).json({ event: events[0] });
 
@@ -417,6 +438,9 @@ const createEventUsingEventTemplate = async(req, res) => {
     // save the event template in the db (saving this can be kept optional)
     const eventTemplate = await eventTemplateModel.create(req.body);
 
+    // get supplier pickup address
+    const { pickupAddress } = await supplierModel.findOne({"_id": eventTemplate.supplier}, `pickupAddress`);
+
     // find out the event dates
     const eventDates = calculateDatesFromEventFrequencyData({
         "eventFrequency": eventTemplate.eventFrequency,
@@ -424,12 +448,13 @@ const createEventUsingEventTemplate = async(req, res) => {
         "startDate": eventTemplate.startDate,
         "endDate": eventTemplate.endDate,
         "days": eventTemplate.days,
-        "eventDate": eventTemplate.eventDate
+        "eventDate": eventTemplate.eventDate,
     });
 
     // create event objects
     const events = [];
     eventDates.forEach(ed => {
+        let closingDate = sub(ed, { hours: eventTemplate.finalOrderCloseHours });
         const event = {};
         event.viewId = 'event_' + crypto.randomBytes(6).toString('hex');
         event.supplier = eventTemplate.supplier;
@@ -438,15 +463,16 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.itemDescription = eventTemplate.itemDescription;
         event.images = eventTemplate.images;
         event.eventDate = ed;
+        event.closingDate = closingDate;
         event.eventVisibilityDate = sub(ed, { 'days': 7 });
         event.status = eventStatus.PENDING,
-            event.minOrders = eventTemplate.minOrders;
+        event.minOrders = eventTemplate.minOrders;
         event.maxOrders = eventTemplate.maxOrders;
         event.pricePerOrder = eventTemplate.pricePerOrder;
         event.costToSupplierPerOrder = eventTemplate.costToSupplierPerOrder;
         event.cuisine = eventTemplate.cuisine;
         event.category = eventTemplate.category;
-        event.bikerPickups = eventTemplate.bikerPickups;
+        event.bikerPickup = pickupAddress;
         event.clientPickups = eventTemplate.clientPickups;
         event.eventTemplate = eventTemplate._id;
         events.push(event);
@@ -460,7 +486,7 @@ const createEventUsingEventTemplate = async(req, res) => {
 }
 
 // case: recurring
-// createEventTemplate({
+// createEventUsingEventTemplate({
 //     "supplier":"62cd67496916c26a1d42bea1",
 //     "dish":"62cd67a2215e738e0e6f6340",
 //     "itemName":"Murg mahraja",

@@ -31,7 +31,7 @@ const EventTemplateSchema = mongoose.Schema({
     endDate: String,
     days: [String],
     eventDate: String,
-    eventCloseDate: String,
+    finalOrderCloseHours: Number, // 24, 48
 
     minOrders: Number,
     maxOrders: Number,
@@ -49,23 +49,12 @@ const EventTemplateSchema = mongoose.Schema({
         type: String,
         required: [true, 'Please provide dish category'],
 
-    },
-    bikerPickups: [{
-        bikerPickupPoint: {
-            type: mongoose.Types.ObjectId,
-            ref: 'BikerPickupPoint',
-            required: true
-        },
-        timings: [String]
-    }],
+    },   
     clientPickups: [{
-        clientPickupPoint: {
-            type: mongoose.Types.ObjectId,
-            ref: 'ClientPickupPoint',
-            required: true
-        },
-        timings: [String]
-    }]
+        type: mongoose.Types.ObjectId,
+        ref: 'ClientPickupPoint',
+        required: true
+    }],
 }, {
     timestamps: true,
     strict: true
