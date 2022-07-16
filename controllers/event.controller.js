@@ -137,8 +137,8 @@ const getAllEvents = async(req, res) => {
             "dishes.description": 1,
             "dishes.cuisine": 1,
             "dishes.category": 1,
-            "eventDate":1,
-            "closingDate":1,
+            "eventDate": 1,
+            "closingDate": 1,
             "bikerPickup": 1,
             "clientPickups": 1,
             "itemName": 1,
@@ -156,11 +156,12 @@ const getAllEvents = async(req, res) => {
             "cuisine": 1,
             "viewId": 1,
             "status": 1,
+            "dishTags": 1,
         }
     })
 
     let events = await eventModel.aggregate(aggreagatePipelineQueries)
-    
+
     return res.status(StatusCodes.OK).json({ events });
 
 }
@@ -198,7 +199,7 @@ const getSupplierEvents = async(req, res) => {
                 "foreignField": "_id",
                 "as": "dishes"
             }
-        },{
+        }, {
             "$lookup": {
                 "from": "clientpickuppoints",
                 "localField": "clientPickups",
@@ -218,9 +219,9 @@ const getSupplierEvents = async(req, res) => {
                 "dishes.description": 1,
                 "dishes.cuisine": 1,
                 "dishes.category": 1,
-                "eventDate":1,
-                "closingDate":1,
-                "bikerPickup": 1,                                
+                "eventDate": 1,
+                "closingDate": 1,
+                "bikerPickup": 1,
                 "itemName": 1,
                 "images": 1,
                 "activeTill": 1,
@@ -237,10 +238,11 @@ const getSupplierEvents = async(req, res) => {
                 "cuisine": 1,
                 "viewId": 1,
                 "status": 1,
+                "dishTags": 1,
             }
         }
     ])
-    
+
     return res.status(StatusCodes.OK).json({ events });
 
 }
@@ -269,7 +271,7 @@ const getEventById = async(req, res) => {
             "foreignField": "_id",
             "as": "dishes"
         }
-    },{
+    }, {
         "$lookup": {
             "from": "clientpickuppoints",
             "localField": "clientPickups",
@@ -289,8 +291,8 @@ const getEventById = async(req, res) => {
             "dishes.description": 1,
             "dishes.cuisine": 1,
             "dishes.category": 1,
-            "eventDate":1,
-            "closingDate":1,
+            "eventDate": 1,
+            "closingDate": 1,
             "bikerPickup": 1,
             "clientPickups": 1,
             "itemName": 1,
@@ -308,6 +310,7 @@ const getEventById = async(req, res) => {
             "cuisine": 1,
             "viewId": 1,
             "status": 1,
+            "dishTags": 1,
         }
     }])
 
@@ -445,7 +448,7 @@ const createEventUsingEventTemplate = async(req, res) => {
     const eventTemplate = await eventTemplateModel.create(req.body);
 
     // get supplier pickup address
-    const { pickupAddress } = await supplierModel.findOne({"_id": eventTemplate.supplier}, `pickupAddress`);
+    const { pickupAddress } = await supplierModel.findOne({ "_id": eventTemplate.supplier }, `pickupAddress`);
 
     // find out the event dates
     const eventDates = calculateDatesFromEventFrequencyData({
@@ -472,7 +475,7 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.closingDate = closingDate;
         event.eventVisibilityDate = sub(ed, { 'days': 7 });
         event.status = eventStatus.PENDING,
-        event.minOrders = eventTemplate.minOrders;
+            event.minOrders = eventTemplate.minOrders;
         event.maxOrders = eventTemplate.maxOrders;
         event.pricePerOrder = eventTemplate.pricePerOrder;
         event.costToSupplierPerOrder = eventTemplate.costToSupplierPerOrder;
@@ -480,6 +483,7 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.category = eventTemplate.category;
         event.bikerPickup = pickupAddress;
         event.clientPickups = eventTemplate.clientPickups;
+        event.dishTags = eventTemplate.dishTags;
         event.eventTemplate = eventTemplate._id;
         events.push(event);
     })
