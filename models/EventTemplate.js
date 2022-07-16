@@ -31,7 +31,7 @@ const EventTemplateSchema = mongoose.Schema({
     endDate: String,
     days: [String],
     eventDate: String,
-    eventCloseDate: String,
+    finalOrderCloseHours: Number, // 24, 48
 
     minOrders: Number,
     maxOrders: Number,

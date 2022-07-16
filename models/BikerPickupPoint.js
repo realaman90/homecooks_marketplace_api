@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-
 const BikerPickupPointSchema = mongoose.Schema({
     name: {
         type: String,

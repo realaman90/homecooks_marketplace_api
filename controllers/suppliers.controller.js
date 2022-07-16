@@ -1,7 +1,9 @@
+const crypto = require('crypto');
 const User = require('../models/User');
 const Supplier = require('../models/Supplier');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
+const crypto = require('crypto');
 
 // Create a supplier
 const createSupplier = async(req, res) => {
