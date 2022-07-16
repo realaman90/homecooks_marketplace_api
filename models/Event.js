@@ -10,7 +10,6 @@ const EventSchema = mongoose.Schema({
     },
     viewId: {
         type: String,
-
     },
     dishes: [{
         type: mongoose.Types.ObjectId,
@@ -48,7 +47,6 @@ const EventSchema = mongoose.Schema({
     category: {
         type: String,
         required: [true, 'Please provide dish category'],
-        enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
     },
     bikerPickup: {
         street: String,

@@ -154,6 +154,8 @@ const getAllEvents = async(req, res) => {
             "deliveryDate": 1,
             "deliveryTime": 1,
             "cuisine": 1,
+            "viewId": 1,
+            "status": 1,
         }
     })
 
@@ -233,6 +235,8 @@ const getSupplierEvents = async(req, res) => {
                 "deliveryDate": 1,
                 "deliveryTime": 1,
                 "cuisine": 1,
+                "viewId": 1,
+                "status": 1,
             }
         }
     ])
@@ -302,6 +306,8 @@ const getEventById = async(req, res) => {
             "deliveryDate": 1,
             "deliveryTime": 1,
             "cuisine": 1,
+            "viewId": 1,
+            "status": 1,
         }
     }])
 
