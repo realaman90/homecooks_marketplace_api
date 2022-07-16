@@ -47,7 +47,7 @@ const EventSchema = mongoose.Schema({
     category: {
         type: String,
         required: [true, 'Please provide dish category'],
-        enum: ['breakfast', 'lunch', 'dinner', 'snacks'],
+        
     },
     bikerPickups: [{
         bikerPickupPoint: {
