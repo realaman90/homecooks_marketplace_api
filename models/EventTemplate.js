@@ -45,7 +45,7 @@ const EventTemplateSchema = mongoose.Schema({
         // required: [true, "Please enter cost to supplier"]
     },
     cuisine: String,
-    mealTags: String,
+    mealTags: [String],
     category: {
         type: String,
         required: [true, 'Please provide dish category'],
