@@ -199,6 +199,7 @@ const getDish = async(req, res) => {
             "category": 1,
             "cuisine": 1,
             "description": 1,
+            "suitableTimings": 1,
         }
     }])
 
