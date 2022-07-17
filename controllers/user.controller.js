@@ -184,7 +184,7 @@ const getUserBySupplierId = async(req, res) => {
 };
 const updateUserBySupplierId = async(req, res) => {
     const userData = req.body;
-    const user = await User.findOne({ supplier: req.params.id }, -'password');
+    const user = await User.findOne({ supplier: req.params.id }, '-password');
     if (!user) {
         throw new CustomError.NotFoundError(`user with id: ${req.params.id} not found`)
     }

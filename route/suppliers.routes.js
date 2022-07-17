@@ -34,6 +34,6 @@ router
 router
     .route('/getUserBySupplierId/:id')
     .get([authenticateUser, authorizePermissions('admin')], getUserBySupplierId)
-    .patch[authenticateUser, authorizePermissions('admin')], (updateUserBySupplierId)
+    .patch([authenticateUser, authorizePermissions('admin')], updateUserBySupplierId)
 
 module.exports = router
