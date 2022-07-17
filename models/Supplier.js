@@ -39,6 +39,7 @@ const SupplierSchema = mongoose.Schema({
         accountHolderName: String,
         accountNumber: Number,
         routingNumber: Number,
+        accountHolderAddress: String,
         venmo: String,
         zelle: String,
         cashApp: String

@@ -54,8 +54,8 @@ const updateSupplier = async(req, res) => {
         pickupAddress,
         bankInfo
     } = req.body;
-    if (!businessName || !address) {
-        throw new CustomError.BadRequestError('Business Name and Address mandatory')
+    if (!businessName || !contactInfo.businessPhone) {
+        throw new CustomError.BadRequestError('Business Name and Phone mandatory')
     };
 
     const supplier = await Supplier.findOne({ _id: supplierId }).select('-password');

@@ -182,6 +182,22 @@ const getUserBySupplierId = async(req, res) => {
     }
     res.status(StatusCodes.OK).json({ user });
 };
+const updateUserBySupplierId = async(req, res) => {
+    const userData = req.body;
+    const user = await User.findOne({ supplier: req.params.id }, -'password');
+    if (!user) {
+        throw new CustomError.NotFoundError(`user with id: ${req.params.id} not found`)
+    }
+    user.fullName = userData.fullName;
+    user.email = userData.email;
+    user.profileImg = userData.profileImg;
+    user.phone = userData.phone;
+    user.address = userData.address;
+    await user.save();
+
+
+    res.status(StatusCodes.OK).json({ user });
+};
 
 
 module.exports = {
@@ -197,4 +213,5 @@ module.exports = {
     getAllCustomers,
     getSingleCustomer,
     getUserBySupplierId,
+    updateUserBySupplierId,
 }
