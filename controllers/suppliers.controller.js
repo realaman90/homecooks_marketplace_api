@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const User = require('../models/User');
 const Supplier = require('../models/Supplier');
 const { StatusCodes } = require('http-status-codes');
