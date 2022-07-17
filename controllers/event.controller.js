@@ -483,7 +483,7 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.category = eventTemplate.category;
         event.bikerPickup = pickupAddress;
         event.clientPickups = eventTemplate.clientPickups;
-        event.dishTags = eventTemplate.dishTags;
+        event.mealTags = eventTemplate.mealTags;
         event.eventTemplate = eventTemplate._id;
         events.push(event);
     })
