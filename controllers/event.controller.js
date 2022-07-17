@@ -474,8 +474,8 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.eventDate = ed;
         event.closingDate = closingDate;
         event.eventVisibilityDate = sub(ed, { 'days': 7 });
-        event.status = eventStatus.PENDING,
-            event.minOrders = eventTemplate.minOrders;
+        event.status = eventStatus.PENDING;
+        event.minOrders = eventTemplate.minOrders;
         event.maxOrders = eventTemplate.maxOrders;
         event.pricePerOrder = eventTemplate.pricePerOrder;
         event.costToSupplierPerOrder = eventTemplate.costToSupplierPerOrder;
