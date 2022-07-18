@@ -327,7 +327,8 @@ const editEvent = async(req, res) => {
 
     const eventId = req.params.eventId;
     const updateEventData = req.body;
-    updateEventData.eventVisibilityDate = sub(updateEventData.eventDate, { 'days': 7 });
+    updateEventData.eventVisibilityDate = sub(parseISO(updateEventData.eventDate), { 'days': 7 });
+    console.log(updateEventData);
 
     let updateResp = null;
 
