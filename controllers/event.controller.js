@@ -10,6 +10,7 @@ const { pickWith_idFromObjectArray, convertIdArrayToObjectID } = require('../uti
 const { format, parseISO, differenceInCalendarDays, add, getDay, getDate, sub } = require('date-fns');
 const eventTemplateModel = require('../models/EventTemplate');
 const crypto = require('crypto');
+const { update } = require('../models/Event');
 
 const createEvent = async(req, res) => {
 
@@ -326,6 +327,7 @@ const editEvent = async(req, res) => {
 
     const eventId = req.params.eventId;
     const updateEventData = req.body;
+    updateEventData.eventVisibilityDate = sub(updateEventData.eventDate, { 'days': 7 });
 
     let updateResp = null;
 
