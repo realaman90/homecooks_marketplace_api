@@ -200,6 +200,9 @@ const getDish = async(req, res) => {
             "cuisine": 1,
             "description": 1,
             "suitableTimings": 1,
+            "price":1,
+            "quantity":1,
+            "size":1,
         }
     }])
 

@@ -311,7 +311,7 @@ const getEventById = async(req, res) => {
             "cuisine": 1,
             "viewId": 1,
             "status": 1,
-            "dishTags": 1,
+            "mealTags": 1,
         }
     }])
 
