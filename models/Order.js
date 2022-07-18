@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { orderStatus } = require('../constants');
-const crypto = require('crypto');
 
 const OrderSchema = mongoose.Schema({
     customer: {
@@ -10,7 +9,6 @@ const OrderSchema = mongoose.Schema({
     },
     viewId: {
         type: String,
-
     },
     event: {
         type: mongoose.Types.ObjectId,
