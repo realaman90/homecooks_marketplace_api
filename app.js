@@ -62,6 +62,7 @@ app.use('/api/v1/admin/event', authenticateUser, authorizePermissions('admin'), 
 app.use('/api/v1/admin/dish', authenticateUser, authorizePermissions('admin'), dishRouter);
 app.use('/api/v1/admin/customer', customerRouter);
 app.use('/api/v1/admin/order', authenticateUser, authorizePermissions('admin'), orderRouter);
+app.use('/api/v1/admin/payout', authenticateUser, authorizePermissions('admin'), payoutRouter);
 
 // for suppliers
 app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions('admin'), bikerPickupPoint);
