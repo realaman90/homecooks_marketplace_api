@@ -10,6 +10,7 @@ const { pickWith_idFromObjectArray, convertIdArrayToObjectID } = require('../uti
 const { format, parseISO, differenceInCalendarDays, add, getDay, getDate, sub } = require('date-fns');
 const eventTemplateModel = require('../models/EventTemplate');
 const crypto = require('crypto');
+const { update } = require('../models/Event');
 
 const createEvent = async(req, res) => {
 
@@ -131,6 +132,7 @@ const getAllEvents = async(req, res) => {
             "supplier.businessImages": 1,
             "supplier.address": 1,
             "supplier.contactInfo": 1,
+            "dishes._id":1,
             "dishes.name": 1,
             "dishes.viewId": 1,
             "dishes.images": 1,
@@ -213,6 +215,7 @@ const getSupplierEvents = async(req, res) => {
                 "supplier.businessImages": 1,
                 "supplier.address": 1,
                 "supplier.contactInfo": 1,
+                "dishes._id":1,
                 "dishes.name": 1,
                 "dishes.viewId": 1,
                 "dishes.images": 1,
@@ -232,13 +235,14 @@ const getSupplierEvents = async(req, res) => {
                 "itemDescription": 1,
                 "maxOrders": 1,
                 "minOrders": 1,
-                "clientPickups": 1,
+                "clientPickups._id": 1,
+                "clientPickups.name": 1,
                 "deliveryDate": 1,
                 "deliveryTime": 1,
                 "cuisine": 1,
                 "viewId": 1,
                 "status": 1,
-                "dishTags": 1,
+                "mealTags": 1,
             }
         }
     ])
@@ -285,6 +289,7 @@ const getEventById = async(req, res) => {
             "supplier.businessImages": 1,
             "supplier.address": 1,
             "supplier.contactInfo": 1,
+            "dishes._id":1,
             "dishes.name": 1,
             "dishes.viewId": 1,
             "dishes.images": 1,
@@ -310,7 +315,7 @@ const getEventById = async(req, res) => {
             "cuisine": 1,
             "viewId": 1,
             "status": 1,
-            "dishTags": 1,
+            "mealTags": 1,
         }
     }])
 
@@ -326,6 +331,8 @@ const editEvent = async(req, res) => {
 
     const eventId = req.params.eventId;
     const updateEventData = req.body;
+    updateEventData.eventVisibilityDate = sub(parseISO(updateEventData.eventDate), { 'days': 7 });
+    // console.log(updateEventData);
 
     let updateResp = null;
 
