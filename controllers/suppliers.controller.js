@@ -99,8 +99,8 @@ const getAllSuppliers = async(req, res) => {
     if (req.query.search) {
         query = {
             $or: [
-                { businessName: { $regex: blockUserData.businessName, $options: 'i' } },
-                { speciality: { $regex: blockUserData.businessName, $options: 'i' } },
+                { businessName: { $regex: req.query.search, $options: 'i' } },
+                { speciality: { $regex: req.query.search, $options: 'i' } },
             ]
         }
     }
