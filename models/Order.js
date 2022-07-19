@@ -33,7 +33,7 @@ const OrderSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.CANCELLED, orderStatus.DELIVERED],
+        enum: ['pending_checkout', orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.CANCELLED, orderStatus.DELIVERED],
         default: orderStatus.PENDING
     },
     pickupPoint: {

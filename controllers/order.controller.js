@@ -1,8 +1,10 @@
 const orderModel = require('../models/Order');
+const kartModel = require('../models/Kart');
+const paymentModel = require('../models/Payment');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
-const { orderStatus } = require('../constants');
+const { orderStatus, paymentStatus } = require('../constants');
 const crypto = require('crypto');
 
 // currently manual payments require just one creat order api
@@ -301,11 +303,257 @@ const deleteOrder = async(req, res) => {
 
 }
 
+
+// perform checkout calculations on kart data
+const paymentCalcOnKartItems = (kartItems) => {
+
+    let totalCost = 0;
+    let totalCostToSupplier = 0;
+
+    // calculate total kart cons
+    kartItems.forEach(ki=>{
+        totalCost = totalCost + (ki.quantity*ki.event.pricePerOrder)
+        totalCostToSupplier = totalCostToSupplier + (ki.quantity*ki.event.costToSupplierPerOrder)
+    })
+
+    // service fee
+    let serviceFee = 20
+
+    // tax and charges
+    let tax = 30
+
+    // subtotal
+    let subTotal = totalCost+serviceFee+tax
+
+    return {
+        cost:totalCost,
+        serviceFee,
+        tax,
+        subTotal,
+        costToSupplier:totalCostToSupplier
+    }
+
+}
+
+const createOrdersFromKart = async (kartItems) => {
+
+    const orders = []    
+
+    kartItems.forEach(ki=>{
+
+        orders.push({
+            customer: ki.customer,
+            viewId: 'order_' + crypto.randomBytes(6).toString('hex'),
+            event: ki.event._id,
+            quantity: ki.quantity,
+            cost: ki.event.pricePerOrder,
+            costToSupplier: ki.event.costToSupplierPerOrder,
+            isPaid: false,
+            status: paymentStatus.PENDING_CHECKOUT
+        })
+
+    })
+
+    // insert all
+    const ordersResp = await orderModel.create(orders);
+    const orderIds = ordersResp.map(o=>o._id);
+    return orderIds;
+}
+
+
+const getCheckout = async (req, res) => {
+
+    const userId = req.user.userId;
+
+    // initial
+    // get orders data from kart
+    let kartItems = await kartModel.aggregate([{
+        "$match": {
+            "customer": mongoose.Types.ObjectId(userId)
+        }
+    }, {
+        "$lookup": {
+            "from": "events",
+            "localField": "event",
+            "foreignField": "_id",
+            "as": "event"
+        }
+    }, {
+        "$unwind": '$event'
+    }, {
+        "$project": {
+            "_id": 1,
+            "customer":1,
+            "quantity":1,
+            "event._id": 1,
+            "event.supplier": 1,
+            "event.pricePerOrder": 1,                
+            "event.costToSupplierPerOrder":1
+        }
+    }]);
+
+    // check for any pending checkouts    
+    let pendingCheckout = await paymentModel.aggregate([{
+        "$match": {
+            $and: [
+                {"customer": mongoose.Types.ObjectId(userId)},
+                {"status": paymentStatus.PENDING_CHECKOUT}
+            ]
+        }    
+    }]);
+
+    pendingCheckout = pendingCheckout[0];
+
+    const calcObj = paymentCalcOnKartItems(kartItems)
+
+    let payment = null;
+
+    if (!pendingCheckout) {
+
+        if (kartItems.length ==0 ){
+            throw new Error(`There are no items in the cart to checkout`);
+        }
+
+        // create and insert orders
+        const orders = await createOrdersFromKart(kartItems);
+
+        // create the object save and return
+        payment = {
+            customer: userId,
+            supplier: kartItems[0].event.supplier,
+            cost: calcObj.cost,
+            serviceFee: calcObj.serviceFee,
+            tax: calcObj.tax,
+            subTotal: calcObj.subTotal,
+            costToSupplier: calcObj.costToSupplier,
+            status: paymentStatus.PENDING_CHECKOUT,   
+            orders,         
+        }
+
+        await paymentModel.create(payment);
+
+    } else {
+
+        payment = pendingCheckout;
+    }
+
+    let orders = await orderModel.aggregate([{
+        "$match": {
+            "_id": { "$in": payment.orders }    
+        }
+    }, {
+        "$lookup": {
+            "from": "events",
+            "localField": "event",
+            "foreignField": "_id",
+            "as": "event"
+        }
+    }, {
+        "$unwind": '$event'
+    }, {
+        "$lookup": {
+            "from": "clientpickuppoints",
+            "localField": "event.clientPickups",
+            "foreignField": "_id",
+            "as": "event.clientPickups"
+        }
+    }, {
+        "$project": {
+            "_id": 1,            
+            "quantity":1,
+            "event._id": 1,
+            "event.itemName":1,
+            "event.itemDescription":1,
+            "event.images":1,            
+            "event.pricePerOrder": 1,                
+            "event.costToSupplierPerOrder":1,            
+            "event.clientPickups.name":1,
+            "event.clientPickups.text":1,
+            "event.clientPickups.viewId":1,
+            "event.clientPickups.address":1,
+            "event.clientPickups.suitableTimes":1
+        }
+    }]);
+
+    return res.status(StatusCodes.OK).json({ checkout: payment, orders });
+
+}
+
+const updatePickupAddressOnOrder = async (req, res) => {
+
+    const orderId = req.params.orderId;
+    const pickupPoint = req.body.pickupPoint;
+
+    await orderModel.updateOne({
+        _id: orderId
+    }, {
+        $set: {
+            pickupPoint,        
+        }
+    })
+
+    return res.status(StatusCodes.OK).json({ message:"pickup point updated on the order" });
+
+}
+
+const updatePaymentMethod = async (req, res) => {
+
+    const paymentId = req.params.paymentId;
+    const paymentMethod = req.body.paymentMethod;
+
+    await paymentModel.updateOne({
+        _id: paymentId
+    }, {
+        $set: {
+            paymentMethod
+        }
+    })
+
+    return res.status(StatusCodes.OK).json({ message: "payment method updated" });
+
+}
+
+const placeOrder = async (req, res) => {
+
+    const paymentId = req.params.paymentId;
+
+    const payment = await paymentModel.findById(paymentId);
+
+    // update payment status to order_placed
+    await paymentModel.updateOne({
+        _id: paymentId
+    }, {
+        $set: {
+            status: paymentStatus.ORDER_PLACED
+        }
+    })
+
+    // update order status to pending
+    await orderModel.updateMany(
+    {
+        _id: {
+            $in: payment.orders
+        }
+    }, {
+        $set: {
+            status: orderStatus.PENDING
+        }
+    })
+
+    return res.status(StatusCodes.OK).json({ message: "order placed successfully" });
+
+}
+
+
 module.exports = {
     createOrder,
     getAllOrders,
     getOrderById,
     getCustomerOrders,
     editOrder,
-    deleteOrder
+    deleteOrder,
+    getCheckout,
+    placeOrder,
+    updatePickupAddressOnOrder,
+    updatePaymentMethod
 }

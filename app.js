@@ -33,6 +33,7 @@ const bikerPickupPoint = require('./route/bikerPickupPoint.routes');
 const clientPickupPointRouter = require('./route/clientPickupPoint.routes');
 const verificationOTP = require('./route/verification.otp.route')
 const kartRouter = require('./route/kart.routes');
+const checkoutRouter = require('./route/checkout.routes');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -72,6 +73,7 @@ app.use('/api/v1/admin/clientPickupPoint', authenticateUser, authorizePermission
 
 // for customers
 app.use('/api/v1/kart', authenticateUser, authorizePermissions('user'), kartRouter);
+app.use('/api/v1/checkout', authenticateUser, authorizePermissions('user'), checkoutRouter);
 
 app.get('/api/v1/admin', (req, res) => {
     res.send('Noudada Admin Apis')
