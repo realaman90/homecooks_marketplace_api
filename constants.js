@@ -13,7 +13,14 @@ const orderStatus = {
   DELIVERED: "delivered",  
 };
 
+const paymentStatus = {
+  PENDING_CHECKOUT: "pending_checkout",
+  ORDER_PLACED: "order_placed"
+}
+
+
 module.exports = {
     eventStatus,
-    orderStatus
+    orderStatus,
+    paymentStatus
 }

@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { eventStatus } = require('../constants');
-const crypto = require('crypto');
 
 const EventSchema = mongoose.Schema({
     supplier: {

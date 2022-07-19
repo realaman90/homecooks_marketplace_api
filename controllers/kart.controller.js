@@ -6,12 +6,6 @@ const { default: mongoose } = require('mongoose');
 const crypto = require('crypto');
 const { eventStatus } = require('../constants');
 
-// router.get('/', kartController.getUserKart);
-// router.get('/inc/event/eventId', kartController.addEventToKart);
-// router.get('/dec/event/eventId', kartController.removeEventFrmKart);
-// router.get('/del/event/eventId', kartController.deleteEventFromKart);
-// router.get('/clear', kartController.clearUserKart);
-
 const getUserKart = async(req, res) => {
 
     const userId = req.user.userId;
@@ -119,6 +113,7 @@ const addEventToKart = async(req, res) => {
 
     // cart updated response
     return res.status(StatusCodes.OK).json({message: 'Kart updated!' });
+
 }
 
 const removeEventFrmKart = async (req, res)=>{
@@ -193,11 +188,11 @@ const clearUserKart = async (req, res)=>{
 
 }
 
-
 module.exports = {
     getUserKart,
     addEventToKart,
     removeEventFrmKart,
     deleteEventFromKart,
-    clearUserKart
+    clearUserKart,
 }
+
