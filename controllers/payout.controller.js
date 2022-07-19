@@ -13,15 +13,13 @@ const createPayoutObjectFromPayment = async(paymentId) => {
 
     const payment = await paymentModel.findById(paymentId, `supplier customer status costToSupplier`);
 
-    if (payment.status != paymentStatus.ORDER_PLACED){
-        console.log("esc 1")
+    if (payment.status != paymentStatus.ORDER_PLACED){        
         return
     }
 
     // dnt create if already exists
     const alreadyExists = await payoutModel.findOne({payment: paymentId}).countDocuments();
     if (alreadyExists){
-        console.log("esc 2")
         return
     }
 
