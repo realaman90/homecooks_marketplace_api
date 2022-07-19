@@ -430,7 +430,7 @@ const getCheckout = async (req, res) => {
             orders,         
         }
 
-        await paymentModel.create(payment);
+        payment = await paymentModel.create(payment);
 
     } else {
 
