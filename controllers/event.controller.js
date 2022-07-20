@@ -173,76 +173,99 @@ const getSupplierEvents = async(req, res) => {
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 
-    let events = await eventModel.aggregate([{
+    let andQuery = [];
+
+    andQuery.push({
+        supplier: mongoose.Types.ObjectId(supplierId)
+    })
+
+    // manage filters    
+    if (req.query.cuisine) {
+        andQuery.push({
+            cuisine: { $regex: req.query.cuisine, $options: 'i' }
+        })
+    }
+    if (req.query.category) {
+        andQuery.push({
+            category: req.query.category
+        })
+    }
+    if (req.query.mealtag) {
+        const t = req.query.mealtag
+        console.log(t);
+        andQuery.push({
+            mealTags: { $regex: req.query.mealTags, $options: 'i' },
+        })
+    }
+    if (req.query.search) {
+        andQuery.push({
+            "$or": [
+                { itemName: { $regex: req.query.search, $options: 'i' }, },
+                { itemDescription: { $regex: req.query.search, $options: 'i' }, },
+                { viewId: { $regex: req.query.search, $options: 'i' }, },
+                { cuisine: { $regex: req.query.search, $options: 'i' }, },
+                { category: { $regex: req.query.search, $options: 'i' }, },
+                { mealTags: { $regex: req.query.search, $options: 'i' }, },
+            ]
+        })
+    }
+
+    const aggreagatePipelineQueries = [];
+    if (andQuery.length > 0) {
+        aggreagatePipelineQueries.push({
             "$match": {
-                "supplier": mongoose.Types.ObjectId(supplierId)
+                "$and": andQuery
             }
-        }, {
-            "$sort": { "createdAt": -1 }
-        }, {
-            "$skip": skip
-        }, {
-            "$limit": limit
-        }, {
-            "$lookup": {
-                "from": "suppliers",
-                "localField": "supplier",
-                "foreignField": "_id",
-                "as": "supplier"
-            }
-        }, {
-            "$unwind": '$supplier'
-        },
-        {
-            "$lookup": {
-                "from": "dishes",
-                "localField": "dishes",
-                "foreignField": "_id",
-                "as": "dishes"
-            }
-        }, {
-            "$lookup": {
-                "from": "clientpickuppoints",
-                "localField": "clientPickups",
-                "foreignField": "_id",
-                "as": "clientPickups"
-            }
-        }, {
-            "$project": {
-                "_id": 1,
-                "supplier.businessName": 1,
-                "supplier.businessImages": 1,
-                "supplier.address": 1,
-                "supplier.contactInfo": 1,
-                "dishes.name": 1,
-                "dishes.viewId": 1,
-                "dishes.images": 1,
-                "dishes.description": 1,
-                "dishes.cuisine": 1,
-                "dishes.category": 1,
-                "eventDate": 1,
-                "closingDate": 1,
-                "bikerPickup": 1,
-                "itemName": 1,
-                "images": 1,
-                "activeTill": 1,
-                "pricePerOrder": 1,
-                "costToSupplierPerOrder": 1,
-                "pickupLocation": 1,
-                "category": 1,
-                "itemDescription": 1,
-                "maxOrders": 1,
-                "minOrders": 1,
-                "clientPickups": 1,
-                "deliveryDate": 1,
-                "deliveryTime": 1,
-                "cuisine": 1,
-                "viewId": 1,
-                "status": 1,
-                "dishTags": 1,
-            }
+        })
+    }
+    aggreagatePipelineQueries.push({ "$sort": { "createdAt": -1 } })
+    aggreagatePipelineQueries.push({ "$skip": skip })
+    aggreagatePipelineQueries.push({ "$limit": limit })
+    aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "suppliers",
+            "localField": "supplier",
+            "foreignField": "_id",
+            "as": "supplier"
         }
-    ])
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
+    aggreagatePipelineQueries.push({
+        "$project": {
+            "_id": 1,
+            "supplier.businessName": 1,
+            "supplier.businessImages": 1,
+            "supplier.address": 1,
+            "supplier.contactInfo": 1,
+            "dishes.name": 1,
+            "dishes.viewId": 1,
+            "dishes.images": 1,
+            "dishes.description": 1,
+            "dishes.cuisine": 1,
+            "dishes.category": 1,
+            "eventDate": 1,
+            "closingDate": 1,
+            "bikerPickup": 1,
+            "itemName": 1,
+            "images": 1,
+            "activeTill": 1,
+            "pricePerOrder": 1,
+            "costToSupplierPerOrder": 1,
+            "pickupLocation": 1,
+            "category": 1,
+            "itemDescription": 1,
+            "maxOrders": 1,
+            "minOrders": 1,
+            "clientPickups": 1,
+            "deliveryDate": 1,
+            "deliveryTime": 1,
+            "cuisine": 1,
+            "viewId": 1,
+            "status": 1,
+            "mealTags": 1,
+        }
+    })
+    const events = await eventModel.aggregate(aggreagatePipelineQueries);
 
     return res.status(StatusCodes.OK).json({ events });
 
