@@ -77,6 +77,11 @@ const getAllEvents = async(req, res) => {
             category: req.query.category
         })
     }
+    if (req.query.mealTag) {
+        andQuery.push({
+            mealTags: { $elemMatch:{ $regex:req.query.mealTag }}
+        })
+    }
     if (req.query.search) {
         andQuery.push({
             "$or": [
@@ -159,6 +164,7 @@ const getAllEvents = async(req, res) => {
             "viewId": 1,
             "status": 1,
             "dishTags": 1,
+            "mealTags":1
         }
     })
 
