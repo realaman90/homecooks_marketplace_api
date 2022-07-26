@@ -34,6 +34,7 @@ const clientPickupPointRouter = require('./route/clientPickupPoint.routes');
 const verificationOTP = require('./route/verification.otp.route')
 const kartRouter = require('./route/kart.routes');
 const checkoutRouter = require('./route/checkout.routes');
+const payoutRouter = require('./route/payout.routes');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
