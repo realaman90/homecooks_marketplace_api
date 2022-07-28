@@ -35,7 +35,7 @@ const getAllDishs = async(req, res) => {
         andQuery.push({
             category: req.query.category
         })
-    }
+    }    
     if (req.query.search) {
         andQuery.push({
             "$or": [
@@ -44,6 +44,7 @@ const getAllDishs = async(req, res) => {
                 { viewId: { $regex: req.query.search, $options: 'i' }, },
                 { cuisine: { $regex: req.query.search, $options: 'i' }, },
                 { category: { $regex: req.query.search, $options: 'i' }, },
+                { mealTags: { $elemMatch:{ $regex:req.query.search } }, }
             ]
         })
     }
@@ -69,8 +70,22 @@ const getAllDishs = async(req, res) => {
     })
     aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
     aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "bikerpickuppoints",
+            "localField": "bikerPickupPoint",
+            "foreignField": "_id",
+            "as": "bikerPickupPoint"
+        }
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$bikerPickupPoint' })
+    aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
+            "bikerPickupPoint.name":1,
+            "bikerPickupPoint.text":1,
+            "bikerPickupPoint.viewId":1,
+            "bikerPickupPoint.address":1,
+            "bikerPickupPoint.suitableTimes":1,
             "supplier.businessName": 1,
             "supplier.businessImages": 1,
             "supplier.address": 1,
@@ -79,6 +94,11 @@ const getAllDishs = async(req, res) => {
             "images": 1,
             "category": 1,
             "cuisine": 1,
+            "mealTags": 1,
+            "minOrders": 1,
+            "maxOrders": 1,
+            "pricePerOrder":1,
+            "costToSupplierPerOrder": 1,
             "description": 1,
         }
     })
@@ -122,6 +142,7 @@ const getAllDishsBySupplier = async(req, res) => {
                 { viewId: { $regex: req.query.search, $options: 'i' }, },
                 { cuisine: { $regex: req.query.search, $options: 'i' }, },
                 { category: { $regex: req.query.search, $options: 'i' }, },
+                { mealTags: { $elemMatch:{ $regex:req.query.search } }, }
             ]
         })
     }
@@ -147,8 +168,22 @@ const getAllDishsBySupplier = async(req, res) => {
     })
     aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
     aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "bikerpickuppoints",
+            "localField": "bikerPickupPoint",
+            "foreignField": "_id",
+            "as": "bikerPickupPoint"
+        }
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$bikerPickupPoint' })
+    aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
+            "bikerPickupPoint.name":1,
+            "bikerPickupPoint.text":1,
+            "bikerPickupPoint.viewId":1,
+            "bikerPickupPoint.address":1,
+            "bikerPickupPoint.suitableTimes":1,
             "supplier.businessName": 1,
             "supplier.businessImages": 1,
             "supplier.address": 1,
@@ -157,10 +192,14 @@ const getAllDishsBySupplier = async(req, res) => {
             "images": 1,
             "category": 1,
             "cuisine": 1,
-            "description": 1,
-            "suitableTimings": 1,
+            "description": 1,            
             "price": 1,
             "viewId": 1,
+            "mealTags": 1,
+            "minOrders": 1,
+            "maxOrders": 1,
+            "pricePerOrder":1,
+            "costToSupplierPerOrder": 1,
         }
     })
 
@@ -188,8 +227,23 @@ const getDish = async(req, res) => {
     }, {
         "$unwind": '$supplier'
     }, {
+        "$lookup": {
+            "from": "bikerpickuppoints",
+            "localField": "bikerPickupPoint",
+            "foreignField": "_id",
+            "as": "bikerPickupPoint"
+        },
+    },
+     { 
+         "$unwind": '$bikerPickupPoint' 
+    }, {
         "$project": {
             "_id": 1,
+            "bikerPickupPoint.name":1,
+            "bikerPickupPoint.text":1,
+            "bikerPickupPoint.viewId":1,
+            "bikerPickupPoint.address":1,
+            "bikerPickupPoint.suitableTimes":1,
             "supplier.businessName": 1,
             "supplier.businessImages": 1,
             "supplier.address": 1,
@@ -203,6 +257,11 @@ const getDish = async(req, res) => {
             "price":1,
             "quantity":1,
             "size":1,
+            "mealTags": 1,
+            "minOrders": 1,
+            "maxOrders": 1,
+            "pricePerOrder":1,
+            "costToSupplierPerOrder": 1,
         }
     }])
 

@@ -19,15 +19,34 @@ const DishSchema = mongoose.Schema({
         type: [String]
     },
     description: String,
+    mealTags: [String],
     cuisine: String,
     category: {
         type: String,
         required: [true, 'Please provide dish category'],
 
     },
+
+    // quantity related
     quantity: Number,
     size: String,
-    price: Number,
+    
+    // event related data
+    minOrders: Number,
+    maxOrders: Number,
+    pricePerOrder: {
+        type: String,
+        required: [true, "Please enter price"]
+    },
+    costToSupplierPerOrder: {
+        type: String,
+        required: [true, "Please enter costToSupplierPerOrder"]
+    },
+    bikerPickupPoint: {
+        type: mongoose.Types.ObjectId,
+        ref: 'BikerPickupPoint',
+        required: true
+    },
     suitableTimings: [String],
 }, {
     timestamps: true,
