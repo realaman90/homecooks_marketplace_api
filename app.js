@@ -35,6 +35,7 @@ const verificationOTP = require('./route/verification.otp.route')
 const kartRouter = require('./route/kart.routes');
 const checkoutRouter = require('./route/checkout.routes');
 const payoutRouter = require('./route/payout.routes');
+const pickUpAreaRouter = require('./route/pickupArea.routes');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -66,6 +67,9 @@ app.use('/api/v1/admin/dish', authenticateUser, authorizePermissions('admin'), d
 app.use('/api/v1/admin/customer', customerRouter);
 app.use('/api/v1/admin/order', authenticateUser, authorizePermissions('admin'), orderRouter);
 app.use('/api/v1/admin/payout', authenticateUser, authorizePermissions('admin'), payoutRouter);
+
+app.use('/api/v1/admin/pickUpArea', authenticateUser, authorizePermissions('admin'), pickUpAreaRouter);
+
 
 // for suppliers
 app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions('admin'), bikerPickupPoint);
