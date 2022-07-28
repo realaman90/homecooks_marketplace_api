@@ -50,8 +50,24 @@ const getAllClientPickupPoint = async(req, res) => {
     aggreagatePipelineQueries.push({ "$skip": skip })
     aggreagatePipelineQueries.push({ "$limit": limit })
     aggreagatePipelineQueries.push({
-        "$project": {
-            "_id": 1,
+        "$lookup": {
+            "from": "pickupareas",
+            "localField": "pickupArea",
+            "foreignField": "_id",
+            "as": "pickupArea"
+        }
+    })
+    aggreagatePipelineQueries.push({
+        "$unwind": '$pickupArea'
+    })    
+    aggreagatePipelineQueries.push({
+        "$project": {            
+            "_id": 1,            
+            "pickupArea._id":1,
+            "pickupArea.name":1,
+            "pickupArea.text":1,
+            "pickupArea.viewId":1,
+            "pickupArea.fullAddress":1,
             "name": 1,
             "text": 1,
             "address": 1,
@@ -74,9 +90,23 @@ const getClientPickupPoint = async(req, res) => {
         "$match": {
             "_id": mongoose.Types.ObjectId(clientPickupPointId)
         }
-    }, {
+        },{ "$lookup": 
+            {
+            "from": "pickupareas",
+            "localField": "pickupArea",
+            "foreignField": "_id",
+            "as": "pickupArea"
+            }
+        },{
+            "$unwind": '$pickupArea'
+        },{
         "$project": {
             "_id": 1,
+            "pickupArea._id":1,
+            "pickupArea.name":1,
+            "pickupArea.text":1,
+            "pickupArea.viewId":1,
+            "pickupArea.fullAddress":1,
             "name": 1,
             "text": 1,
             "address": 1,

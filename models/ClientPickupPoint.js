@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 const crypto = require('crypto');
 
 const ClientPickupPointSchema = mongoose.Schema({
+    pickupArea: {
+        type: mongoose.Types.ObjectId,
+        ref: 'PickupArea',
+        required: true
+    },
     name: {
         type: String,
         required: [true, 'Please enter name']
