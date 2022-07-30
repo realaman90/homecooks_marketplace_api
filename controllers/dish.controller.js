@@ -100,6 +100,7 @@ const getAllDishs = async(req, res) => {
             "pricePerOrder": 1,
             "costToSupplierPerOrder": 1,
             "description": 1,
+            "suitableTimings": 1,
         }
     })
 
@@ -200,7 +201,7 @@ const getAllDishsBySupplier = async(req, res) => {
             "maxOrders": 1,
             "pricePerOrder": 1,
             "costToSupplierPerOrder": 1,
-            "suitableTimes": 1,
+            "suitableTimings": 1,
         }
     })
 
@@ -263,7 +264,7 @@ const getDish = async(req, res) => {
                 "maxOrders": 1,
                 "pricePerOrder": 1,
                 "costToSupplierPerOrder": 1,
-                "suitableTimes": 1,
+                "suitableTimings": 1,
             }
         }
     ])
