@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const crypto = require('crypto');
+const { eventStatus } = require('../constants');
 
-const DishSchema = mongoose.Schema({
+const DishItemSchema = mongoose.Schema({
     supplier: {
         type: mongoose.Types.ObjectId,
         ref: 'Supplier',
@@ -13,7 +14,7 @@ const DishSchema = mongoose.Schema({
     },
     viewId: {
         type: String,
-        default: 'dish_' + crypto.randomBytes(6).toString('hex'),
+        default: 'dish_item_' + crypto.randomBytes(6).toString('hex'),
     },
     images: {
         type: [String]
@@ -24,13 +25,16 @@ const DishSchema = mongoose.Schema({
     category: {
         type: String,
         required: [true, 'Please provide dish category'],
-
     },
-
     // quantity related
     quantity: Number,
     size: String,
     
+    // event date related data 
+    eventDate: Date,
+    eventVisibilityDate: Date,
+    closingDate: Date,
+
     // sale related data
     minOrders: Number,
     maxOrders: Number,
@@ -47,10 +51,24 @@ const DishSchema = mongoose.Schema({
         ref: 'BikerPickupPoint',
         required: true
     },
-    suitableTimings: [String],
+    clientPickups: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'ClientPickupPoint',
+    }],
+    event: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Event',
+        required: true
+    },
+    status: {
+        type: String,
+        enum: [eventStatus.PENDING, eventStatus.ACTIVE, eventStatus.DELIVERED, eventStatus.CANCELLED, eventStatus.FULFILLED],
+        default: eventStatus.PENDING
+    },    
 }, {
     timestamps: true,
     strict: true
 });
 
-module.exports = mongoose.model('Dish', DishSchema)
+module.exports = mongoose.model('DishItem', DishItemSchema)
+

@@ -12,11 +12,11 @@ const EventTemplateSchema = mongoose.Schema({
         ref: 'Dish',
         required: true
     }],
-    itemName: {
+    name: {
         type: String,
         required: [true, 'Please Enter item name']
     },
-    itemDescription: String,
+    description: String,
     images: {
         type: [String]
     },
@@ -32,37 +32,9 @@ const EventTemplateSchema = mongoose.Schema({
     days: [String],
     eventDate: String,
     finalOrderCloseHours: Number, // 24, 48
-
-    minOrders: Number,
-    maxOrders: Number,
-    pricePerOrder: {
-        type: String,
-        required: [true, "Please enter price"]
-    },
-    costToSupplierPerOrder: {
-        type: String,
-        // Utkarsh we need to discuss this with Abla
-        // required: [true, "Please enter cost to supplier"]
-    },
-    cuisine: String,
-    mealTags: [String],
-    category: {
-        type: String,
-        required: [true, 'Please provide dish category'],
-
-    },
-    bikerPickups: [{
-        bikerPickupPoint: {
-            type: mongoose.Types.ObjectId,
-            ref: 'BikerPickupPoint',
-
-        },
-        timings: [String]
-    }],
     clientPickups: [{
         type: mongoose.Types.ObjectId,
         ref: 'ClientPickupPoint',
-
     }]
 }, {
     timestamps: true,

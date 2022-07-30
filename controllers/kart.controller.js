@@ -1,5 +1,5 @@
 const kartModel = require('../models/Kart');
-const eventModel = require('../models/Event');
+const dishItemModel = require('../models/DishItem');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
@@ -16,38 +16,31 @@ const getUserKart = async(req, res) => {
         }
     }, {
         "$lookup": {
-            "from": "events",
-            "localField": "event",
+            "from": "dishitems",
+            "localField": "item",
             "foreignField": "_id",
-            "as": "event"
+            "as": "item"
         }
     }, {
-        "$unwind": '$event'
-    }, {
-        "$lookup": {
-            "from": "dishes",
-            "localField": "event.dishes",
-            "foreignField": "_id",
-            "as": "event.dishes"
-        }
+        "$unwind": '$item'
     }, {
         "$project": {
             "_id": 1,
             "quantity":1,
-            "event.itemName": 1,
-            "event.itemDescription": 1,
-            "event.activeTill": 1,
-            "event.deliveryDate": 1,
-            "event.deliveryTime": 1,
-            "event.cuisine": 1,
-            "event.category": 1,        
-            "event.pricePerOrder": 1,                
-            "event.dishes.name": 1,
-            "event.dishes.viewId": 1,
-            "event.dishes.images": 1,
-            "event.dishes.description": 1,
-            "event.dishes.cuisine": 1,
-            "event.dishes.category": 1            
+            "item._id": 1,
+            "item.name": 1,
+            "item.images": 1,
+            "item.category": 1,
+            "item.cuisine": 1,
+            "item.mealTags": 1,
+            "item.minOrders": 1,
+            "item.maxOrders": 1,
+            "item.pricePerOrder":1,
+            "item.costToSupplierPerOrder": 1,
+            "item.description": 1,
+            "item.eventDate":1,
+            "item.eventVisibilityDate":1,
+            "item.closingDate":1,                     
         }
     }])
 
@@ -59,7 +52,7 @@ const getUserKart = async(req, res) => {
     
     // calculate total kart cons
     kartItems.forEach(ki=>{
-        totalCost = totalCost + (ki.quantity*ki.event.pricePerOrder)
+        totalCost = totalCost + (ki.quantity*ki.item.pricePerOrder)
     })
 
     return res.status(StatusCodes.OK).json({ kart: {kartItems}, totalCost });
@@ -68,13 +61,13 @@ const getUserKart = async(req, res) => {
 
 // currently manual payments require just one create order api
 // this is will be udpate to have a checkout process one platform payments are enabled
-const addEventToKart = async(req, res) => {
+const addItemToKart = async(req, res) => {
 
-    const eventId = req.params.eventId;
+    const itemId = req.params.itemId;
 
     // check event is open to receive orders
-    const event = await eventModel.findById(eventId, `status`);
-    if (event.status != eventStatus.PENDING){
+    const item = await dishItemModel.findById(itemId, `status`);
+    if (item.status != eventStatus.PENDING){
         throw new CustomError.BadRequestError(`Item not available`);        
     }
 
@@ -82,20 +75,20 @@ const addEventToKart = async(req, res) => {
     
     
     // check if event already present in kart
-    const eventInKart = await kartModel.find({
+    const itemInKart = await kartModel.find({
         $and: [
             {customer: req.user.userId},
-            {event: eventId},
+            {item: itemId},
         ]
     }).countDocuments();
 
-    if (eventInKart){
+    if (itemInKart){
         // if yes, increase the count
         await kartModel.updateOne(
             {
                 $and: [
                     {customer: req.user.userId},
-                    {event: eventId},
+                    {item: itemId},
                 ]
             }, {
                 $inc: {
@@ -106,7 +99,7 @@ const addEventToKart = async(req, res) => {
         // if no, create an entry in cart model
         await kartModel.create({
             customer:req.user.userId,
-            event:eventId,
+            item: itemId,
             quantity:1
         })
     }
@@ -116,29 +109,29 @@ const addEventToKart = async(req, res) => {
 
 }
 
-const removeEventFrmKart = async (req, res)=>{
+const removeItemFrmKart = async (req, res)=>{
 
-    const eventId = req.params.eventId;
+    const itemId = req.params.itemId;
 
     // check if event is present in kart
-    const eventInKart = await kartModel.findOne({
+    const itemInKart = await kartModel.findOne({
         $and: [
             {customer: req.user.userId},
-            {event: eventId},
+            {item: itemId},
         ]
     }, `quantity`);
 
-    if (!eventInKart){
+    if (!itemInKart){
         throw new CustomError.BadRequestError(`Invalid operation`);   
     }
 
-    if (eventInKart.quantity > 1){
+    if (itemInKart.quantity > 1){
         // decrese the qunatity
         await kartModel.updateOne(
             {
                 $and: [
                     {customer: req.user.userId},
-                    {event: eventId},
+                    {item: itemId},
                 ]
             }, {
                 $inc: {
@@ -151,7 +144,7 @@ const removeEventFrmKart = async (req, res)=>{
             {
                 $and: [
                     {customer: req.user.userId},
-                    {event: eventId},
+                    {item: itemId},
                 ]
             })        
     }
@@ -160,16 +153,16 @@ const removeEventFrmKart = async (req, res)=>{
     return res.status(StatusCodes.OK).json({message: 'Kart updated!' });    
 
 }
-const deleteEventFromKart = async (req, res)=>{
+const deleteItemFromKart = async (req, res)=>{
 
-    const eventId = req.params.eventId;
+    const itemId = req.params.itemId;
 
     // remove any record of that event from user kart
     await kartModel.deleteOne(
         {
             $and: [
                 {customer: req.user.userId},
-                {event: eventId},
+                {item: itemId},
             ]
         })        
 
@@ -190,9 +183,9 @@ const clearUserKart = async (req, res)=>{
 
 module.exports = {
     getUserKart,
-    addEventToKart,
-    removeEventFrmKart,
-    deleteEventFromKart,
+    addItemToKart,
+    removeItemFrmKart,
+    deleteItemFromKart,
     clearUserKart,
 }
 

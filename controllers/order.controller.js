@@ -85,30 +85,22 @@ const getAllOrders = async(req, res) => {
     aggreagatePipelineQueries.push({ "$unwind": '$customer' })
     aggreagatePipelineQueries.push({
         "$lookup": {
-            "from": "events",
-            "localField": "event",
+            "from": "dishitems",
+            "localField": "item",
             "foreignField": "_id",
-            "as": "event"
+            "as": "item"
         }
     })
-    aggreagatePipelineQueries.push({ "$unwind": '$event' })
-    aggreagatePipelineQueries.push({
-        "$lookup": {
-            "from": "dishes",
-            "localField": "event.dishes",
-            "foreignField": "_id",
-            "as": "event.dishes"
-        }
-    })
+    aggreagatePipelineQueries.push({ "$unwind": '$item' })    
     aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "suppliers",
-            "localField": "event.supplier",
+            "localField": "item.supplier",
             "foreignField": "_id",
-            "as": "event.supplier"
+            "as": "item.supplier"
         }
     })
-    aggreagatePipelineQueries.push({ "$unwind": '$event.supplier' })
+    aggreagatePipelineQueries.push({ "$unwind": '$item.supplier' })
     aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "clientpickuppoints",
@@ -121,23 +113,24 @@ const getAllOrders = async(req, res) => {
     aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
-            "event.itemName": 1,
-            "event.itemDescription": 1,
-            "event.activeTill": 1,
-            "event.deliveryDate": 1,
-            "event.deliveryTime": 1,
-            "event.cuisine": 1,
-            "event.category": 1,
-            "event.supplier.businessName": 1,
-            "event.supplier.businessImages": 1,
-            "event.supplier.address": 1,
-            "event.supplier.contactInfo": 1,
-            "event.dishes.name": 1,
-            "event.dishes.viewId": 1,
-            "event.dishes.images": 1,
-            "event.dishes.description": 1,
-            "event.dishes.cuisine": 1,
-            "event.dishes.category": 1,
+            "item._id": 1,
+            "item.name": 1,
+            "item.images": 1,
+            "item.category": 1,
+            "item.cuisine": 1,
+            "item.mealTags": 1,
+            "item.minOrders": 1,
+            "item.maxOrders": 1,
+            "item.pricePerOrder":1,
+            "item.costToSupplierPerOrder": 1,
+            "item.description": 1,
+            "item.eventDate":1,
+            "item.eventVisibilityDate":1,
+            "item.closingDate":1,                     
+            "item.supplier.businessName": 1,
+            "item.supplier.businessImages": 1,
+            "item.supplier.address": 1,
+            "item.supplier.contactInfo": 1,
             "customer.fullName": 1,
             "customer.profileImg": 1,
             "customer.email": 1,
@@ -176,29 +169,22 @@ const getOrderById = async(req, res) => {
         "$unwind": '$customer'
     }, {
         "$lookup": {
-            "from": "events",
-            "localField": "event",
+            "from": "dishitems",
+            "localField": "item",
             "foreignField": "_id",
-            "as": "event"
+            "as": "item"
         }
     }, {
-        "$unwind": '$event'
-    }, {
-        "$lookup": {
-            "from": "dishes",
-            "localField": "event.dishes",
-            "foreignField": "_id",
-            "as": "event.dishes"
-        }
+        "$unwind": '$item'
     }, {
         "$lookup": {
             "from": "suppliers",
-            "localField": "event.supplier",
+            "localField": "item.supplier",
             "foreignField": "_id",
-            "as": "event.supplier"
+            "as": "item.supplier"
         }
     }, {
-        "$unwind": '$event.supplier'
+        "$unwind": '$item.supplier'
     }, {
         "$lookup": {
             "from": "clientpickuppoints",
@@ -211,23 +197,24 @@ const getOrderById = async(req, res) => {
     }, {
         "$project": {
             "_id": 1,
-            "event.itemName": 1,
-            "event.itemDescription": 1,
-            "event.activeTill": 1,
-            "event.deliveryDate": 1,
-            "event.deliveryTime": 1,
-            "event.cuisine": 1,
-            "event.category": 1,
-            "event.supplier.businessName": 1,
-            "event.supplier.businessImages": 1,
-            "event.supplier.address": 1,
-            "event.supplier.contactInfo": 1,
-            "event.dishes.name": 1,
-            "event.dishes.viewId": 1,
-            "event.dishes.images": 1,
-            "event.dishes.description": 1,
-            "event.dishes.cuisine": 1,
-            "event.dishes.category": 1,
+            "item._id": 1,
+            "item.name": 1,
+            "item.images": 1,
+            "item.category": 1,
+            "item.cuisine": 1,
+            "item.mealTags": 1,
+            "item.minOrders": 1,
+            "item.maxOrders": 1,
+            "item.pricePerOrder":1,
+            "item.costToSupplierPerOrder": 1,
+            "item.description": 1,
+            "item.eventDate":1,
+            "item.eventVisibilityDate":1,
+            "item.closingDate":1,                     
+            "item.supplier.businessName": 1,
+            "item.supplier.businessImages": 1,
+            "item.supplier.address": 1,
+            "item.supplier.contactInfo": 1,
             "customer.fullName": 1,
             "customer.profileImg": 1,
             "customer.email": 1,
@@ -312,8 +299,8 @@ const paymentCalcOnKartItems = (kartItems) => {
 
     // calculate total kart cons
     kartItems.forEach(ki=>{
-        totalCost = totalCost + (ki.quantity*ki.event.pricePerOrder)
-        totalCostToSupplier = totalCostToSupplier + (ki.quantity*ki.event.costToSupplierPerOrder)
+        totalCost = totalCost + (ki.quantity*ki.item.pricePerOrder)
+        totalCostToSupplier = totalCostToSupplier + (ki.quantity*ki.item.costToSupplierPerOrder)
     })
 
     // service fee
@@ -344,10 +331,10 @@ const createOrdersFromKart = async (kartItems) => {
         orders.push({
             customer: ki.customer,
             viewId: 'order_' + crypto.randomBytes(6).toString('hex'),
-            event: ki.event._id,
+            item: ki.item._id,
             quantity: ki.quantity,
-            cost: ki.event.pricePerOrder,
-            costToSupplier: ki.event.costToSupplierPerOrder,
+            cost: ki.quantity*ki.item.pricePerOrder,
+            costToSupplier: ki.quantity*ki.item.costToSupplierPerOrder,
             isPaid: false,
             status: paymentStatus.PENDING_CHECKOUT
         })
@@ -373,22 +360,23 @@ const getCheckout = async (req, res) => {
         }
     }, {
         "$lookup": {
-            "from": "events",
-            "localField": "event",
+            "from": "dishitems",
+            "localField": "item",
             "foreignField": "_id",
-            "as": "event"
+            "as": "item"
         }
     }, {
-        "$unwind": '$event'
+        "$unwind": '$item'
     }, {
         "$project": {
             "_id": 1,
             "customer":1,
             "quantity":1,
-            "event._id": 1,
-            "event.supplier": 1,
-            "event.pricePerOrder": 1,                
-            "event.costToSupplierPerOrder":1
+            "pickupPoint":1,
+            "item._id": 1,
+            "item.supplier": 1,
+            "item.pricePerOrder": 1,                
+            "item.costToSupplierPerOrder":1
         }
     }]);
 
@@ -420,7 +408,7 @@ const getCheckout = async (req, res) => {
         // create the object save and return
         payment = {
             customer: userId,
-            supplier: kartItems[0].event.supplier,
+            supplier: kartItems[0].item.supplier,
             cost: calcObj.cost,
             serviceFee: calcObj.serviceFee,
             tax: calcObj.tax,
@@ -443,35 +431,36 @@ const getCheckout = async (req, res) => {
         }
     }, {
         "$lookup": {
-            "from": "events",
-            "localField": "event",
+            "from": "dishitems",
+            "localField": "item",
             "foreignField": "_id",
-            "as": "event"
+            "as": "item"
         }
     }, {
-        "$unwind": '$event'
+        "$unwind": '$item'
     }, {
         "$lookup": {
             "from": "clientpickuppoints",
-            "localField": "event.clientPickups",
+            "localField": "item.clientPickups",
             "foreignField": "_id",
-            "as": "event.clientPickups"
+            "as": "item.clientPickups"
         }
     }, {
         "$project": {
             "_id": 1,            
             "quantity":1,
-            "event._id": 1,
-            "event.itemName":1,
-            "event.itemDescription":1,
-            "event.images":1,            
-            "event.pricePerOrder": 1,                
-            "event.costToSupplierPerOrder":1,            
-            "event.clientPickups.name":1,
-            "event.clientPickups.text":1,
-            "event.clientPickups.viewId":1,
-            "event.clientPickups.address":1,
-            "event.clientPickups.suitableTimes":1
+            "pickupPoint":1,
+            "item._id": 1,
+            "item.name":1,
+            "item.description":1,
+            "item.images":1,            
+            "item.pricePerOrder": 1,                
+            "item.costToSupplierPerOrder":1,            
+            "item.clientPickups.name":1,
+            "item.clientPickups.text":1,
+            "item.clientPickups.viewId":1,
+            "item.clientPickups.address":1,
+            "item.clientPickups.suitableTimes":1
         }
     }]);
 
