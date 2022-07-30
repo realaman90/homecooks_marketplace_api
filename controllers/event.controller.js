@@ -1,4 +1,7 @@
+
 const eventModel = require('../models/Event');
+const dishModel = require('../models/Dish');
+const dishItemModel = require('../models/DishItem');
 const supplierModel = require('../models/Supplier');
 const bikerPickupPointModel = require('../models/BikerPickupPoint');
 const clientPickupPointModel = require('../models/ClientPickupPoint');
@@ -85,8 +88,8 @@ const getAllEvents = async(req, res) => {
     if (req.query.search) {
         andQuery.push({
             "$or": [
-                { itemName: { $regex: req.query.search, $options: 'i' }, },
-                { itemDescription: { $regex: req.query.search, $options: 'i' }, },
+                { name: { $regex: req.query.search, $options: 'i' }, },
+                { description: { $regex: req.query.search, $options: 'i' }, },
                 { cuisine: { $regex: req.query.search, $options: 'i' }, },
                 { category: { $regex: req.query.search, $options: 'i' }, },
             ]
@@ -115,10 +118,10 @@ const getAllEvents = async(req, res) => {
     aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
     aggreagatePipelineQueries.push({
             "$lookup": {
-                "from": "dishes",
-                "localField": "dishes",
+                "from": "dishitems",
+                "localField": "dishItems",
                 "foreignField": "_id",
-                "as": "dishes"
+                "as": "dishItems"
             }
         })
         // aggreagatePipelineQueries.push({"$unwind": '$dish'})
@@ -137,34 +140,30 @@ const getAllEvents = async(req, res) => {
             "supplier.businessImages": 1,
             "supplier.address": 1,
             "supplier.contactInfo": 1,
-            "dishes._id":1,
-            "dishes.name": 1,
-            "dishes.viewId": 1,
-            "dishes.images": 1,
-            "dishes.description": 1,
-            "dishes.cuisine": 1,
-            "dishes.category": 1,
+            "dishItems._id":1,
+            "dishItems.name": 1,
+            "dishItems.viewId": 1,
+            "dishItems.images": 1,
+            "dishItems.description": 1,
+            "dishItems.cuisine": 1,
+            "dishItems.category": 1,
+            "dishItems.mealTags":1,
+            "dishItems.minOrders":1,
+            "dishItems.maxOrders":1,
+            "dishItems.pricePerOrder":1,
+            "dishItems.costToSupplierPerOrder":1,
             "eventDate": 1,
             "closingDate": 1,
             "bikerPickup": 1,
             "clientPickups": 1,
-            "itemName": 1,
+            "name": 1,
             "images": 1,
             "activeTill": 1,
-            "pricePerOrder": 1,
-            "costToSupplierPerOrder": 1,
-            "pickupLocation": 1,
-            "category": 1,
-            "itemDescription": 1,
-            "maxOrders": 1,
-            "minOrders": 1,
+            "description": 1,            
             "deliveryDate": 1,
             "deliveryTime": 1,
-            "cuisine": 1,
             "viewId": 1,
             "status": 1,
-            "dishTags": 1,
-            "mealTags":1
         }
     })
 
@@ -202,10 +201,10 @@ const getSupplierEvents = async(req, res) => {
         },
         {
             "$lookup": {
-                "from": "dishes",
-                "localField": "dishes",
+                "from": "dishitems",
+                "localField": "dishItems",
                 "foreignField": "_id",
-                "as": "dishes"
+                "as": "dishItems"
             }
         }, {
             "$lookup": {
@@ -221,34 +220,31 @@ const getSupplierEvents = async(req, res) => {
                 "supplier.businessImages": 1,
                 "supplier.address": 1,
                 "supplier.contactInfo": 1,
-                "dishes._id":1,
-                "dishes.name": 1,
-                "dishes.viewId": 1,
-                "dishes.images": 1,
-                "dishes.description": 1,
-                "dishes.cuisine": 1,
-                "dishes.category": 1,
+                "dishitems._id":1,
+                "dishitems.name": 1,
+                "dishitems.viewId": 1,
+                "dishitems.images": 1,
+                "dishitems.description": 1,                
+                "dishItems.cuisine": 1,
+                "dishItems.category": 1,
+                "dishItems.mealTags":1,
+                "dishItems.minOrders":1,
+                "dishItems.maxOrders":1,
+                "dishItems.pricePerOrder":1,
+                "dishItems.costToSupplierPerOrder":1,
                 "eventDate": 1,
                 "closingDate": 1,
                 "bikerPickup": 1,
-                "itemName": 1,
+                "name": 1,
                 "images": 1,
-                "activeTill": 1,
-                "pricePerOrder": 1,
-                "costToSupplierPerOrder": 1,
-                "pickupLocation": 1,
-                "category": 1,
-                "itemDescription": 1,
+                "activeTill": 1,                                                
+                "description": 1,
                 "maxOrders": 1,
                 "minOrders": 1,
                 "clientPickups._id": 1,
-                "clientPickups.name": 1,
-                "deliveryDate": 1,
-                "deliveryTime": 1,
-                "cuisine": 1,
+                "clientPickups.name": 1,                                
                 "viewId": 1,
-                "status": 1,
-                "mealTags": 1,
+                "status": 1,                
             }
         }
     ])
@@ -276,10 +272,10 @@ const getEventById = async(req, res) => {
         "$unwind": '$supplier'
     }, {
         "$lookup": {
-            "from": "dishes",
-            "localField": "dishes",
+            "from": "dishitems",
+            "localField": "dishItems",
             "foreignField": "_id",
-            "as": "dishes"
+            "as": "dishItems"
         }
     }, {
         "$lookup": {
@@ -295,25 +291,30 @@ const getEventById = async(req, res) => {
             "supplier.businessImages": 1,
             "supplier.address": 1,
             "supplier.contactInfo": 1,
-            "dishes._id":1,
-            "dishes.name": 1,
-            "dishes.viewId": 1,
-            "dishes.images": 1,
-            "dishes.description": 1,
-            "dishes.cuisine": 1,
-            "dishes.category": 1,
+            "dishitems._id":1,
+            "dishitems.name": 1,
+            "dishitems.viewId": 1,
+            "dishitems.images": 1,
+            "dishitems.description": 1,                
+            "dishItems.cuisine": 1,
+            "dishItems.category": 1,
+            "dishItems.mealTags":1,
+            "dishItems.minOrders":1,
+            "dishItems.maxOrders":1,
+            "dishItems.pricePerOrder":1,
+            "dishItems.costToSupplierPerOrder":1,
             "eventDate": 1,
             "closingDate": 1,
             "bikerPickup": 1,
             "clientPickups": 1,
-            "itemName": 1,
+            "name": 1,
             "images": 1,
             "activeTill": 1,
             "pricePerOrder": 1,
             "costToSupplierPerOrder": 1,
             "pickupLocation": 1,
             "category": 1,
-            "itemDescription": 1,
+            "description": 1,
             "maxOrders": 1,
             "minOrders": 1,
             "deliveryDate": 1,
@@ -459,10 +460,7 @@ const createEventUsingEventTemplate = async(req, res) => {
 
     // save the event template in the db (saving this can be kept optional)
     const eventTemplate = await eventTemplateModel.create(req.body);
-
-    // get supplier pickup address
-    const { pickupAddress } = await supplierModel.findOne({ "_id": eventTemplate.supplier }, `pickupAddress`);
-
+    
     // find out the event dates
     const eventDates = calculateDatesFromEventFrequencyData({
         "eventFrequency": eventTemplate.eventFrequency,
@@ -478,41 +476,76 @@ const createEventUsingEventTemplate = async(req, res) => {
     eventDates.forEach(ed => {
         let closingDate = sub(ed, { hours: eventTemplate.finalOrderCloseHours });
         const event = {};
+        event._id = new mongoose.Types.ObjectId();
+        event.status = eventStatus.PENDING;
         event.viewId = 'event_' + crypto.randomBytes(6).toString('hex');
-        event.supplier = eventTemplate.supplier;
-        event.dishes = eventTemplate.dishes;
-        event.itemName = eventTemplate.itemName;
-        event.itemDescription = eventTemplate.itemDescription;
+        event.supplier = eventTemplate.supplier;        
+        event.name = eventTemplate.name;
+        event.description = eventTemplate.description;
         event.images = eventTemplate.images;
         event.eventDate = ed;
         event.closingDate = closingDate;
-        event.eventVisibilityDate = sub(ed, { 'days': 7 });
-        event.status = eventStatus.PENDING;
-        event.minOrders = eventTemplate.minOrders;
-        event.maxOrders = eventTemplate.maxOrders;
-        event.pricePerOrder = eventTemplate.pricePerOrder;
-        event.costToSupplierPerOrder = eventTemplate.costToSupplierPerOrder;
-        event.cuisine = eventTemplate.cuisine;
-        event.category = eventTemplate.category;
-        event.bikerPickup = pickupAddress;
-        event.clientPickups = eventTemplate.clientPickups;
-        event.mealTags = eventTemplate.mealTags;
+        event.eventVisibilityDate = sub(ed, { 'days': 7 });        
+        event.clientPickups = eventTemplate.clientPickups;        
         event.eventTemplate = eventTemplate._id;
         events.push(event);
     })
 
+    const dishItems = [];
+
+    const dishes = await dishModel.find({
+        _id: {$in: eventTemplate.dishes}
+    })
+    
+    // create dish items
+    events.forEach(e=>{
+        const dishItemsIds = [];
+        dishes.forEach(d=>{
+            const dishItemId = new mongoose.Types.ObjectId();
+            dishItemsIds.push(dishItemId);
+            dishItems.push({
+                _id: dishItemId,
+                // dish related data
+                status: eventStatus.PENDING,
+                event: e._id,
+                supplier: d.supplier,
+                name: d.name,
+                viewId: d.viewId,
+                images: d.images,
+                description: d.description,
+                mealTags: d.mealTags,
+                cuisine: d.cuisine,
+                category: d.category,
+                quantity: d.quantity,
+                size: d.size,
+                minOrders: d.minOrders,
+                maxOrders: d.maxOrders,
+                pricePerOrder: d.pricePerOrder,
+                costToSupplierPerOrder: d.costToSupplierPerOrder,
+                bikerPickupPoint: d.bikerPickupPoint,
+                clientPickups: e.clientPickups,
+                // event date related data
+                eventDate: e.eventDate,
+                eventVisibilityDate: e.eventVisibilityDate,
+                closingDate: e.closingDate,                                
+            })
+        })
+        e.dishItems = dishItemsIds
+    })
+
     // insert many events, create events based on those dates
-    const resp = await eventModel.create(events);
+    const respEvents = await eventModel.create(events);
 
-    return res.status(StatusCodes.CREATED).json({ msg: `${resp.length} event created` });
+    const respDishItems = await dishItemModel.create(dishItems);
 
+    return res.status(StatusCodes.CREATED).json({ msg: `${respEvents.length} event created, ${respDishItems.length} dish items created` });
 }
 
 // case: recurring
 // createEventUsingEventTemplate({
 //     "supplier":"62cd67496916c26a1d42bea1",
 //     "dish":"62cd67a2215e738e0e6f6340",
-//     "itemName":"Murg mahraja",
+//     "name":"Murg mahraja",
 //     "images":[""],    
 //     "pricePerOrder":"100.20",
 //     "costToSupplierPerOrder":"50.10",
@@ -525,7 +558,7 @@ const createEventUsingEventTemplate = async(req, res) => {
 //         "country":"country"
 //     },
 //     "category":"lunch",
-//     "itemDescription":"powerful murg lunch",
+//     "description":"powerful murg lunch",
 //     "maxOrders":100,
 //     "minOrders":10,
 //     "deliveryDate":"2022-06-28T00:00:00.000Z",    

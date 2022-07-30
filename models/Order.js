@@ -10,9 +10,9 @@ const OrderSchema = mongoose.Schema({
     viewId: {
         type: String,
     },
-    event: {
+    item: {
         type: mongoose.Types.ObjectId,
-        ref: 'Event',
+        ref: 'DishItem',
         required: true
     },
     quantity: {

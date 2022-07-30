@@ -10,54 +10,27 @@ const EventSchema = mongoose.Schema({
     viewId: {
         type: String,
     },
-    dishes: [{
+    dishItems: [{
         type: mongoose.Types.ObjectId,
-        ref: 'Dish',
+        ref: 'DishItems',
         required: true
     }],
-    itemName: {
+    name: {
         type: String,
         required: [true, 'Please Enter item name']
     },
-    itemDescription: String,
+    description: String,
     images: {
         type: [String]
     },
+    eventDate: Date,
+    eventVisibilityDate: Date,
+    closingDate: Date,
     status: {
         type: String,
         enum: [eventStatus.PENDING, eventStatus.ACTIVE, eventStatus.DELIVERED, eventStatus.CANCELLED, eventStatus.FULFILLED],
         default: eventStatus.PENDING
-    },
-    minOrders: Number,
-    maxOrders: Number,
-    eventDate: Date,
-    eventVisibilityDate: Date,
-    closingDate: Date,
-    pricePerOrder: {
-        type: String,
-        required: [true, "Please enter price"]
-    },
-    costToSupplierPerOrder: {
-        type: String,
-        required: [true, "Please enter cost to supplier"]
-    },
-
-    cuisine: String,
-    mealTags: [String],
-    category: {
-        type: String,
-        required: [true, 'Please provide dish category'],
-    },
-    bikerPickup: {
-        street: String,
-        appartment_house: String,
-        city: String,
-        state: String,
-        zipCode: Number,
-        country: String,
-        latitude: Number,
-        longitude: Number
-    },
+    },    
     clientPickups: [{
         type: mongoose.Types.ObjectId,
         ref: 'ClientPickupPoint',

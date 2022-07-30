@@ -6,9 +6,9 @@ const KartSchema = mongoose.Schema({
         ref: 'User',
         required: true
     },    
-    event: {
+    item: {
         type: mongoose.Types.ObjectId,
-        ref: 'Event',
+        ref: 'DishItem',
         required: true
     },
     quantity: {
