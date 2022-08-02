@@ -113,6 +113,11 @@ const getAllOrders = async(req, res) => {
     aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
+            "viewId": 1,
+            "quantity": 1,
+            "totalCost": 1,
+            "isPaid": 1,
+            "status": 1,
             "item._id": 1,
             "item.name": 1,
             "item.images": 1,
@@ -135,9 +140,6 @@ const getAllOrders = async(req, res) => {
             "customer.profileImg": 1,
             "customer.email": 1,
             "customer.phone": 1,
-            "totalCost": 1,
-            "isPaid": 1,
-            "status": 1,
             "pickupPoint.name": 1,
             "pickupPoint.text": 1,
             "pickupPoint.address": 1,
