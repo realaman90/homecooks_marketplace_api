@@ -41,7 +41,7 @@ const UserSchema = mongoose.Schema({
 
     },
     notificationSettings: {
-        email: Boolean,
+        email: { type: Boolean, default: true},
         phone: { type: Boolean, default: true },
     },
     role: {

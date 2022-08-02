@@ -2,6 +2,7 @@ const User = require('../models/User');
 const { StatusCodes } = require('http-status-codes');
 const customError = require('../errors');
 const { sendOTP, createUserToken } = require('../utils');
+const notificationController = require('./notification.controller');
 
 const register = async(req, res) => {
     const {
@@ -37,6 +38,11 @@ const register = async(req, res) => {
 
     const reason = 'Signup verification';
     sendOTP(user, reason);
+
+    process.nextTick(()=>{
+        // send welcome notification
+        notificationController.CreateUserWelcomeNotification(user._id);
+    })
 
     res.status(StatusCodes.CREATED).json({ msg: "OTP sent on your phone" });
 };
