@@ -91,7 +91,7 @@ const getAllOrders = async(req, res) => {
             "as": "item"
         }
     })
-    aggreagatePipelineQueries.push({ "$unwind": '$item' })    
+    aggreagatePipelineQueries.push({ "$unwind": '$item' })
     aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "suppliers",
@@ -101,15 +101,15 @@ const getAllOrders = async(req, res) => {
         }
     })
     aggreagatePipelineQueries.push({ "$unwind": '$item.supplier' })
-    aggreagatePipelineQueries.push({
-        "$lookup": {
-            "from": "clientpickuppoints",
-            "localField": "pickupPoint",
-            "foreignField": "_id",
-            "as": "pickupPoint"
-        }
-    })
-    aggreagatePipelineQueries.push({ "$unwind": '$pickupPoint' })
+        // aggreagatePipelineQueries.push({
+        //     "$lookup": {
+        //         "from": "clientpickuppoints",
+        //         "localField": "pickupPoint",
+        //         "foreignField": "_id",
+        //         "as": "pickupPoint"
+        //     }
+        // })
+        // aggreagatePipelineQueries.push({ "$unwind": '$pickupPoint' })
     aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
@@ -121,12 +121,12 @@ const getAllOrders = async(req, res) => {
             "item.mealTags": 1,
             "item.minOrders": 1,
             "item.maxOrders": 1,
-            "item.pricePerOrder":1,
+            "item.pricePerOrder": 1,
             "item.costToSupplierPerOrder": 1,
             "item.description": 1,
-            "item.eventDate":1,
-            "item.eventVisibilityDate":1,
-            "item.closingDate":1,                     
+            "item.eventDate": 1,
+            "item.eventVisibilityDate": 1,
+            "item.closingDate": 1,
             "item.supplier.businessName": 1,
             "item.supplier.businessImages": 1,
             "item.supplier.address": 1,
@@ -205,12 +205,12 @@ const getOrderById = async(req, res) => {
             "item.mealTags": 1,
             "item.minOrders": 1,
             "item.maxOrders": 1,
-            "item.pricePerOrder":1,
+            "item.pricePerOrder": 1,
             "item.costToSupplierPerOrder": 1,
             "item.description": 1,
-            "item.eventDate":1,
-            "item.eventVisibilityDate":1,
-            "item.closingDate":1,                     
+            "item.eventDate": 1,
+            "item.eventVisibilityDate": 1,
+            "item.closingDate": 1,
             "item.supplier.businessName": 1,
             "item.supplier.businessImages": 1,
             "item.supplier.address": 1,
@@ -298,9 +298,9 @@ const paymentCalcOnKartItems = (kartItems) => {
     let totalCostToSupplier = 0;
 
     // calculate total kart cons
-    kartItems.forEach(ki=>{
-        totalCost = totalCost + (ki.quantity*ki.item.pricePerOrder)
-        totalCostToSupplier = totalCostToSupplier + (ki.quantity*ki.item.costToSupplierPerOrder)
+    kartItems.forEach(ki => {
+        totalCost = totalCost + (ki.quantity * ki.item.pricePerOrder)
+        totalCostToSupplier = totalCostToSupplier + (ki.quantity * ki.item.costToSupplierPerOrder)
     })
 
     // service fee
@@ -310,31 +310,31 @@ const paymentCalcOnKartItems = (kartItems) => {
     let tax = 30
 
     // subtotal
-    let subTotal = totalCost+serviceFee+tax
+    let subTotal = totalCost + serviceFee + tax
 
     return {
-        cost:totalCost,
+        cost: totalCost,
         serviceFee,
         tax,
         subTotal,
-        costToSupplier:totalCostToSupplier
+        costToSupplier: totalCostToSupplier
     }
 
 }
 
-const createOrdersFromKart = async (kartItems) => {
+const createOrdersFromKart = async(kartItems) => {
 
-    const orders = []    
+    const orders = []
 
-    kartItems.forEach(ki=>{
+    kartItems.forEach(ki => {
 
         orders.push({
             customer: ki.customer,
             viewId: 'order_' + crypto.randomBytes(6).toString('hex'),
             item: ki.item._id,
             quantity: ki.quantity,
-            cost: ki.quantity*ki.item.pricePerOrder,
-            costToSupplier: ki.quantity*ki.item.costToSupplierPerOrder,
+            cost: ki.quantity * ki.item.pricePerOrder,
+            costToSupplier: ki.quantity * ki.item.costToSupplierPerOrder,
             isPaid: false,
             status: paymentStatus.PENDING_CHECKOUT
         })
@@ -343,12 +343,12 @@ const createOrdersFromKart = async (kartItems) => {
 
     // insert all
     const ordersResp = await orderModel.create(orders);
-    const orderIds = ordersResp.map(o=>o._id);
+    const orderIds = ordersResp.map(o => o._id);
     return orderIds;
 }
 
 
-const getCheckout = async (req, res) => {
+const getCheckout = async(req, res) => {
 
     const userId = req.user.userId;
 
@@ -370,13 +370,13 @@ const getCheckout = async (req, res) => {
     }, {
         "$project": {
             "_id": 1,
-            "customer":1,
-            "quantity":1,
-            "pickupPoint":1,
+            "customer": 1,
+            "quantity": 1,
+            "pickupPoint": 1,
             "item._id": 1,
             "item.supplier": 1,
-            "item.pricePerOrder": 1,                
-            "item.costToSupplierPerOrder":1
+            "item.pricePerOrder": 1,
+            "item.costToSupplierPerOrder": 1
         }
     }]);
 
@@ -384,10 +384,10 @@ const getCheckout = async (req, res) => {
     let pendingCheckout = await paymentModel.aggregate([{
         "$match": {
             $and: [
-                {"customer": mongoose.Types.ObjectId(userId)},
-                {"status": paymentStatus.PENDING_CHECKOUT}
+                { "customer": mongoose.Types.ObjectId(userId) },
+                { "status": paymentStatus.PENDING_CHECKOUT }
             ]
-        }    
+        }
     }]);
 
     pendingCheckout = pendingCheckout[0];
@@ -398,7 +398,7 @@ const getCheckout = async (req, res) => {
 
     if (!pendingCheckout) {
 
-        if (kartItems.length ==0 ){
+        if (kartItems.length == 0) {
             throw new Error(`There are no items in the cart to checkout`);
         }
 
@@ -414,8 +414,8 @@ const getCheckout = async (req, res) => {
             tax: calcObj.tax,
             subTotal: calcObj.subTotal,
             costToSupplier: calcObj.costToSupplier,
-            status: paymentStatus.PENDING_CHECKOUT,   
-            orders,         
+            status: paymentStatus.PENDING_CHECKOUT,
+            orders,
         }
 
         payment = await paymentModel.create(payment);
@@ -427,7 +427,7 @@ const getCheckout = async (req, res) => {
 
     let orders = await orderModel.aggregate([{
         "$match": {
-            "_id": { "$in": payment.orders }    
+            "_id": { "$in": payment.orders }
         }
     }, {
         "$lookup": {
@@ -447,20 +447,20 @@ const getCheckout = async (req, res) => {
         }
     }, {
         "$project": {
-            "_id": 1,            
-            "quantity":1,
-            "pickupPoint":1,
+            "_id": 1,
+            "quantity": 1,
+            "pickupPoint": 1,
             "item._id": 1,
-            "item.name":1,
-            "item.description":1,
-            "item.images":1,            
-            "item.pricePerOrder": 1,                
-            "item.costToSupplierPerOrder":1,            
-            "item.clientPickups.name":1,
-            "item.clientPickups.text":1,
-            "item.clientPickups.viewId":1,
-            "item.clientPickups.address":1,
-            "item.clientPickups.suitableTimes":1
+            "item.name": 1,
+            "item.description": 1,
+            "item.images": 1,
+            "item.pricePerOrder": 1,
+            "item.costToSupplierPerOrder": 1,
+            "item.clientPickups.name": 1,
+            "item.clientPickups.text": 1,
+            "item.clientPickups.viewId": 1,
+            "item.clientPickups.address": 1,
+            "item.clientPickups.suitableTimes": 1
         }
     }]);
 
@@ -468,7 +468,7 @@ const getCheckout = async (req, res) => {
 
 }
 
-const updatePickupAddressOnOrder = async (req, res) => {
+const updatePickupAddressOnOrder = async(req, res) => {
 
     const orderId = req.params.orderId;
     const pickupPoint = req.body.pickupPoint;
@@ -477,15 +477,15 @@ const updatePickupAddressOnOrder = async (req, res) => {
         _id: orderId
     }, {
         $set: {
-            pickupPoint,        
+            pickupPoint,
         }
     })
 
-    return res.status(StatusCodes.OK).json({ message:"pickup point updated on the order" });
+    return res.status(StatusCodes.OK).json({ message: "pickup point updated on the order" });
 
 }
 
-const updatePaymentMethod = async (req, res) => {
+const updatePaymentMethod = async(req, res) => {
 
     const paymentId = req.params.paymentId;
     const paymentMethod = req.body.paymentMethod;
@@ -502,7 +502,7 @@ const updatePaymentMethod = async (req, res) => {
 
 }
 
-const placeOrder = async (req, res) => {
+const placeOrder = async(req, res) => {
 
     const paymentId = req.params.paymentId;
 
@@ -518,8 +518,7 @@ const placeOrder = async (req, res) => {
     })
 
     // update order status to pending
-    await orderModel.updateMany(
-    {
+    await orderModel.updateMany({
         _id: {
             $in: payment.orders
         }
