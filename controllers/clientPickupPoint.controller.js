@@ -59,17 +59,17 @@ const getAllClientPickupPoint = async(req, res) => {
     })
     aggreagatePipelineQueries.push({
         "$unwind": '$pickupArea'
-    })    
+    })
     aggreagatePipelineQueries.push({
-        "$project": {            
-            "_id": 1,            
-            "pickupArea._id":1,
-            "pickupArea.name":1,
-            "pickupArea.text":1,
-            "pickupArea.viewId":1,
-            "pickupArea.fullAddress":1,
+        "$project": {
+            "_id": 1,
+            "pickupArea._id": 1,
+            "pickupArea.name": 1,
+            "pickupArea.text": 1,
+            "pickupArea.viewId": 1,
+            "pickupArea.fullAddress": 1,
             "name": 1,
-            "text": 1,
+            "suitableTimes": 1,
             "address": 1,
             "createdAt": 1,
             "updatedAt": 1,
@@ -90,25 +90,25 @@ const getClientPickupPoint = async(req, res) => {
         "$match": {
             "_id": mongoose.Types.ObjectId(clientPickupPointId)
         }
-        },{ "$lookup": 
-            {
+    }, {
+        "$lookup": {
             "from": "pickupareas",
             "localField": "pickupArea",
             "foreignField": "_id",
             "as": "pickupArea"
-            }
-        },{
-            "$unwind": '$pickupArea'
-        },{
+        }
+    }, {
+        "$unwind": '$pickupArea'
+    }, {
         "$project": {
             "_id": 1,
-            "pickupArea._id":1,
-            "pickupArea.name":1,
-            "pickupArea.text":1,
-            "pickupArea.viewId":1,
-            "pickupArea.fullAddress":1,
+            "pickupArea._id": 1,
+            "pickupArea.name": 1,
+            "pickupArea.text": 1,
+            "pickupArea.viewId": 1,
+            "pickupArea.fullAddress": 1,
             "name": 1,
-            "text": 1,
+            "suitableTimes": 1,
             "address": 1,
             "createdAt": 1,
             "updatedAt": 1,

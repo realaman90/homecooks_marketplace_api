@@ -36,6 +36,8 @@ const kartRouter = require('./route/kart.routes');
 const checkoutRouter = require('./route/checkout.routes');
 const payoutRouter = require('./route/payout.routes');
 const pickUpAreaRouter = require('./route/pickupArea.routes');
+const items = require('./route/item.routes');
+const itemsForAdmin = require('./route/item.admin.routes')
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -58,7 +60,7 @@ app.use(cookieParser(process.env.JWT_SECRET));
 app.use(express.static('./public'));
 app.use(expressFileUpload());
 
-//apis
+//apis admin
 app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
@@ -67,19 +69,23 @@ app.use('/api/v1/admin/dish', authenticateUser, authorizePermissions('admin'), d
 app.use('/api/v1/admin/customer', customerRouter);
 app.use('/api/v1/admin/order', authenticateUser, authorizePermissions('admin'), orderRouter);
 app.use('/api/v1/admin/payout', authenticateUser, authorizePermissions('admin'), payoutRouter);
-
 app.use('/api/v1/admin/pickUpArea', authenticateUser, authorizePermissions('admin'), pickUpAreaRouter);
+app.use('/api/v1/admin/products', authenticateUser, authorizePermissions('admin'), itemsForAdmin);
 
 
-// for suppliers
+
+
+//apis for suppliers
 app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions('admin'), bikerPickupPoint);
 
-// for clients
+//apis for clients
 app.use('/api/v1/admin/clientPickupPoint', authenticateUser, authorizePermissions('admin'), clientPickupPointRouter);
 
-// for customers
+//apis for customers
 app.use('/api/v1/kart', authenticateUser, authorizePermissions('user'), kartRouter);
 app.use('/api/v1/checkout', authenticateUser, authorizePermissions('user'), checkoutRouter);
+app.use('/api/v1/products', authenticateUser, authorizePermissions('user'), items);
+
 
 app.get('/api/v1/admin', (req, res) => {
     res.send('Noudada Admin Apis')
