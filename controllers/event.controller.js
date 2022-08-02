@@ -270,14 +270,16 @@ const getEventById = async(req, res) => {
         }
     }, {
         "$unwind": '$supplier'
-    }, {
+    },
+     {
         "$lookup": {
             "from": "dishitems",
             "localField": "dishItems",
             "foreignField": "_id",
             "as": "dishItems"
         }
-    }, {
+    },
+     {
         "$lookup": {
             "from": "clientpickuppoints",
             "localField": "clientPickups",
@@ -293,16 +295,9 @@ const getEventById = async(req, res) => {
             "supplier.contactInfo": 1,
             "dishitems._id":1,
             "dishitems.name": 1,
-            "dishitems.viewId": 1,
-            "dishitems.images": 1,
-            "dishitems.description": 1,                
-            "dishItems.cuisine": 1,
-            "dishItems.category": 1,
-            "dishItems.mealTags":1,
-            "dishItems.minOrders":1,
-            "dishItems.maxOrders":1,
-            "dishItems.pricePerOrder":1,
-            "dishItems.costToSupplierPerOrder":1,
+            "dishitems.viewId": 1,  
+            "dishitems.category": 1,            
+            "dishitems.mealTags": 1,            
             "eventDate": 1,
             "closingDate": 1,
             "bikerPickup": 1,
