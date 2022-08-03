@@ -42,6 +42,9 @@ const OrderSchema = mongoose.Schema({
     },
     pickupDate: Date,
     pickupTime: String,
+    instruction: String,
+    cancelReason: String,
+
 }, {
     timestamps: true,
     strict: true

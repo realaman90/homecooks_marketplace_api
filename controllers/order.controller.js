@@ -101,21 +101,21 @@ const getAllOrders = async(req, res) => {
         }
     })
     aggreagatePipelineQueries.push({ "$unwind": '$item.supplier' })
-        // aggreagatePipelineQueries.push({
-        //     "$lookup": {
-        //         "from": "clientpickuppoints",
-        //         "localField": "pickupPoint",
-        //         "foreignField": "_id",
-        //         "as": "pickupPoint"
-        //     }
-        // })
-        // aggreagatePipelineQueries.push({ "$unwind": '$pickupPoint' })
+    aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "clientpickuppoints",
+            "localField": "pickupPoint",
+            "foreignField": "_id",
+            "as": "pickupPoint"
+        }
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$pickupPoint' })
     aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
             "viewId": 1,
             "quantity": 1,
-            "totalCost": 1,
+            "cost": 1,
             "isPaid": 1,
             "status": 1,
             "item._id": 1,
@@ -155,6 +155,7 @@ const getAllOrders = async(req, res) => {
 const getOrderById = async(req, res) => {
 
     const orderId = req.params.orderId;
+    console.log(orderId);
 
     let orders = await orderModel.aggregate([{
         "$match": {
