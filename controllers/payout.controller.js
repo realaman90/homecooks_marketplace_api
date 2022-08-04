@@ -107,10 +107,6 @@ const getListOfPayouts = async (req, res)=>{
             '$match':{
                 "status": status
             }
-        },{
-            '$skip': skip
-        },{
-            '$limit': limit
         }, 
         // dish data
         {
@@ -124,6 +120,11 @@ const getListOfPayouts = async (req, res)=>{
                 "totalOrders": { $sum: { "$toDouble": "$quantity"} },
                 "totalAmount": { $sum: { "$toDouble": "$amount"} }
             }
+        },
+        {
+            '$skip': skip
+        },{
+            '$limit': limit
         },{
             "$lookup": {
                 "from": "suppliers",
