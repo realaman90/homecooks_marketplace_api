@@ -119,35 +119,38 @@ const getListOfPayouts = async (req, res)=>{
                    "item": "$item",
                    "supplier":"$supplier",
                 },
+                "supplier":{$first: '$supplier'},
+                "item":{$first: '$item'},
                 "totalOrders": { $sum: { "$toDouble": "$quantity"} },
                 "totalAmount": { $sum: { "$toDouble": "$amount"} }
             }
         },{
             "$lookup": {
                 "from": "suppliers",
-                "localField": "_id.supplier",
+                "localField": "supplier",
                 "foreignField": "_id",
-                "as": "_id.supplier"
+                "as": "supplier"
             }
         },{ 
-            "$unwind": '$_id.supplier' 
+            "$unwind": '$supplier' 
         },{
             "$lookup": {
                 "from": "dishitems",
-                "localField": "_id.item",
+                "localField": "item",
                 "foreignField": "_id",
-                "as": "_id.item"
+                "as": "item"
             }
         },{ 
-            "$unwind": '$_id.item' 
+            "$unwind": '$item' 
         },{
             '$project': {     
                 "_id":0,
                 "status": status,
-                "supplier":"$_id.supplier.businessName",
-                "item":"$_id.item.name",
-                "eventDate":"$_id.item.eventDate",
-                "productViewId": "$_id.item.viewId",
+                "supplier.businessName":1,                
+                "item._id":1,
+                "item.name":1,
+                "item.eventDate":1,
+                "item.viewId": 1,
                 "totalOrders":1,
                 "totalAmount":1
             }
