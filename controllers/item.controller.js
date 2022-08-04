@@ -301,7 +301,9 @@ const getItem = async(req, res) => {
     return res.status(StatusCodes.OK).json({ dish: dishes[0] });
 
 }
+
 const getAllItemsForAdmin = async(req, res) => {
+    
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 
@@ -404,9 +406,64 @@ const getAllItemsForAdmin = async(req, res) => {
     return res.status(StatusCodes.OK).json({ items, itemCount });
 }
 
+const getItemByItemId = async (req, res) => {
+
+    const skip = req.query.skip ? Number(req.query.skip) : 0;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+
+    const itemId = req.params.itemId;
+    const item = await dishItemModel.findById(itemId, `_id name viewId eventDate closingDate minOrders maxOrders`);
+    const orders = await orderModel.aggregate([
+        {
+            "$match": {
+                item: mongoose.Types.ObjectId(itemId)
+            }
+        }, {
+            "$sort": { "createdAt": -1 } 
+        },{
+            "$skip": skip
+        }, {
+            "$limit": limit
+        },{
+            "$lookup": {
+                "from": "users",
+                "localField": "customer",
+                "foreignField": "_id",
+                "as": "customer"
+            }
+        }, { 
+            "$unwind": '$customer' 
+        }, {
+            "$project":{
+                "customer.fullName":1,
+                "viewId":1,
+                "quanity":1,
+                "amount":1,
+                "status":1
+            }
+        }
+    ]);
+    
+    const product = {
+        "_id": item._id,
+        "name": item.name,
+        "viewId": item.viewId,
+        "eventDate": item.eventDate,
+        "closingDate": item.closingDate,
+        "minOrders": item.minOrders,
+        "maxOrders": item.maxOrders,
+        "totalOrders": orders.length
+    }
+
+    return res.status(StatusCodes.OK).json({ product, orders });
+
+}
+
+
 module.exports = {
     getItem,
     getAllItems,
     getAllItemsBySupplier,
-    getAllItemsForAdmin
+    getAllItemsForAdmin,
+    getItemByItemId
 }
