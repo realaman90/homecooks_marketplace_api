@@ -106,11 +106,15 @@ const getListOfPayouts = async(req, res) => {
             '$match': {
                 "status": status
             }
+<<<<<<< HEAD
         }, {
             '$skip': skip
         }, {
             '$limit': limit
         },
+=======
+        }, 
+>>>>>>> bea89a307a1545fb6605f9866fd4252c75f125b2
         // dish data
         {
             "$group": {
@@ -123,7 +127,16 @@ const getListOfPayouts = async(req, res) => {
                 "totalOrders": { $sum: { "$toDouble": "$quantity" } },
                 "totalAmount": { $sum: { "$toDouble": "$amount" } }
             }
+<<<<<<< HEAD
         }, {
+=======
+        },
+        {
+            '$skip': skip
+        },{
+            '$limit': limit
+        },{
+>>>>>>> bea89a307a1545fb6605f9866fd4252c75f125b2
             "$lookup": {
                 "from": "suppliers",
                 "localField": "supplier",
