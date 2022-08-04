@@ -184,6 +184,7 @@ const getSupplierPayouts = async (req, res) => {
                 },
                 "supplier":{$first: '$supplier'},
                 "item":{$first: '$item'},
+                "event":{$first: '$event'},
                 "totalOrders": { $sum: { "$toDouble": "$quantity"} },
                 "totalAmount": { $sum: { "$toDouble": "$amount"} }
             }
@@ -206,10 +207,22 @@ const getSupplierPayouts = async (req, res) => {
         },{ 
             "$unwind": '$item' 
         },{
+            "$lookup": {
+                "from": "events",
+                "localField": "event",
+                "foreignField": "_id",
+                "as": "event"
+            }
+        },{ 
+            "$unwind": '$event' 
+        },{
             '$project': {     
                 "_id":0,
                 "status": status,
                 "supplier.businessName":1,
+                "event.name":1,
+                "event.viewId":1,
+                "item._id":1,
                 "item.name":1,
                 "item.eventDate":1,
                 "item.viewId": 1,
@@ -222,6 +235,86 @@ const getSupplierPayouts = async (req, res) => {
     return res.status(StatusCodes.OK).json({ payouts });
     
 }
+
+
+const getPayoutByItem = async (req, res) => {
+
+    const skip = req.query.skip ? Number(req.query.skip) : 0;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+
+    const status = req.query.status || 'pending';
+    const itemId = req.params.itemId;
+
+    const payouts = await payoutModel.aggregate([
+        {
+            '$match':{
+                "status": status,
+                "item": mongoose.Types.ObjectId(itemId)
+            }
+        },{
+            '$skip': skip
+        },{
+            '$limit': limit
+        }, 
+        // dish data
+        {
+            "$group": {
+                "_id": {
+                   "item": "$item",                   
+                },
+                "supplier":{$first: '$supplier'},
+                "item":{$first: '$item'},
+                "event":{$first: '$event'},
+                "totalOrders": { $sum: { "$toDouble": "$quantity"} },
+                "totalAmount": { $sum: { "$toDouble": "$amount"} }
+            }
+        },{
+            "$lookup": {
+                "from": "suppliers",
+                "localField": "supplier",
+                "foreignField": "_id",
+                "as": "supplier"
+            }
+        },{ 
+            "$unwind": '$supplier' 
+        },{
+            "$lookup": {
+                "from": "dishitems",
+                "localField": "item",
+                "foreignField": "_id",
+                "as": "item"
+            }
+        },{ 
+            "$unwind": '$item' 
+        },{
+            "$lookup": {
+                "from": "events",
+                "localField": "event",
+                "foreignField": "_id",
+                "as": "event"
+            }
+        },{ 
+            "$unwind": '$event' 
+        },{
+            '$project': {     
+                "_id":0,
+                "status": status,
+                "supplier.businessName":1,
+                "event.name":1,
+                "event.viewId":1,
+                "item._id":1,
+                "item.name":1,
+                "item.eventDate":1,
+                "item.viewId": 1,
+                "totalOrders":1,
+                "totalAmount":1
+            }
+        }
+    ])
+
+    return res.status(StatusCodes.OK).json({ payouts });
+}
+
 
 // mark payout completed
 const updatePayoutStatus = async (req, res) => {
@@ -240,11 +333,30 @@ const updatePayoutStatus = async (req, res) => {
     return res.status(StatusCodes.OK).json({ message: `payout status updated to ${status}` });
 }
 
+const updatePayoutStatusForItem = async (req, res) => {
+
+    const itemId = req.params.itemId;
+    const status = req.body.status;
+
+    await payoutModel.updateMany({
+        item: itemId
+    }, {
+        $set: {
+            status
+        }
+    })
+
+    return res.status(StatusCodes.OK).json({ message: `payout status updated for item ${itemId} to ${status}` });
+
+}
+
 
 
 module.exports = {
     getListOfPayouts,
     getSupplierPayouts,
     createPayoutsForPayment,
-    updatePayoutStatus
+    updatePayoutStatus,
+    getPayoutByItem,
+    updatePayoutStatusForItem,
 }
