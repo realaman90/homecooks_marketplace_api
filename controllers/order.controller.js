@@ -200,9 +200,13 @@ const getOrderById = async(req, res) => {
     }, {
         "$project": {
             "_id": 1,
+            "quantity": 1,
+            "instruction": 1,
+            "viewId": 1,
             "item._id": 1,
             "item.name": 1,
             "item.images": 1,
+            "item.viewId": 1,
             "item.category": 1,
             "item.cuisine": 1,
             "item.mealTags": 1,
@@ -222,7 +226,7 @@ const getOrderById = async(req, res) => {
             "customer.profileImg": 1,
             "customer.email": 1,
             "customer.phone": 1,
-            "totalCost": 1,
+            "cost": 1,
             "isPaid": 1,
             "status": 1,
             "pickupPoint.name": 1,
@@ -475,12 +479,14 @@ const updatePickupAddressOnOrder = async(req, res) => {
 
     const orderId = req.params.orderId;
     const pickupPoint = req.body.pickupPoint;
+    const instruction = req.body.instruction
 
     await orderModel.updateOne({
         _id: orderId
     }, {
         $set: {
             pickupPoint,
+            instruction,
         }
     })
 

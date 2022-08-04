@@ -30,7 +30,7 @@ const EventSchema = mongoose.Schema({
         type: String,
         enum: [eventStatus.PENDING, eventStatus.ACTIVE, eventStatus.DELIVERED, eventStatus.CANCELLED, eventStatus.FULFILLED],
         default: eventStatus.PENDING
-    },    
+    },
     clientPickups: [{
         type: mongoose.Types.ObjectId,
         ref: 'ClientPickupPoint',

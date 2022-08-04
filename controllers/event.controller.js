@@ -1,4 +1,3 @@
-
 const eventModel = require('../models/Event');
 const dishModel = require('../models/Dish');
 const dishItemModel = require('../models/DishItem');
@@ -82,7 +81,7 @@ const getAllEvents = async(req, res) => {
     }
     if (req.query.mealTag) {
         andQuery.push({
-            mealTags: { $elemMatch:{ $regex:req.query.mealTag }}
+            mealTags: { $elemMatch: { $regex: req.query.mealTag } }
         })
     }
     if (req.query.search) {
@@ -140,18 +139,18 @@ const getAllEvents = async(req, res) => {
             "supplier.businessImages": 1,
             "supplier.address": 1,
             "supplier.contactInfo": 1,
-            "dishItems._id":1,
+            "dishItems._id": 1,
             "dishItems.name": 1,
             "dishItems.viewId": 1,
             "dishItems.images": 1,
             "dishItems.description": 1,
             "dishItems.cuisine": 1,
             "dishItems.category": 1,
-            "dishItems.mealTags":1,
-            "dishItems.minOrders":1,
-            "dishItems.maxOrders":1,
-            "dishItems.pricePerOrder":1,
-            "dishItems.costToSupplierPerOrder":1,
+            "dishItems.mealTags": 1,
+            "dishItems.minOrders": 1,
+            "dishItems.maxOrders": 1,
+            "dishItems.pricePerOrder": 1,
+            "dishItems.costToSupplierPerOrder": 1,
             "eventDate": 1,
             "closingDate": 1,
             "bikerPickup": 1,
@@ -159,7 +158,7 @@ const getAllEvents = async(req, res) => {
             "name": 1,
             "images": 1,
             "activeTill": 1,
-            "description": 1,            
+            "description": 1,
             "deliveryDate": 1,
             "deliveryTime": 1,
             "viewId": 1,
@@ -220,31 +219,31 @@ const getSupplierEvents = async(req, res) => {
                 "supplier.businessImages": 1,
                 "supplier.address": 1,
                 "supplier.contactInfo": 1,
-                "dishitems._id":1,
+                "dishitems._id": 1,
                 "dishitems.name": 1,
                 "dishitems.viewId": 1,
                 "dishitems.images": 1,
-                "dishitems.description": 1,                
+                "dishitems.description": 1,
                 "dishItems.cuisine": 1,
                 "dishItems.category": 1,
-                "dishItems.mealTags":1,
-                "dishItems.minOrders":1,
-                "dishItems.maxOrders":1,
-                "dishItems.pricePerOrder":1,
-                "dishItems.costToSupplierPerOrder":1,
+                "dishItems.mealTags": 1,
+                "dishItems.minOrders": 1,
+                "dishItems.maxOrders": 1,
+                "dishItems.pricePerOrder": 1,
+                "dishItems.costToSupplierPerOrder": 1,
                 "eventDate": 1,
                 "closingDate": 1,
                 "bikerPickup": 1,
                 "name": 1,
                 "images": 1,
-                "activeTill": 1,                                                
+                "activeTill": 1,
                 "description": 1,
                 "maxOrders": 1,
                 "minOrders": 1,
                 "clientPickups._id": 1,
-                "clientPickups.name": 1,                                
+                "clientPickups.name": 1,
                 "viewId": 1,
-                "status": 1,                
+                "status": 1,
             }
         }
     ])
@@ -258,68 +257,69 @@ const getEventById = async(req, res) => {
     const eventId = req.params.eventId;
 
     let events = await eventModel.aggregate([{
-        "$match": {
-            "_id": mongoose.Types.ObjectId(eventId)
+            "$match": {
+                "_id": mongoose.Types.ObjectId(eventId)
+            }
+        },
+        {
+            "$lookup": {
+                "from": "suppliers",
+                "localField": "supplier",
+                "foreignField": "_id",
+                "as": "supplier"
+            }
+        }, {
+            "$lookup": {
+                "from": "dishitems",
+                "localField": "dishItems",
+                "foreignField": "_id",
+                "as": "dishItems"
+            }
+        },
+
+        {
+            "$lookup": {
+                "from": "clientpickuppoints",
+                "localField": "clientPickups",
+                "foreignField": "_id",
+                "as": "clientPickups"
+            }
+        },
+        {
+            "$project": {
+                "_id": 1,
+                "supplier.businessName": 1,
+                "supplier.businessImages": 1,
+                "supplier.address": 1,
+                "supplier.contactInfo": 1,
+                // "dishitems._id": 1,
+                // "dishitems.name": 1,
+                "dishitems.viewId": 1,
+                "dishitems.category": 1,
+                "dishitems.mealTags": 1,
+                "eventDate": 1,
+                "closingDate": 1,
+                "bikerPickup": 1,
+                "clientPickups": 1,
+                "name": 1,
+                "images": 1,
+                "activeTill": 1,
+                "pricePerOrder": 1,
+                "costToSupplierPerOrder": 1,
+                "pickupLocation": 1,
+                // "category": 1,
+                "description": 1,
+                // "maxOrders": 1,
+                // "minOrders": 1,
+                "deliveryDate": 1,
+                "deliveryTime": 1,
+                // "cuisine": 1,
+                "viewId": 1,
+                "status": 1,
+                // "mealTags": 1,
+            }
         }
-    }, {
-        "$lookup": {
-            "from": "suppliers",
-            "localField": "supplier",
-            "foreignField": "_id",
-            "as": "supplier"
-        }
-    }, {
-        "$unwind": '$supplier'
-    },
-     {
-        "$lookup": {
-            "from": "dishitems",
-            "localField": "dishItems",
-            "foreignField": "_id",
-            "as": "dishItems"
-        }
-    },
-     {
-        "$lookup": {
-            "from": "clientpickuppoints",
-            "localField": "clientPickups",
-            "foreignField": "_id",
-            "as": "clientPickups"
-        }
-    }, {
-        "$project": {
-            "_id": 1,
-            "supplier.businessName": 1,
-            "supplier.businessImages": 1,
-            "supplier.address": 1,
-            "supplier.contactInfo": 1,
-            "dishitems._id":1,
-            "dishitems.name": 1,
-            "dishitems.viewId": 1,  
-            "dishitems.category": 1,            
-            "dishitems.mealTags": 1,            
-            "eventDate": 1,
-            "closingDate": 1,
-            "bikerPickup": 1,
-            "clientPickups": 1,
-            "name": 1,
-            "images": 1,
-            "activeTill": 1,
-            "pricePerOrder": 1,
-            "costToSupplierPerOrder": 1,
-            "pickupLocation": 1,
-            "category": 1,
-            "description": 1,
-            "maxOrders": 1,
-            "minOrders": 1,
-            "deliveryDate": 1,
-            "deliveryTime": 1,
-            "cuisine": 1,
-            "viewId": 1,
-            "status": 1,
-            "mealTags": 1,
-        }
-    }])
+    ])
 
     if (events.length < 1) {
         throw new CustomError.BadRequestError('Invalid Event Id');
@@ -455,7 +455,7 @@ const createEventUsingEventTemplate = async(req, res) => {
 
     // save the event template in the db (saving this can be kept optional)
     const eventTemplate = await eventTemplateModel.create(req.body);
-    
+
     // find out the event dates
     const eventDates = calculateDatesFromEventFrequencyData({
         "eventFrequency": eventTemplate.eventFrequency,
@@ -474,14 +474,14 @@ const createEventUsingEventTemplate = async(req, res) => {
         event._id = new mongoose.Types.ObjectId();
         event.status = eventStatus.PENDING;
         event.viewId = 'event_' + crypto.randomBytes(6).toString('hex');
-        event.supplier = eventTemplate.supplier;        
+        event.supplier = eventTemplate.supplier;
         event.name = eventTemplate.name;
         event.description = eventTemplate.description;
         event.images = eventTemplate.images;
         event.eventDate = ed;
         event.closingDate = closingDate;
-        event.eventVisibilityDate = sub(ed, { 'days': 7 });        
-        event.clientPickups = eventTemplate.clientPickups;        
+        event.eventVisibilityDate = sub(ed, { 'days': 7 });
+        event.clientPickups = eventTemplate.clientPickups;
         event.eventTemplate = eventTemplate._id;
         events.push(event);
     })
@@ -489,13 +489,13 @@ const createEventUsingEventTemplate = async(req, res) => {
     const dishItems = [];
 
     const dishes = await dishModel.find({
-        _id: {$in: eventTemplate.dishes}
+        _id: { $in: eventTemplate.dishes }
     })
-    
+
     // create dish items
-    events.forEach(e=>{
+    events.forEach(e => {
         const dishItemsIds = [];
-        dishes.forEach(d=>{
+        dishes.forEach(d => {
             const dishItemId = new mongoose.Types.ObjectId();
             dishItemsIds.push(dishItemId);
             dishItems.push({
@@ -522,7 +522,7 @@ const createEventUsingEventTemplate = async(req, res) => {
                 // event date related data
                 eventDate: e.eventDate,
                 eventVisibilityDate: e.eventVisibilityDate,
-                closingDate: e.closingDate,                                
+                closingDate: e.closingDate,
             })
         })
         e.dishItems = dishItemsIds
