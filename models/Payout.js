@@ -2,10 +2,20 @@ const mongoose = require("mongoose");
 const crypto = require('crypto');
 
 const PayoutSchema = mongoose.Schema({    
-    payment: {
+    order: {
         type: mongoose.Types.ObjectId,
-        ref: 'Payment',
+        ref: 'Order',
         required: true   
+    },
+    event: {        
+        type: mongoose.Types.ObjectId,
+        ref: 'Event',
+        required: true
+    },
+    item: {
+        type: mongoose.Types.ObjectId,
+        ref: 'DishItem',
+        required: true
     },
     supplier: {
         type: mongoose.Types.ObjectId,
@@ -16,7 +26,8 @@ const PayoutSchema = mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true
-    },
+    },    
+    quantity: String,
     paymentMethod: String,
     amount: String,
     status: {

@@ -10,6 +10,11 @@ const OrderSchema = mongoose.Schema({
     viewId: {
         type: String,
     },
+    event: {        
+        type: mongoose.Types.ObjectId,
+        ref: 'Event',
+        required: true
+    },
     item: {
         type: mongoose.Types.ObjectId,
         ref: 'DishItem',
@@ -36,15 +41,19 @@ const OrderSchema = mongoose.Schema({
         enum: ['pending_checkout', orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.CANCELLED, orderStatus.DELIVERED],
         default: orderStatus.PENDING
     },
+    supplier: {        
+        type: mongoose.Types.ObjectId,
+        ref: 'Supplier',
+        required: true        
+    },
     pickupPoint: {
         type: mongoose.Types.ObjectId,
         ref: 'ClientPickupPoint'
-    },
+    },    
     pickupDate: Date,
     pickupTime: String,
     instruction: String,
     cancelReason: String,
-
 }, {
     timestamps: true,
     strict: true

@@ -11,6 +11,16 @@ const KartSchema = mongoose.Schema({
         ref: 'DishItem',
         required: true
     },
+    event: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Event',
+        required: true
+    },
+    supplier: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Supplier',
+        required: true
+    },
     quantity: {
         type: Number,
         required: [true, 'Please Enter the quantity']

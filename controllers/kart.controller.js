@@ -66,7 +66,7 @@ const addItemToKart = async(req, res) => {
     const itemId = req.params.itemId;
 
     // check event is open to receive orders
-    const item = await dishItemModel.findById(itemId, `status`);
+    const item = await dishItemModel.findById(itemId, `status event supplier`);
     if (item.status != eventStatus.PENDING){
         throw new CustomError.BadRequestError(`Item not available`);        
     }
@@ -100,6 +100,8 @@ const addItemToKart = async(req, res) => {
         await kartModel.create({
             customer:req.user.userId,
             item: itemId,
+            event: item.event,
+            supplier: item.supplier,
             quantity:1
         })
     }

@@ -6,6 +6,8 @@ const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const { orderStatus, paymentStatus } = require('../constants');
 const crypto = require('crypto');
+const payoutController = require('./payout.controller');
+
 
 // currently manual payments require just one creat order api
 // this is will be udpate to have a checkout process one platform payments are enabled
@@ -339,6 +341,8 @@ const createOrdersFromKart = async(kartItems) => {
             customer: ki.customer,
             viewId: 'order_' + crypto.randomBytes(6).toString('hex'),
             item: ki.item._id,
+            event: ki.event,
+            supplier: ki.supplier,
             quantity: ki.quantity,
             cost: ki.quantity * ki.item.pricePerOrder,
             costToSupplier: ki.quantity * ki.item.costToSupplierPerOrder,
@@ -380,6 +384,8 @@ const getCheckout = async(req, res) => {
             "customer": 1,
             "quantity": 1,
             "pickupPoint": 1,
+            "event":1,
+            "supplier":1, 
             "item._id": 1,
             "item.supplier": 1,
             "item.pricePerOrder": 1,
@@ -536,6 +542,8 @@ const placeOrder = async(req, res) => {
             status: orderStatus.PENDING
         }
     })
+
+    await payoutController.createPayoutsForPayment(paymentId);
 
     return res.status(StatusCodes.OK).json({ message: "order placed successfully" });
 
