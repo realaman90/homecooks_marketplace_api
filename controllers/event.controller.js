@@ -276,7 +276,6 @@ const getEventById = async(req, res) => {
                 "as": "dishItems"
             }
         },
-
         {
             "$lookup": {
                 "from": "clientpickuppoints",
@@ -292,11 +291,11 @@ const getEventById = async(req, res) => {
                 "supplier.businessImages": 1,
                 "supplier.address": 1,
                 "supplier.contactInfo": 1,
-                // "dishitems._id": 1,
-                // "dishitems.name": 1,
-                "dishitems.viewId": 1,
-                "dishitems.category": 1,
-                "dishitems.mealTags": 1,
+                "dishitems._id": 1,
+                "dishItems.name": 1,
+                "dishItems.viewId": 1,
+                "dishItems.category": 1,
+                "dishItems.mealTags": 1,
                 "eventDate": 1,
                 "closingDate": 1,
                 "bikerPickup": 1,
