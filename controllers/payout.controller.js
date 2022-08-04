@@ -20,8 +20,8 @@ const createPayoutObjectFromOrder = async(orderId) => {
     // }
 
     // dnt create if already exists
-    const alreadyExists = await payoutModel.findOne({order: orderId}).countDocuments();
-    if (alreadyExists){
+    const alreadyExists = await payoutModel.findOne({ order: orderId }).countDocuments();
+    if (alreadyExists) {
         return
     }
 
@@ -42,13 +42,13 @@ const createPayoutObjectFromOrder = async(orderId) => {
 
 }
 
-const createPayoutsForPayment = async (paymentId) => {
+const createPayoutsForPayment = async(paymentId) => {
 
     const orders = await orderModel.find({
         payment: paymentId
     }, `"id`);
 
-    for (let i=0; i< orders.length; i++){
+    for (let i = 0; i < orders.length; i++) {
         createPayoutObjectFromOrder(orders[i]._id);
     }
 
@@ -61,13 +61,13 @@ const refreshSupplierPayouts = async(supplierId) => {
 
     const supplierOrders = await orderModel.find({
         $and: [
-            {supplier: supplierId},
+            { supplier: supplierId },
             // {status: orderStatus.CONFIRMED},            
         ]
     }, `_id`);
 
-    for (let i = 0; i< supplierOrders.length; i++){
-        
+    for (let i = 0; i < supplierOrders.length; i++) {
+
         await createPayoutObjectFromOrder(supplierOrders[i]._id);
     }
 
@@ -81,78 +81,78 @@ const refreshAllPayouts = async() => {
 
     const suppliers = await paymentModel.distinct('supplier');
 
-    for (let i = 0; i< suppliers.length; i++){
+    for (let i = 0; i < suppliers.length; i++) {
 
         await refreshSupplierPayouts(suppliers[i]._id);
     }
-    
+
 }
 
 // refreshAllPayouts()
 
-const getListOfPayouts = async (req, res)=>{
+const getListOfPayouts = async(req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 
     const status = req.query.status || 'pending';
-    
+
     // const payouts = await payoutModel.find()
     // .skip(skip)
     // .limit(limit)
     // .sort({"_id":-1})
 
-    const payouts = await payoutModel.aggregate([
-        {
-            '$match':{
+    const payouts = await payoutModel.aggregate([{
+            '$match': {
                 "status": status
             }
-        },{
+        }, {
             '$skip': skip
-        },{
+        }, {
             '$limit': limit
-        }, 
+        },
         // dish data
         {
             "$group": {
                 "_id": {
-                   "item": "$item",
-                   "supplier":"$supplier",
+                    "item": "$item",
+                    "supplier": "$supplier",
                 },
-                "supplier":{$first: '$supplier'},
-                "item":{$first: '$item'},
-                "totalOrders": { $sum: { "$toDouble": "$quantity"} },
-                "totalAmount": { $sum: { "$toDouble": "$amount"} }
+                "supplier": { $first: '$supplier' },
+                "item": { $first: '$item' },
+                "totalOrders": { $sum: { "$toDouble": "$quantity" } },
+                "totalAmount": { $sum: { "$toDouble": "$amount" } }
             }
-        },{
+        }, {
             "$lookup": {
                 "from": "suppliers",
                 "localField": "supplier",
                 "foreignField": "_id",
                 "as": "supplier"
             }
-        },{ 
-            "$unwind": '$supplier' 
-        },{
+        }, {
+            "$unwind": '$supplier'
+        }, {
             "$lookup": {
                 "from": "dishitems",
                 "localField": "item",
                 "foreignField": "_id",
                 "as": "item"
             }
-        },{ 
-            "$unwind": '$item' 
-        },{
-            '$project': {     
-                "_id":0,
+        }, {
+            "$unwind": '$item'
+        }, {
+            '$project': {
+                "_id": 0,
                 "status": status,
-                "supplier.businessName":1,                
-                "item._id":1,
-                "item.name":1,
-                "item.eventDate":1,
+                "supplier._id": 1,
+                "supplier.businessName": 1,
+                "item._id": 1,
+                "item.name": 1,
+                "item.eventDate": 1,
                 "item.viewId": 1,
-                "totalOrders":1,
-                "totalAmount":1
+                "totalOrders": 1,
+                "totalAmount": 1
             }
         }
     ])
@@ -160,7 +160,7 @@ const getListOfPayouts = async (req, res)=>{
     return res.status(StatusCodes.OK).json({ payouts });
 }
 
-const getSupplierPayouts = async (req, res) => {
+const getSupplierPayouts = async(req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
@@ -168,79 +168,78 @@ const getSupplierPayouts = async (req, res) => {
     const status = req.query.status || 'pending';
     const supplierId = req.params.supplierId;
 
-    const payouts = await payoutModel.aggregate([
-        {
-            '$match':{
+    const payouts = await payoutModel.aggregate([{
+            '$match': {
                 "status": status,
                 "supplier": mongoose.Types.ObjectId(supplierId)
             }
-        },{
+        }, {
             '$skip': skip
-        },{
+        }, {
             '$limit': limit
-        }, 
+        },
         // dish data
         {
             "$group": {
                 "_id": {
-                   "item": "$item",                   
+                    "item": "$item",
                 },
-                "supplier":{$first: '$supplier'},
-                "item":{$first: '$item'},
-                "event":{$first: '$event'},
-                "totalOrders": { $sum: { "$toDouble": "$quantity"} },
-                "totalAmount": { $sum: { "$toDouble": "$amount"} }
+                "supplier": { $first: '$supplier' },
+                "item": { $first: '$item' },
+                "event": { $first: '$event' },
+                "totalOrders": { $sum: { "$toDouble": "$quantity" } },
+                "totalAmount": { $sum: { "$toDouble": "$amount" } }
             }
-        },{
+        }, {
             "$lookup": {
                 "from": "suppliers",
                 "localField": "supplier",
                 "foreignField": "_id",
                 "as": "supplier"
             }
-        },{ 
-            "$unwind": '$supplier' 
-        },{
+        }, {
+            "$unwind": '$supplier'
+        }, {
             "$lookup": {
                 "from": "dishitems",
                 "localField": "item",
                 "foreignField": "_id",
                 "as": "item"
             }
-        },{ 
-            "$unwind": '$item' 
-        },{
+        }, {
+            "$unwind": '$item'
+        }, {
             "$lookup": {
                 "from": "events",
                 "localField": "event",
                 "foreignField": "_id",
                 "as": "event"
             }
-        },{ 
-            "$unwind": '$event' 
-        },{
-            '$project': {     
-                "_id":0,
+        }, {
+            "$unwind": '$event'
+        }, {
+            '$project': {
+                "_id": 0,
                 "status": status,
-                "supplier.businessName":1,
-                "event.name":1,
-                "event.viewId":1,
-                "item._id":1,
-                "item.name":1,
-                "item.eventDate":1,
+                "supplier.businessName": 1,
+                "event.name": 1,
+                "event.viewId": 1,
+                "item._id": 1,
+                "item.name": 1,
+                "item.eventDate": 1,
                 "item.viewId": 1,
-                "totalOrders":1,
-                "totalAmount":1
+                "totalOrders": 1,
+                "totalAmount": 1
             }
         }
     ])
 
     return res.status(StatusCodes.OK).json({ payouts });
-    
+
 }
 
 
-const getPayoutByItem = async (req, res) => {
+const getPayoutByItem = async(req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
@@ -248,69 +247,69 @@ const getPayoutByItem = async (req, res) => {
     const status = req.query.status || 'pending';
     const itemId = req.params.itemId;
 
-    const payouts = await payoutModel.aggregate([
-        {
-            '$match':{
+    const payouts = await payoutModel.aggregate([{
+            '$match': {
                 "status": status,
                 "item": mongoose.Types.ObjectId(itemId)
             }
-        },{
+        }, {
             '$skip': skip
-        },{
+        }, {
             '$limit': limit
-        }, 
+        },
         // dish data
         {
             "$group": {
                 "_id": {
-                   "item": "$item",                   
+                    "item": "$item",
                 },
-                "supplier":{$first: '$supplier'},
-                "item":{$first: '$item'},
-                "event":{$first: '$event'},
-                "totalOrders": { $sum: { "$toDouble": "$quantity"} },
-                "totalAmount": { $sum: { "$toDouble": "$amount"} }
+                "supplier": { $first: '$supplier' },
+                "item": { $first: '$item' },
+                "event": { $first: '$event' },
+                "totalOrders": { $sum: { "$toDouble": "$quantity" } },
+                "totalAmount": { $sum: { "$toDouble": "$amount" } }
             }
-        },{
+        }, {
             "$lookup": {
                 "from": "suppliers",
                 "localField": "supplier",
                 "foreignField": "_id",
                 "as": "supplier"
             }
-        },{ 
-            "$unwind": '$supplier' 
-        },{
+        }, {
+            "$unwind": '$supplier'
+        }, {
             "$lookup": {
                 "from": "dishitems",
                 "localField": "item",
                 "foreignField": "_id",
                 "as": "item"
             }
-        },{ 
-            "$unwind": '$item' 
-        },{
+        }, {
+            "$unwind": '$item'
+        }, {
             "$lookup": {
                 "from": "events",
                 "localField": "event",
                 "foreignField": "_id",
                 "as": "event"
             }
-        },{ 
-            "$unwind": '$event' 
-        },{
-            '$project': {     
-                "_id":0,
+        }, {
+            "$unwind": '$event'
+        }, {
+            '$project': {
+                "_id": 0,
                 "status": status,
-                "supplier.businessName":1,
-                "event.name":1,
-                "event.viewId":1,
-                "item._id":1,
-                "item.name":1,
-                "item.eventDate":1,
+                "supplier._id": 1,
+                "supplier.businessName": 1,
+                "event.name": 1,
+                "event.viewId": 1,
+                "item._id": 1,
+                "item.name": 1,
+                "item.eventDate": 1,
                 "item.viewId": 1,
-                "totalOrders":1,
-                "totalAmount":1
+                "totalOrders": 1,
+                "totalAmount": 1
             }
         }
     ])
@@ -320,7 +319,7 @@ const getPayoutByItem = async (req, res) => {
 
 
 // mark payout completed
-const updatePayoutStatus = async (req, res) => {
+const updatePayoutStatus = async(req, res) => {
 
     const payoutId = req.params.payoutId;
     const status = req.body.status;
@@ -336,7 +335,7 @@ const updatePayoutStatus = async (req, res) => {
     return res.status(StatusCodes.OK).json({ message: `payout status updated to ${status}` });
 }
 
-const updatePayoutStatusForItem = async (req, res) => {
+const updatePayoutStatusForItem = async(req, res) => {
 
     const itemId = req.params.itemId;
     const status = req.body.status;
