@@ -303,9 +303,9 @@ const getItem = async(req, res) => {
 }
 
 const getAllItemsForAdmin = async(req, res) => {
-    
+
     const skip = req.query.skip ? Number(req.query.skip) : 0;
-    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
 
     const status = req.query.status || 'active';
 
@@ -383,24 +383,24 @@ const getAllItemsForAdmin = async(req, res) => {
         itemCount = await dishItemModel.find({ "$and": andQuery }).countDocuments();
     }
 
-    // console.log()
     // attach order counts
     const itemIds = items.map(i=> i._id);
     const orders = await orderModel.find({
         item: {$in: itemIds}
     }, `_id item quantity`)
+
     // create order count map
     const orderMap = {}
     orders.forEach(o=>{
         if (orderMap[o.item] != undefined){
             orderMap[o.item] = orderMap[o.item] + Number(o.quantity)
         }else {
-            orderMap[o.item] = 0;
+            orderMap[o.item] = Number(o.quantity);
         }
     })
     
     items.forEach(i=>{
-        i.totalOrders = orderMap[i._id]
+        i.totalOrders = orderMap[i._id] || 0;
     })
 
     return res.status(StatusCodes.OK).json({ items, itemCount });
@@ -437,13 +437,18 @@ const getItemByItemId = async (req, res) => {
             "$project":{
                 "customer.fullName":1,
                 "viewId":1,
-                "quanity":1,
+                "quantity":1,
                 "amount":1,
                 "status":1
             }
         }
     ]);
     
+    let totalOrders = 0;
+    orders.forEach(o=>{
+        totalOrders = totalOrders + Number(o.quantity);
+    })
+
     const product = {
         "_id": item._id,
         "name": item.name,
@@ -452,7 +457,7 @@ const getItemByItemId = async (req, res) => {
         "closingDate": item.closingDate,
         "minOrders": item.minOrders,
         "maxOrders": item.maxOrders,
-        "totalOrders": orders.length
+        "totalOrders": totalOrders
     }
 
     return res.status(StatusCodes.OK).json({ product, orders });
