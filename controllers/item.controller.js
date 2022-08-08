@@ -412,7 +412,10 @@ const getItemByItemId = async (req, res) => {
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 
     const itemId = req.params.itemId;
-    const item = await dishItemModel.findById(itemId, `_id name viewId eventDate closingDate minOrders maxOrders`);
+    const item = await dishItemModel
+    .findById(itemId, `_id name viewId eventDate closingDate minOrders maxOrders`)
+    .populate('clientPickups', `name text viewId address suitableTimes`)
+
     const orders = await orderModel.aggregate([
         {
             "$match": {
@@ -437,9 +440,10 @@ const getItemByItemId = async (req, res) => {
             "$project":{
                 "customer.fullName":1,
                 "viewId":1,
-                "quantity":1,
-                "amount":1,
-                "status":1
+                "quantity":1,                
+                "status":1,
+                "cost":1,
+                "costToSupplier":1
             }
         }
     ]);
@@ -457,6 +461,7 @@ const getItemByItemId = async (req, res) => {
         "closingDate": item.closingDate,
         "minOrders": item.minOrders,
         "maxOrders": item.maxOrders,
+        "clientPickups":item.clientPickups,
         "totalOrders": totalOrders
     }
 
