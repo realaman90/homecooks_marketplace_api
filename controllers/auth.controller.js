@@ -106,12 +106,12 @@ const resetPassword = async(req, res) => {
 //sign in customer
 const registerUser = async(req, res) => {
     const userData = req.body;
-    console.log(userData)
+
     userData.role = 'user';
 
     const emailAlreadyExists = await User.findOne({ email: userData.email });
     if (emailAlreadyExists) {
-        throw new customError.BadRequestError('email Number already registered')
+        throw new customError.BadRequestError('Email  already registered')
     }
 
 

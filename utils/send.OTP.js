@@ -23,8 +23,8 @@ const sendOTP = async(userFromDB, reason) => {
     //email
 
     const msg = {
-        to: `${userFromDB.email}`, // Change to your recipient
-        from: `${process.env.SGSENDER}`, // Change to your verified sender
+        to: `${userFromDB.email}`, // recipient
+        from: `${process.env.SGSENDER}`, //  sender
 
         templateId: process.env.OTPTEMPLATEID,
         dynamicTemplateData: {
