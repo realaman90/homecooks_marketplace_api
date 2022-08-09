@@ -24,12 +24,14 @@ const sendOTPOnPhone = async(req, res) => {
 
 }
 const verfyOTP = async(req, res) => {
-    const { phone, otp } = req.body;
+    const { email, phone, otp } = req.body;
     //use redis for this in case we implement redis
-    const user = await User.findOne({ phone });
+    let user;
+    if (!email) { user = await User.findOne({ phone }) } else { user = await User.findOne({ email }) };
     if (!user) {
         throw new customError.BadRequestError('user not found')
     }
+    console.log(user);
 
 
     const dBOTP = await OTP.findOne({ user: user });
@@ -39,7 +41,8 @@ const verfyOTP = async(req, res) => {
     if (!dBOTP.otp === otp) {
         throw new customError.BadRequestError('Invalid OTP')
     }
-    user.isPhoneVerified = true;
+    if (email) { user.isEmailVerified = true; }
+    if (phone) { user.isPhoneVerified = true; }
     await user.save();
     const token = createUserToken(user)
     res.status(StatusCodes.OK).json({ msg: "OTP verified", token })

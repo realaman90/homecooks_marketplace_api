@@ -39,7 +39,7 @@ const register = async(req, res) => {
     const reason = 'Signup verification';
     sendOTP(user, reason);
 
-    process.nextTick(()=>{
+    process.nextTick(() => {
         // send welcome notification
         notificationController.CreateUserWelcomeNotification(user._id);
     })
@@ -48,12 +48,18 @@ const register = async(req, res) => {
 };
 
 const login = async(req, res) => {
-    const { phone, password } = req.body;
+    const { email, phone, password } = req.body;
+    console.log(email)
 
-    if (!phone || !password) {
-        throw new customError.BadRequestError('Please provide phone and password')
+    if (!phone && !email || !password) {
+        throw new customError.BadRequestError('Please provide phone or email and password')
     }
-    const user = await User.findOne({ phone });
+    let user;
+    if (!email && phone != null) {
+        user = await User.findOne({ phone });
+    } else {
+        user = await User.findOne({ email });
+    }
     if (!user) {
         throw new customError.BadRequestError('User not registerd')
     }
@@ -61,9 +67,13 @@ const login = async(req, res) => {
     if (!isPasswordCorrect) {
         throw new customError.UnauthenticatedError('Invalid Credentials')
     }
-    if (!user.isPhoneVerified) {
+    if (user.role !== 'user' && !user.isPhoneVerified) {
         sendOTP(user, 'first verification');
         res.status(StatusCodes.OK).json({ msg: 'Please verify phone number' })
+        return
+    } else if (user.role === 'user' && !user.isEmailVerified) {
+        sendOTP(user, 'first verification');
+        res.status(StatusCodes.OK).json({ msg: 'Please verify your email' })
         return
     }
     const tokenUser = createUserToken(user);
@@ -93,15 +103,37 @@ const resetPassword = async(req, res) => {
 
 
 
-//reset Password initate send otp on the phone number
-// create model
-//user
-//otp, expiry date, reason
-// verify otp and reset password use phone no.
+//sign in customer
+const registerUser = async(req, res) => {
+    const userData = req.body;
+
+    userData.role = 'user';
+
+    const emailAlreadyExists = await User.findOne({ email: userData.email });
+    if (emailAlreadyExists) {
+        throw new customError.BadRequestError('Email  already registered')
+    }
+
+
+    const user = await User.create(userData);
+
+    const reason = 'Signup verification';
+    sendOTP(user, reason);
+
+    process.nextTick(() => {
+        // send welcome notification
+        notificationController.CreateUserWelcomeNotification(user._id);
+    })
+
+    res.status(StatusCodes.CREATED).json({ msg: "OTP sent on your phone" });
+};
+
+
 module.exports = {
     register,
     login,
     resetPasswordOTP,
-    resetPassword
+    resetPassword,
+    registerUser
 
 }

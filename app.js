@@ -67,7 +67,6 @@ app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
 app.use('/api/v1/admin/event', authenticateUser, authorizePermissions('admin'), eventRouter);
 app.use('/api/v1/admin/dish', authenticateUser, authorizePermissions('admin'), dishRouter);
-app.use('/api/v1/admin/customer', customerRouter);
 app.use('/api/v1/admin/order', authenticateUser, authorizePermissions('admin'), orderRouter);
 app.use('/api/v1/admin/payout', authenticateUser, authorizePermissions('admin'), payoutRouter);
 app.use('/api/v1/admin/pickUpArea', authenticateUser, authorizePermissions('admin'), pickUpAreaRouter);
@@ -83,13 +82,14 @@ app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions
 app.use('/api/v1/admin/clientPickupPoint', authenticateUser, authorizePermissions('admin'), clientPickupPointRouter);
 
 //apis for customers
+app.use('/api/v1/customer', customerRouter);
 app.use('/api/v1/kart', authenticateUser, authorizePermissions('user'), kartRouter);
 app.use('/api/v1/checkout', authenticateUser, authorizePermissions('user'), checkoutRouter);
 app.use('/api/v1/products', authenticateUser, authorizePermissions('user'), items);
 
 
 // for both admin and user
-app.use('/api/v1/notification', authenticateUser, authorizePermissions('user','admin'), notificationRouter);
+app.use('/api/v1/notification', authenticateUser, authorizePermissions('user', 'admin'), notificationRouter);
 
 
 app.get('/api/v1/admin', (req, res) => {
