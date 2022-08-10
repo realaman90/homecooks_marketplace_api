@@ -13,14 +13,18 @@ services:
       - .:/app:delegated
       - ./package.json:/app/package.json:delegated      
     environment:
-      - MONGO_URL=mongodb://mongo:27017/noudada
-      # - MONGO_URL=mongodb+srv://admin_noudada:6_QmtB3UYCXfLkr@noudada.cwkxv.mongodb.net/noudada_Admin?retryWrites=true&w=majority
+      # - MONGO_URL=mongodb://mongo:27017/noudada
+      - MONGO_URL=mongodb+srv://admin_noudada:6_QmtB3UYCXfLkr@noudada.cwkxv.mongodb.net/noudada_Admin?retryWrites=true&w=majority
       - JWT_SECRET=v9y$B&E)H@McQfTjWmZq4t7w!z%C*F-J
       - JWT_LIFETIME=30d
       - TWILIO_ACCOUNT_SID=AC168f4128a705d3f0f8a192bbcdee03aa
       - TWILIO_AUTH_TOKEN=2c5844ad81c567a6cb026292bcfd443a
       - TWILIO_PHONE_NUMBER=+19707158771
       - APP_URL=http://127.0.0.1:4200
+      - SENDGRID_API_KEY=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
+      - SGSENDER=dev@noudada.com
+      - OTPTEMPLATEID=d-1785b3f16f1e4ea8af9306436218bd8a
+      - SUPER_ADMIN_EMAIL=utkarsh17ife@gmail.com
     networks:
       - noudata_net
 

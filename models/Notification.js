@@ -4,7 +4,16 @@ const {notificationTypes} = require('../constants');
 const NotificationSchema = mongoose.Schema({
     type: {
         type: String,
-        enum: [notificationTypes.WELCOME_FR_USER, notificationTypes.ORDER_CREATED_FR_USER, notificationTypes.ORDER_CREATED_FR_ADMIN, notificationTypes.NEW_SUPPLIER_SIGNUP_FR_ADMIN],
+        enum: [
+            notificationTypes.WELCOME_FR_USER, 
+            notificationTypes.ORDER_CREATED_FR_USER, 
+            notificationTypes.NEW_SUPPLIER_SIGNUP_FR_ADMIN,
+            notificationTypes.NEW_USER_SIGNUP_FR_ADMIN,
+            notificationTypes.NEW_USER_SIGNUP_FR_ADMIN,
+            notificationTypes.NEW_DISH_CREATED_FR_ADMIN,
+            notificationTypes.NEW_EVENT_CREATED_FR_ADMIN,
+            notificationTypes.NEW_ORDER_CREATED_FR_ADMIN,
+        ],
     },
     viewId: {
         type: String,

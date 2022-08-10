@@ -123,6 +123,7 @@ const registerUser = async(req, res) => {
     process.nextTick(() => {
         // send welcome notification
         notificationController.CreateUserWelcomeNotification(user._id);
+        notificationController.UserSignUpNotificationForAdmin(user._id)
     })
 
     res.status(StatusCodes.CREATED).json({ msg: "OTP sent on your phone" });

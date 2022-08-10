@@ -7,6 +7,7 @@ const { default: mongoose } = require('mongoose');
 const { orderStatus, paymentStatus } = require('../constants');
 const crypto = require('crypto');
 const payoutController = require('./payout.controller');
+const notificationController = require('./notification.controller');
 
 
 // currently manual payments require just one creat order api
@@ -545,8 +546,11 @@ const placeOrder = async(req, res) => {
 
     await payoutController.createPayoutsForPayment(paymentId);
 
-    return res.status(StatusCodes.OK).json({ message: "order placed successfully" });
+    process.nextTick(()=>{
+        notificationController.OrderCreatedNotificationForAdmin(paymentId)
+    })
 
+    return res.status(StatusCodes.OK).json({ message: "order placed successfully" });
 }
 
 
