@@ -6,13 +6,16 @@ const crypto = require('crypto');
 // Create a supplier or a customer
 const registerUser = async(req, res) => {
     const userData = req.body;
+
     if (userData.role === 'user') {
         const chars = userData.fullName.substr(0, 3).toUpperCase();
-        userData.viewId = 'CUS' + Math.floor(1000 + Math.random() * 9000) + chars;
+        userData.viewId = 'CUS' + Math.floor(10000 + Math.random() * 90000) + chars;
         const emailAlreadyExists = await User.findOne({ email: userData.email });
         const phoneAlreadyExists = await User.findOneAndDelete({ phone: userData.phone });
         if (emailAlreadyExists || phoneAlreadyExists) {
+
             throw new CustomError.BadRequestError('Email or Phone is already registered in the platform')
+
         }
         const user = await User.create(userData);
 
