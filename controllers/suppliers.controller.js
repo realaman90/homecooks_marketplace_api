@@ -6,35 +6,17 @@ const crypto = require('crypto');
 
 // Create a supplier
 const createSupplier = async(req, res) => {
-    const viewId = 'caterer_' + crypto.randomBytes(6).toString('hex');
-    const {
-        businessName,
-        speciality,
-        description,
-        licenses,
-        businessImages,
-        address,
-        contactInfo,
-        pickupAddress,
-        bankInfo
-    } = req.body;
-    if (!businessName || !address) {
+    const supplierData = req.body;
+    const chars = supplierData.businessName.substr(0, 3).toUpperCase();
+    const viewId = 'C' + Math.floor(1000 + Math.random() * 9000) + chars;
+    supplierData.viewId = viewId;
+
+    if (!supplierData.businessName || !supplierData.address) {
         throw new CustomError.BadRequestError('businessName and address mandatory')
     }
 
     // registered user is an admin
-    const supplier = await Supplier.create({
-        businessName,
-        viewId,
-        speciality,
-        description,
-        licenses,
-        businessImages,
-        address,
-        contactInfo,
-        pickupAddress,
-        bankInfo
-    });
+    const supplier = await Supplier.create(supplierData);
 
     res.status(StatusCodes.CREATED).json({ supplier });
 };

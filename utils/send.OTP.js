@@ -13,11 +13,15 @@ const sendOTP = async(userFromDB, reason) => {
     });
     //phone
     if (userFromDB.role != 'user') {
-        const response = await twilioClient.messages.create({
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: "+" + userFromDB.phone,
-            body: message,
-        });
+        try {
+            const response = await twilioClient.messages.create({
+                from: process.env.TWILIO_PHONE_NUMBER,
+                to: "+" + userFromDB.phone,
+                body: message,
+            });
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     //email

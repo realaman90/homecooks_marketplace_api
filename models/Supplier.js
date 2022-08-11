@@ -35,6 +35,7 @@ const SupplierSchema = mongoose.Schema({
         businessPhone: Number,
         businessEmail: String,
     },
+    paymentMethod: String,
     bankInfo: {
         accountHolderName: String,
         accountNumber: Number,

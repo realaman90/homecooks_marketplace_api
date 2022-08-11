@@ -106,6 +106,8 @@ const resetPassword = async(req, res) => {
 //sign in customer
 const registerUser = async(req, res) => {
     const userData = req.body;
+    const chars = userData.fullName.substr(0, 2).toUpperCase();
+    userData.viewId = 'CUS' + Math.floor(1000 + Math.random() * 9000) + chars;
 
     userData.role = 'user';
 
