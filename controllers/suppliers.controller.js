@@ -4,45 +4,64 @@ const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const crypto = require('crypto');
 const BikerPickupPoint = require('../models/BikerPickupPoint');
+const { IDGen } = require('../utils/viewId');
+
+const createDefaultSupplierUser = async (supplier) => {
+    
+    const { viewId, businessName, businessImages, businessPhone, businessEmail, address } = supplier;
+
+    let userData = {};
+    
+    const password = crypto.randomBytes(9).toString('hex');
+    userData.fullName = businessName;
+    userData.profileImg = businessImages[0];
+    userData.phone = businessPhone;
+    if (businessEmail) { userData.email = businessEmail; }
+    userData.address = address;
+    userData.viewId = `supplier-${viewId}`
+    userData.password = password;
+    userData.role = 'supplier';
+
+    const user = await User.create(userData);
+
+    return user
+}
+
+const createDetfaultSupplierBikerPickupPoint = async (supplier) => {
+
+    const { businessName, pickupAddress,  _id } = supplier;
+
+    const bickerPickupPointData = {};
+
+    bickerPickupPointData.name = businessName
+    bickerPickupPointData.supplier = _id;
+    bickerPickupPointData.address = pickupAddress;
+    bickerPickupPointData.viewId = IDGen('BP', businessName);
+
+    const bickerPickupPoint = await BikerPickupPoint.create(bickerPickupPointData);
+
+    return bickerPickupPoint;
+}
 
 // Create a supplier
 const createSupplier = async(req, res) => {
     const supplierData = req.body;
-    const chars = supplierData.businessName.substr(0, 3).toUpperCase();
-    const viewId = 'C' + Math.floor(10000 + Math.random() * 90000) + chars;
-    supplierData.viewId = viewId;
+
+    supplierData.viewId = IDGen('C', supplierData.businessName);
 
     if (!supplierData.businessName || !supplierData.address) {
         throw new CustomError.BadRequestError('businessName and address mandatory')
     }
 
-
     // registered user is an admin
     const supplier = await Supplier.create(supplierData);
-    let userData = {};
-    let bickerPickupPointData = {};
-
-    const { businessName, businessImages, businessPhone, businessEmail, pickupAddress, address, _id } = supplier;
-    const password = crypto.randomBytes(9).toString('hex');
-
-    userData.fullName = businessName;
-
-    userData.profileImg = businessImages[0];
-    userData.phone = businessPhone;
-    if (businessEmail) { userData.email = businessEmail; }
-    userData.address = address;
-    userData.viewId = 'supplier-' + viewId;
-    userData.password = password;
-    userData.role = 'supplier';
-
-    bickerPickupPointData.name = businessName
-    bickerPickupPointData.supplier = _id;
-    bickerPickupPointData.address = pickupAddress;
-    bickerPickupPointData.viewId = 'PA' + Math.floor(10000 + Math.random() * 90000) + chars
-
-    const user = await User.create(userData);
-
-    const bickerPickupPoint = await BikerPickupPoint.create(bickerPickupPointData);
+    
+    const defaultSetupResp =await Promise.all([
+                createDefaultSupplierUser(supplier), 
+                createDetfaultSupplierBikerPickupPoint(supplier)
+            ]);
+    const user = defaultSetupResp[0]
+    const bickerPickupPoint = defaultSetupResp[1]
 
     res.status(StatusCodes.CREATED).json({ supplier, user, bickerPickupPoint });
 };
