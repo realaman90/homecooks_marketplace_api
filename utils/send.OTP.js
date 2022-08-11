@@ -22,24 +22,26 @@ const sendOTP = async(userFromDB, reason) => {
 
     //email
 
-    const msg = {
-        to: `${userFromDB.email}`, // recipient
-        from: `${process.env.SGSENDER}`, //  sender
+    if (userFromDB.role === 'user') {
+        const msg = {
+            to: `${userFromDB.email}`, // recipient
+            from: `${process.env.SGSENDER}`, //  sender
 
-        templateId: process.env.OTPTEMPLATEID,
-        dynamicTemplateData: {
-            subject: `${userFromDB.fullName} your verification code`,
-            name: `${userFromDB.fullName}`,
-            otp: `${fourDigitOTP}`,
-        },
+            templateId: process.env.OTPTEMPLATEID,
+            dynamicTemplateData: {
+                subject: `${userFromDB.fullName} your verification code`,
+                name: `${userFromDB.fullName}`,
+                otp: `${fourDigitOTP}`,
+            },
+        }
+        sgMail
+            .send(msg)
+            .then(() => {
+                console.log('Email sent')
+            })
+            .catch((error) => {
+                console.error(error)
+            })
     }
-    sgMail
-        .send(msg)
-        .then(() => {
-            console.log('Email sent')
-        })
-        .catch((error) => {
-            console.error(error)
-        })
 }
 module.exports = sendOTP;
