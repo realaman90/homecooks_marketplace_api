@@ -5,6 +5,7 @@ const dishController = require('../controllers/dish.controller');
 
 router.post('/', dishController.createDish);
 router.get('/', dishController.getAllDishs);
+router.get('/common_days', dishController.getDishesCommonDays);
 router.get('/supplier/:supplierId', dishController.getAllDishsBySupplier);
 router.get('/:dishId', dishController.getDish);
 router.put('/:dishId', dishController.editDish);

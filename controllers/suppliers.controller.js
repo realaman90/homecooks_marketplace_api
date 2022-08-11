@@ -10,7 +10,7 @@ const createDefaultSupplierUser = async (supplier) => {
     
     const { viewId, businessName, businessImages, businessPhone, businessEmail, address } = supplier;
 
-    let userData = {};
+    const userData = {};
     
     const password = crypto.randomBytes(9).toString('hex');
     userData.fullName = businessName;
@@ -56,7 +56,7 @@ const createSupplier = async(req, res) => {
     // registered user is an admin
     const supplier = await Supplier.create(supplierData);
     
-    const defaultSetupResp =await Promise.all([
+    const defaultSetupResp = await Promise.all([
                 createDefaultSupplierUser(supplier), 
                 createDetfaultSupplierBikerPickupPoint(supplier)
             ]);

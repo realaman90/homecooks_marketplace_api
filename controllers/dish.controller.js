@@ -339,6 +339,42 @@ const deleteDish = async(req, res) => {
 
 }
 
+const getDishesCommonDays = async (req, res) => {
+
+    let dishIds = req.query.dishIds.split('|');
+
+    dishIds = dishIds.map(d=>mongoose.Types.ObjectId(d));
+
+    const dishesDetails = await dishModel.find({
+        _id: {
+            $in: dishIds
+        }
+    }, `suitableDays`)
+
+    const daysCount = {}
+
+    dishesDetails.forEach(d=>{
+        d.suitableDays.forEach(s=>{
+            if (daysCount[s]){
+                daysCount[s] = daysCount[s]+1
+            }else {
+                daysCount[s] = 1
+            }
+        })
+    })
+
+    const commonDays = [];
+    for (const day in daysCount) {
+        if (daysCount[day] == dishesDetails.length){            
+            commonDays.push(day)
+        }
+    }
+
+    return res.status(StatusCodes.OK).json({ commonDays });
+}
+
+
+
 module.exports = {
     createDish,
     getAllDishs,
@@ -346,4 +382,5 @@ module.exports = {
     getDish,
     editDish,
     deleteDish,
+    getDishesCommonDays
 }
