@@ -3,11 +3,12 @@ const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const crypto = require('crypto');
+const {IDGen} = require('../utils/viewId');
 
 const createDish = async(req, res) => {
 
     const dishData = req.body;
-    dishData.viewId = 'dish_' + crypto.randomBytes(6).toString('hex');
+    dishData.viewId = IDGen('D', dishData.name);
 
     let dish = null;
     try {
@@ -34,6 +35,13 @@ const getAllDishs = async(req, res) => {
     if (req.query.category) {
         andQuery.push({
             category: req.query.category
+        })
+    }
+    if (req.query.suitableDays) {
+        andQuery.push({
+            suitableDays: {
+                $in : req.query.suitableDays.split('|')
+            }
         })
     }
     if (req.query.search) {
@@ -100,7 +108,7 @@ const getAllDishs = async(req, res) => {
             "pricePerOrder": 1,
             "costToSupplierPerOrder": 1,
             "description": 1,
-            "suitableTimings": 1,
+            "suitableDays": 1,
         }
     })
 
@@ -133,6 +141,13 @@ const getAllDishsBySupplier = async(req, res) => {
     if (req.query.category) {
         andQuery.push({
             category: req.query.category
+        })
+    }
+    if (req.query.suitableDays) {
+        andQuery.push({
+            suitableDays: {
+                $in : req.query.suitableDays.split('|')
+            }
         })
     }
     if (req.query.search) {
@@ -201,7 +216,7 @@ const getAllDishsBySupplier = async(req, res) => {
             "maxOrders": 1,
             "pricePerOrder": 1,
             "costToSupplierPerOrder": 1,
-            "suitableTimings": 1,
+            "suitableDays": 1,
         }
     })
 
@@ -254,8 +269,7 @@ const getDish = async(req, res) => {
                 "images": 1,
                 "category": 1,
                 "cuisine": 1,
-                "description": 1,
-                "suitableTimings": 1,
+                "description": 1,                
                 "price": 1,
                 "quantity": 1,
                 "size": 1,
@@ -264,7 +278,7 @@ const getDish = async(req, res) => {
                 "maxOrders": 1,
                 "pricePerOrder": 1,
                 "costToSupplierPerOrder": 1,
-                "suitableTimings": 1,
+                "suitableDays": 1,
             }
         }
     ])

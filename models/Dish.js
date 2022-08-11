@@ -24,7 +24,6 @@ const DishSchema = mongoose.Schema({
     category: {
         type: String,
         required: [true, 'Please provide dish category'],
-
     },
 
     // quantity related
@@ -47,7 +46,10 @@ const DishSchema = mongoose.Schema({
         ref: 'BikerPickupPoint',
         required: true
     },
-    suitableTimings: [String],
+    suitableDays: [{
+        type: String,
+        enum: ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'],        
+    }]
 }, {
     timestamps: true,
     strict: true
