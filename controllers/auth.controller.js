@@ -81,8 +81,14 @@ const login = async(req, res) => {
 };
 
 const resetPasswordOTP = async(req, res) => {
-    const { phone } = req.body;
-    const user = await User.findOne({ phone });
+    const { phone, email } = req.body;
+    let user;
+    if (!email) {
+        user = await User.findOne({ phone });
+    } else {
+        user = await User.findOne({ email });
+    }
+
     if (!user) {
         throw new customError.BadRequestError('User not registerd')
     }
@@ -90,8 +96,13 @@ const resetPasswordOTP = async(req, res) => {
     res.status(StatusCodes.OK).json({ msg: 'Otp sent! Please verify' })
 }
 const resetPassword = async(req, res) => {
-    const { phone, password } = req.body;
-    const user = await User.findOne({ phone });
+    const { email, phone, password } = req.body;
+    let user;
+    if (!email) {
+        user = await User.findOne({ phone });
+    } else {
+        user = await User.findOne({ email });
+    }
     if (!user) {
         throw new customError.BadRequestError('User not registerd')
     }
