@@ -23,13 +23,14 @@ const EventSchema = mongoose.Schema({
     images: {
         type: [String]
     },
-    eventDate: Date,
+    eventDate: Date, // in case of one time event
     eventVisibilityDate: Date,
     closingDate: Date,
+    eventTime: String,
     status: {
         type: String,
-        enum: [eventStatus.PENDING, eventStatus.ACTIVE, eventStatus.DELIVERED, eventStatus.CANCELLED, eventStatus.FULFILLED],
-        default: eventStatus.PENDING
+        enum: [eventStatus.ACTIVE, eventStatus.DELIVERED, eventStatus.CANCELLED, eventStatus.FULFILLED],
+        default: eventStatus.ACTIVE
     },
     clientPickups: [{
         type: mongoose.Types.ObjectId,

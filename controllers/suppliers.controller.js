@@ -27,7 +27,7 @@ const createDefaultSupplierUser = async (supplier) => {
     return user
 }
 
-const createDetfaultSupplierBikerPickupPoint = async (supplier) => {
+const createDefaultSupplierBikerPickupPoint = async (supplier) => {
 
     const { businessName, pickupAddress,  _id } = supplier;
 
@@ -58,7 +58,7 @@ const createSupplier = async(req, res) => {
     
     const defaultSetupResp = await Promise.all([
                 createDefaultSupplierUser(supplier), 
-                createDetfaultSupplierBikerPickupPoint(supplier)
+                createDefaultSupplierBikerPickupPoint(supplier)
             ]);
     const user = defaultSetupResp[0]
     const bickerPickupPoint = defaultSetupResp[1]

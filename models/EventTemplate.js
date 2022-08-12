@@ -26,12 +26,11 @@ const EventTemplateSchema = mongoose.Schema({
         type: String,
         enum: ["one_time", "recurring"]
     },
-    recurringType: String, // weekly | monthly | null
     startDate: String,
     endDate: String,
-    days: [String],
-    eventDate: String,
-    finalOrderCloseHours: Number, // 24, 48
+    days: [String],    
+    eventTime: String,
+    finalOrderCloseHours: Number, // 12, 24, 48
     clientPickups: [{
         type: mongoose.Types.ObjectId,
         ref: 'ClientPickupPoint',

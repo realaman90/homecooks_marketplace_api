@@ -116,7 +116,6 @@ const getAllDishs = async(req, res) => {
 
     return res.status(StatusCodes.OK).json({ dishes });
 
-
 }
 
 const getAllDishsBySupplier = async(req, res) => {

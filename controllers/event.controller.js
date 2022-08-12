@@ -386,13 +386,34 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
 
     let dates = [];
 
+    // loop from start date to end date and filter the dates based on the "recurringType" and "days" fields
+    const startDateISO = parseISO(eventFrequncyData.startDate)
+    const endDateISO = parseISO(eventFrequncyData.endDate)
+
+    const calendarDays = differenceInCalendarDays(endDateISO, startDateISO) + 1;
+
     if (eventFrequncyData.eventFrequency == "recurring") {
+        
+        for (let i = 0; i < calendarDays; i++) {
+            const nextISODate = add(startDateISO, {
+                days: i
+            });
 
-        // loop from start date to end date and filter the dates based on the "recurringType" and "days" fields
-        const startDateISO = parseISO(eventFrequncyData.startDate)
-        const endDateISO = parseISO(eventFrequncyData.endDate)
+            // 0 | 1 | 2 | 3 | 4 | 5 | 6 the day of week, 0 represents Sunday
+            const dayOfWeek = getDay(nextISODate);
 
-        const calendarDays = differenceInCalendarDays(endDateISO, startDateISO) + 1;
+            if (eventFrequncyData.days.indexOf('Mon') > -1 && dayOfWeek == 1 ||
+                eventFrequncyData.days.indexOf('Tue') > -1 && dayOfWeek == 2 ||
+                eventFrequncyData.days.indexOf('Wed') > -1 && dayOfWeek == 3 ||
+                eventFrequncyData.days.indexOf('Thur') > -1 && dayOfWeek == 4 ||
+                eventFrequncyData.days.indexOf('Fri') > -1 && dayOfWeek == 5 ||
+                eventFrequncyData.days.indexOf('Sat') > -1 && dayOfWeek == 6 ||
+                eventFrequncyData.days.indexOf('Sun') > -1 && dayOfWeek == 0
+            ) {
+                dates.push(nextISODate)
+            }
+        }
+    } else {
 
         for (let i = 0; i < calendarDays; i++) {
             const nextISODate = add(startDateISO, {
@@ -402,51 +423,43 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
             // 0 | 1 | 2 | 3 | 4 | 5 | 6 the day of week, 0 represents Sunday
             const dayOfWeek = getDay(nextISODate);
 
-            if (eventFrequncyData.recurringType == "weekly") {
+            if (eventFrequncyData.days.indexOf('Mon') > -1 && dayOfWeek == 1 ||
+                eventFrequncyData.days.indexOf('Tue') > -1 && dayOfWeek == 2 ||
+                eventFrequncyData.days.indexOf('Wed') > -1 && dayOfWeek == 3 ||
+                eventFrequncyData.days.indexOf('Thur') > -1 && dayOfWeek == 4 ||
+                eventFrequncyData.days.indexOf('Fri') > -1 && dayOfWeek == 5 ||
+                eventFrequncyData.days.indexOf('Sat') > -1 && dayOfWeek == 6 ||
+                eventFrequncyData.days.indexOf('Sun') > -1 && dayOfWeek == 0
+            ) {
 
-                if (eventFrequncyData.days.indexOf("monday") > -1 && dayOfWeek == 1 ||
-                    eventFrequncyData.days.indexOf("tuesday") > -1 && dayOfWeek == 2 ||
-                    eventFrequncyData.days.indexOf("wednesday") > -1 && dayOfWeek == 3 ||
-                    eventFrequncyData.days.indexOf("thursday") > -1 && dayOfWeek == 4 ||
-                    eventFrequncyData.days.indexOf("friday") > -1 && dayOfWeek == 5 ||
-                    eventFrequncyData.days.indexOf("saturday") > -1 && dayOfWeek == 6 ||
-                    eventFrequncyData.days.indexOf("sunday") > -1 && dayOfWeek == 0
-                ) {
+                console.log(dates)
+                if (dates.length < eventFrequncyData.days.length) {
                     dates.push(nextISODate)
+                }else {
+                    break;
                 }
-            } else {
-                // recurring type "recurringType" = "monthly"
-                // 1 to 31
-                const dayOfMonth = getDate(nextISODate);
-                if (eventFrequncyData.days.indexOf(`${dayOfMonth}`) > -1) {
-                    dates.push(nextISODate)
-                }
+
             }
-
         }
-    } else {
-        // eventFrequency = one_time
-        dates.push(parseISO(eventFrequncyData.eventDate))
+
     }
 
+    // console.log(dates)
     return dates;
-
 }
 
 // calculateDatesFromEventFrequencyData(
-// {"eventFrequency": "recurring",
-//     "recurringType":  "weekly",
-//     "startDate": "2022-06-28",
-//     "endDate": "2022-07-28",    
-//     "days": ["monday", "thursday"]
+// {   "eventFrequency": "one_time",    
+//     "startDate": "2022-08-28",
+//     "endDate": "2022-09-28",    
+//     "days": ["Mon", "Thur"]
 // })
-// calculateDatesFromEventFrequencyData({"eventFrequency": "recurring",
-//     "recurringType":  "monthly",
-//     "startDate": "2022-06-28",
-//     "endDate": "2023-09-28",    
-//     "days": ["3", "9", "21", "31"]
+// calculateDatesFromEventFrequencyData({
+//     "eventFrequency": "recurring",    
+//     "startDate": "2022-08-28",
+//     "endDate": "2022-09-28",    
+//     "days": ["Mon", "Thur"]
 // })
-
 
 const createEventUsingEventTemplate = async(req, res) => {
 
@@ -457,12 +470,10 @@ const createEventUsingEventTemplate = async(req, res) => {
 
     // find out the event dates
     const eventDates = calculateDatesFromEventFrequencyData({
-        "eventFrequency": eventTemplate.eventFrequency,
-        "recurringType": eventTemplate.recurringType,
+        "eventFrequency": eventTemplate.eventFrequency,        
         "startDate": eventTemplate.startDate,
         "endDate": eventTemplate.endDate,
-        "days": eventTemplate.days,
-        "eventDate": eventTemplate.eventDate,
+        "days": eventTemplate.days        
     });
 
     // create event objects
@@ -471,13 +482,14 @@ const createEventUsingEventTemplate = async(req, res) => {
         let closingDate = sub(ed, { hours: eventTemplate.finalOrderCloseHours });
         const event = {};
         event._id = new mongoose.Types.ObjectId();
-        event.status = eventStatus.PENDING;
+        event.status = eventStatus.ACTIVE;
         event.viewId = 'event_' + crypto.randomBytes(6).toString('hex');
         event.supplier = eventTemplate.supplier;
         event.name = eventTemplate.name;
         event.description = eventTemplate.description;
         event.images = eventTemplate.images;
         event.eventDate = ed;
+        event.eventTime = eventTemplate.eventTime;
         event.closingDate = closingDate;
         event.eventVisibilityDate = sub(ed, { 'days': 7 });
         event.clientPickups = eventTemplate.clientPickups;
@@ -500,7 +512,7 @@ const createEventUsingEventTemplate = async(req, res) => {
             dishItems.push({
                 _id: dishItemId,
                 // dish related data
-                status: eventStatus.PENDING,
+                status: eventStatus.ACTIVE,
                 event: e._id,
                 supplier: d.supplier,
                 name: d.name,
@@ -537,36 +549,37 @@ const createEventUsingEventTemplate = async(req, res) => {
 
 // case: recurring
 // createEventUsingEventTemplate({
-//     "supplier":"62cd67496916c26a1d42bea1",
-//     "dish":"62cd67a2215e738e0e6f6340",
-//     "name":"Murg mahraja",
-//     "images":[""],    
-//     "pricePerOrder":"100.20",
-//     "costToSupplierPerOrder":"50.10",
-//     "pickupLocation":{
-//         "street":"street",
-//         "apartment_house":"appartment_house",
-//         "city":"city",
-//         "state":"state",
-//         "zipCode":201002,
-//         "country":"country"
-//     },
-//     "category":"lunch",
-//     "description":"powerful murg lunch",
-//     "maxOrders":100,
-//     "minOrders":10,
-//     "deliveryDate":"2022-06-28T00:00:00.000Z",    
-//     "cuisine":"Indian",
-//     "bikerPickups": [],
-//     "clientPickups": [],
-//     // frequency related data    
-//     "eventFrequency": "recurring",
-//     "recurringType":  "weekly",
-//     "startDate": "2022-06-28",
-//     "endDate": "2022-08-28",    
-//     "days": ["monday", "thrusday"],
-//     "eventDate": "2022-07-28"
+    // "supplier":"{{supplierId}}",
+    // "dishes":[ "62f6780c8bd7c51502c5253b", "62f678508bd7c51502c52543"],
+    // "name":"Murg Biryani",
+    // "description":"a spiced mix of meat and rice, traditionally cooked over an open fire in a leather pot. It is combined in different ways with a variety of components to create a number of highly tasty and unique flavor combinations",
+    // "images":["https://images.unsplash.com/photo-1599043513900-ed6fe01d3833?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8YmlyeWFuaXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60"],    
+    // "eventFrequency": "one_time",    
+    // "startDate": "2022-08-19",
+    // "endDate": "2022-10-22",    
+    // "days": ["Mon", "Thur"],    
+    // "clientPickups": [
+    //      "62f63a6caac1332c63a5a1c1"       
+    // ],
+    // "eventTime":"09:00 AM"
 // })
+
+// case: one time
+// createEventUsingEventTemplate({
+    // "supplier":"{{supplierId}}",
+    // "dishes":[ "62f6780c8bd7c51502c5253b", "62f678508bd7c51502c52543"],
+    // "name":"Murg Biryani",
+    // "description":"a spiced mix of meat and rice, traditionally cooked over an open fire in a leather pot. It is combined in different ways with a variety of components to create a number of highly tasty and unique flavor combinations",
+    // "images":["https://images.unsplash.com/photo-1599043513900-ed6fe01d3833?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8YmlyeWFuaXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60"],    
+    // "eventFrequency": "recurring",    
+    // "startDate": "2022-08-19",
+    // "endDate": "2022-10-22",    
+    // "days": ["Thur", "Mon"],   
+    // "clientPickups": [
+    //      "62f63a6caac1332c63a5a1c1"       
+    // ]
+// })
+
 
 module.exports = {
     createEvent,
