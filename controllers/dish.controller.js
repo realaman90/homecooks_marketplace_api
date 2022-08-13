@@ -1,9 +1,11 @@
 const dishModel = require('../models/Dish');
+const eventModel = require('../models/Event');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const crypto = require('crypto');
 const {IDGen} = require('../utils/viewId');
+const dishItemModel = require('../models/DishItem');
 
 const createDish = async(req, res) => {
 
@@ -319,6 +321,17 @@ const deleteDish = async(req, res) => {
     const dishId = req.params.dishId;
 
     let deleteResp = null;
+
+    // validation
+    // - check no event is using this dish
+
+    const productCount = await dishItemModel.find({
+        dish: dishId
+    }).countDocuments()
+
+    if (productCount){
+        throw new CustomError.BadRequestError('dish is mapped to an event, cannot delete');
+    }
 
     try {
         deleteResp = await dishModel.deleteOne({

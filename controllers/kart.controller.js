@@ -67,7 +67,7 @@ const addItemToKart = async(req, res) => {
 
     // check event is open to receive orders
     const item = await dishItemModel.findById(itemId, `status event supplier`);
-    if (item.status != eventStatus.PENDING){
+    if (item.status != eventStatus.ACTIVE){
         throw new CustomError.BadRequestError(`Item not available`);        
     }
 
@@ -155,6 +155,7 @@ const removeItemFrmKart = async (req, res)=>{
     return res.status(StatusCodes.OK).json({message: 'Kart updated!' });    
 
 }
+
 const deleteItemFromKart = async (req, res)=>{
 
     const itemId = req.params.itemId;

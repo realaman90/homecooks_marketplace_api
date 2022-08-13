@@ -7,8 +7,9 @@ const eventStatus = {
 };
 
 const orderStatus = {
-  PENDING: "pending",  
+  ACTIVE: "active",
   CONFIRMED: "confirmed",
+  COMPLETED: "completed",
   CANCELLED: "cancelled",
   DELIVERED: "delivered",  
 };

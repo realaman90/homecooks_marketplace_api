@@ -540,11 +540,14 @@ const placeOrder = async(req, res) => {
         }
     }, {
         $set: {
-            status: orderStatus.PENDING
+            status: orderStatus.ACTIVE
         }
     })
 
     await payoutController.createPayoutsForPayment(paymentId);
+
+    //clear user kart
+    await kartModel.deleteMany({customer: req.user.userId})        
 
     process.nextTick(()=>{
         notificationController.OrderCreatedNotificationForAdmin(paymentId)

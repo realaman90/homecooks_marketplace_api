@@ -8,6 +8,11 @@ const DishItemSchema = mongoose.Schema({
         ref: 'Supplier',
         required: true
     },
+    dish: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Dish',
+        required: true
+    },
     name: {
         type: String,
         required: [true, 'Please enter name']
@@ -32,6 +37,7 @@ const DishItemSchema = mongoose.Schema({
     
     // event date related data 
     eventDate: Date,
+    eventTime: String,
     eventVisibilityDate: Date,
     closingDate: Date,
 

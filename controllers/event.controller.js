@@ -1,13 +1,11 @@
 const eventModel = require('../models/Event');
+const orderModel = require('../models/Order');
 const dishModel = require('../models/Dish');
 const dishItemModel = require('../models/DishItem');
-const supplierModel = require('../models/Supplier');
-const bikerPickupPointModel = require('../models/BikerPickupPoint');
-const clientPickupPointModel = require('../models/ClientPickupPoint');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
-const { eventStatus } = require('../constants');
+const { eventStatus,orderStatus } = require('../constants');
 const { pickWith_idFromObjectArray, convertIdArrayToObjectID } = require('../utils/array');
 const { format, parseISO, differenceInCalendarDays, add, getDay, getDate, sub } = require('date-fns');
 const eventTemplateModel = require('../models/EventTemplate');
@@ -68,12 +66,6 @@ const getAllEvents = async(req, res) => {
 
     let andQuery = [];
 
-    // manage filters
-    if (req.query.status) {
-        andQuery.push({
-            status: req.query.status
-        })
-    }
     if (req.query.category) {
         andQuery.push({
             category: req.query.category
@@ -151,18 +143,16 @@ const getAllEvents = async(req, res) => {
             "dishItems.maxOrders": 1,
             "dishItems.pricePerOrder": 1,
             "dishItems.costToSupplierPerOrder": 1,
-            "eventDate": 1,
-            "closingDate": 1,
+            "eventDate":1,
+            "eventVisibilityDate":1,
+            "closingDate":1,
+            "eventTime":1,
             "bikerPickup": 1,
             "clientPickups": 1,
             "name": 1,
             "images": 1,
-            "activeTill": 1,
             "description": 1,
-            "deliveryDate": 1,
-            "deliveryTime": 1,
             "viewId": 1,
-            "status": 1,
         }
     })
 
@@ -231,8 +221,10 @@ const getSupplierEvents = async(req, res) => {
                 "dishItems.maxOrders": 1,
                 "dishItems.pricePerOrder": 1,
                 "dishItems.costToSupplierPerOrder": 1,
-                "eventDate": 1,
-                "closingDate": 1,
+                "eventDate":1,
+                "eventVisibilityDate":1,
+                "closingDate":1,
+                "eventTime":1,
                 "bikerPickup": 1,
                 "name": 1,
                 "images": 1,
@@ -243,7 +235,6 @@ const getSupplierEvents = async(req, res) => {
                 "clientPickups._id": 1,
                 "clientPickups.name": 1,
                 "viewId": 1,
-                "status": 1,
             }
         }
     ])
@@ -296,7 +287,10 @@ const getEventById = async(req, res) => {
                 "dishItems.viewId": 1,
                 "dishItems.category": 1,
                 "dishItems.mealTags": 1,
-                "eventDate": 1,
+                "eventDate":1,
+                "eventVisibilityDate":1,
+                "closingDate":1,
+                "eventTime":1,
                 "closingDate": 1,
                 "bikerPickup": 1,
                 "clientPickups": 1,
@@ -306,16 +300,8 @@ const getEventById = async(req, res) => {
                 "pricePerOrder": 1,
                 "costToSupplierPerOrder": 1,
                 "pickupLocation": 1,
-                // "category": 1,
                 "description": 1,
-                // "maxOrders": 1,
-                // "minOrders": 1,
-                "deliveryDate": 1,
-                "deliveryTime": 1,
-                // "cuisine": 1,
                 "viewId": 1,
-                "status": 1,
-                // "mealTags": 1,
             }
         }
     ])
@@ -351,7 +337,8 @@ const editEvent = async(req, res) => {
         throw new CustomError.BadRequestError('Failed to update data');
     }
 
-    return res.status(StatusCodes.OK).json({ msg: `Event data updated!` });
+    return res.status(StatusCodes.OK).json({ msg: `deleteEvent
+    deleteEventEvent data updated!` });
 
 }
 
@@ -360,25 +347,31 @@ const deleteEvent = async(req, res) => {
 
     const eventId = req.params.eventId;
 
-    let deleteResp = null;
+    // delete validation
+    // - check there are no orders against this event
+    const ordersCount = await orderModel.find({
+        $and: [
+            {status: { $ne: orderStatus.CANCELLED}},
+            {event: eventId}
+        ]
+    }).countDocuments()
+
+    if (ordersCount){
+        throw new CustomError.BadRequestError(`Cannot delete this event, it has ${ordersCount} orders against it`);
+    }
 
     try {
-        deleteResp = await eventModel.deleteOne({
-            $and: [
-                { _id: eventId },
-                { status: { $in: [eventStatus.PENDING, eventStatus.CANCELLED] } }
-            ]
-        });
+        // delete event
+        await eventModel.deleteOne({ _id: eventId })
+
+        // delete event dish items
+        await dishItemModel.deleteMany({ event: eventId })
+                
     } catch (err) {
         throw new CustomError.BadRequestError(err.message);
     }
 
-    if (!deleteResp.deletedCount) {
-        throw new CustomError.BadRequestError('Failed remove the event');
-    }
-
-    return res.status(StatusCodes.OK).json({ msg: `Event removed!` });
-
+    return res.status(StatusCodes.OK).json({ msg: `Event and products linked to the event are removed!` });
 }
 
 
@@ -432,7 +425,6 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
                 eventFrequncyData.days.indexOf('Sun') > -1 && dayOfWeek == 0
             ) {
 
-                console.log(dates)
                 if (dates.length < eventFrequncyData.days.length) {
                     dates.push(nextISODate)
                 }else {
@@ -482,7 +474,6 @@ const createEventUsingEventTemplate = async(req, res) => {
         let closingDate = sub(ed, { hours: eventTemplate.finalOrderCloseHours });
         const event = {};
         event._id = new mongoose.Types.ObjectId();
-        event.status = eventStatus.ACTIVE;
         event.viewId = 'event_' + crypto.randomBytes(6).toString('hex');
         event.supplier = eventTemplate.supplier;
         event.name = eventTemplate.name;
@@ -515,6 +506,7 @@ const createEventUsingEventTemplate = async(req, res) => {
                 status: eventStatus.ACTIVE,
                 event: e._id,
                 supplier: d.supplier,
+                dish: d._id,
                 name: d.name,
                 viewId: d.viewId,
                 images: d.images,
@@ -530,6 +522,7 @@ const createEventUsingEventTemplate = async(req, res) => {
                 costToSupplierPerOrder: d.costToSupplierPerOrder,
                 bikerPickupPoint: d.bikerPickupPoint,
                 clientPickups: e.clientPickups,
+                eventTime: eventTemplate.eventTime,
                 // event date related data
                 eventDate: e.eventDate,
                 eventVisibilityDate: e.eventVisibilityDate,

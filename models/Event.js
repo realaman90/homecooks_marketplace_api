@@ -27,11 +27,6 @@ const EventSchema = mongoose.Schema({
     eventVisibilityDate: Date,
     closingDate: Date,
     eventTime: String,
-    status: {
-        type: String,
-        enum: [eventStatus.ACTIVE, eventStatus.DELIVERED, eventStatus.CANCELLED, eventStatus.FULFILLED],
-        default: eventStatus.ACTIVE
-    },
     clientPickups: [{
         type: mongoose.Types.ObjectId,
         ref: 'ClientPickupPoint',
