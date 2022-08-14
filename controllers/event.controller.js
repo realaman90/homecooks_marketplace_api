@@ -239,6 +239,9 @@ const getSupplierEvents = async(req, res) => {
                 "clientPickups._id": 1,
                 "clientPickups.name": 1,
                 "viewId": 1,
+                "closingTimeString": 1,
+                "supplierPickupTimeString": 1,
+
             }
         }
     ])
