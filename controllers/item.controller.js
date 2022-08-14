@@ -264,6 +264,7 @@ const getItem = async(req, res) => {
     }, {
         "$project": {
             "_id": 1,
+            "supplier._id": 1,
             "bikerPickupPoint.name": 1,
             "bikerPickupPoint.text": 1,
             "bikerPickupPoint.viewId": 1,
@@ -311,18 +312,19 @@ const getAllItemsForAdmin = async(req, res) => {
 
     let andQuery = [];
 
-    if (status == 'active'){        
+    if (status == 'active') {
         andQuery.push({
-        "$or": [                
-            {"status":eventStatus.PENDING},
-            {"status":eventStatus.ACTIVE}
-        ]})
+            "$or": [
+                { "status": eventStatus.PENDING },
+                { "status": eventStatus.ACTIVE }
+            ]
+        })
     }
-    if (status == 'completed'){
-        andQuery.push({status:eventStatus.FULFILLED})
+    if (status == 'completed') {
+        andQuery.push({ status: eventStatus.FULFILLED })
     }
-    if (status == 'closed'){
-        andQuery.push({status:eventStatus.CANCELLED})        
+    if (status == 'closed') {
+        andQuery.push({ status: eventStatus.CANCELLED })
     }
 
     // andQuery.push({"eventVisibilityDate":{"$lte": new Date()}})
@@ -359,18 +361,56 @@ const getAllItemsForAdmin = async(req, res) => {
             }
         })
     }
-    aggreagatePipelineQueries.push({"$sort": { "createdAt": -1 } })
-    aggreagatePipelineQueries.push({"$skip": skip })
-    aggreagatePipelineQueries.push({"$limit": limit })    
+    aggreagatePipelineQueries.push({ "$sort": { "createdAt": -1 } })
+    aggreagatePipelineQueries.push({ "$skip": skip })
+    aggreagatePipelineQueries.push({ "$limit": limit })
+        // aggreagatePipelineQueries.push({
+        //     "$project": {
+        //         "_id": 1,
+        //         "name": 1,
+        //         "viewId": 1,
+        //         "eventDate": 1,
+        //         "closingDate": 1,
+        //         "minOrders": 1,
+        //         "maxOrders": 1
+        //     }
+        // })
+    aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "suppliers",
+            "localField": "supplier",
+            "foreignField": "_id",
+            "as": "supplier"
+        }
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
+    aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "bikerpickuppoints",
+            "localField": "bikerPickupPoint",
+            "foreignField": "_id",
+            "as": "bikerPickupPoint"
+        }
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$bikerPickupPoint' })
     aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
+            "bikerPickupPoint.name": 1,
+            "bikerPickupPoint.text": 1,
+            "bikerPickupPoint.viewId": 1,
+            "bikerPickupPoint.address": 1,
+            "bikerPickupPoint.suitableTimes": 1,
+            "supplier._id": 1,
+            "supplier.businessName": 1,
+            "_id": 1,
             "name": 1,
             "viewId": 1,
-            "eventDate":1,
-            "closingDate":1,
-            "minOrders":1,
-            "maxOrders":1
+            "eventDate": 1,
+            "closingDate": 1,
+            "minOrders": 1,
+            "maxOrders": 1
+
         }
     })
 
@@ -384,72 +424,71 @@ const getAllItemsForAdmin = async(req, res) => {
     }
 
     // attach order counts
-    const itemIds = items.map(i=> i._id);
+    const itemIds = items.map(i => i._id);
     const orders = await orderModel.find({
-        item: {$in: itemIds}
+        item: { $in: itemIds }
     }, `_id item quantity`)
 
     // create order count map
     const orderMap = {}
-    orders.forEach(o=>{
-        if (orderMap[o.item] != undefined){
+    orders.forEach(o => {
+        if (orderMap[o.item] != undefined) {
             orderMap[o.item] = orderMap[o.item] + Number(o.quantity)
-        }else {
+        } else {
             orderMap[o.item] = Number(o.quantity);
         }
     })
-    
-    items.forEach(i=>{
+
+    items.forEach(i => {
         i.totalOrders = orderMap[i._id] || 0;
     })
 
     return res.status(StatusCodes.OK).json({ items, itemCount });
 }
 
-const getItemByItemId = async (req, res) => {
+const getItemByItemId = async(req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 
     const itemId = req.params.itemId;
     const item = await dishItemModel
-    .findById(itemId, `_id name viewId eventDate closingDate minOrders maxOrders`)
-    .populate('clientPickups', `name text viewId address suitableTimes`)
+        .findById(itemId, `_id name viewId eventDate closingDate minOrders maxOrders`)
+        .populate('clientPickups', `name text viewId address suitableTimes`)
+        .populate(`supplier`, `businessName viewId`)
 
-    const orders = await orderModel.aggregate([
-        {
-            "$match": {
-                item: mongoose.Types.ObjectId(itemId)
-            }
-        }, {
-            "$sort": { "createdAt": -1 } 
-        },{
-            "$skip": skip
-        }, {
-            "$limit": limit
-        },{
-            "$lookup": {
-                "from": "users",
-                "localField": "customer",
-                "foreignField": "_id",
-                "as": "customer"
-            }
-        }, { 
-            "$unwind": '$customer' 
-        }, {
-            "$project":{
-                "customer.fullName":1,
-                "viewId":1,
-                "quantity":1,                
-                "status":1,
-                "cost":1,
-                "costToSupplier":1
-            }
+    const orders = await orderModel.aggregate([{
+        "$match": {
+            item: mongoose.Types.ObjectId(itemId)
         }
-    ]);
-    
+    }, {
+        "$sort": { "createdAt": -1 }
+    }, {
+        "$skip": skip
+    }, {
+        "$limit": limit
+    }, {
+        "$lookup": {
+            "from": "users",
+            "localField": "customer",
+            "foreignField": "_id",
+            "as": "customer"
+        }
+    }, {
+        "$unwind": '$customer'
+    }, {
+        "$project": {
+            "customer.fullName": 1,
+            "viewId": 1,
+            "quantity": 1,
+            "status": 1,
+            "cost": 1,
+            "costToSupplier": 1
+        }
+    }]);
+
     let totalOrders = 0;
-    orders.forEach(o=>{
+    orders.forEach(o => {
         totalOrders = totalOrders + Number(o.quantity);
     })
 
@@ -461,7 +500,7 @@ const getItemByItemId = async (req, res) => {
         "closingDate": item.closingDate,
         "minOrders": item.minOrders,
         "maxOrders": item.maxOrders,
-        "clientPickups":item.clientPickups,
+        "clientPickups": item.clientPickups,
         "totalOrders": totalOrders
     }
 
