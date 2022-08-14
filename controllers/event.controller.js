@@ -154,6 +154,8 @@ const getAllEvents = async(req, res) => {
             "images": 1,
             "description": 1,
             "viewId": 1,
+            "closingTimeString": 1,
+            "supplierPickupTimeString": 1,
         }
     })
 
@@ -304,6 +306,8 @@ const getEventById = async(req, res) => {
                 "pickupLocation": 1,
                 "description": 1,
                 "viewId": 1,
+                "closingTimeString": 1,
+                "supplierPickupTimeString": 1,
             }
         }
     ])
