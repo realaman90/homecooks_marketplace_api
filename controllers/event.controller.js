@@ -456,16 +456,23 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
 // })
 
 const CalcClosingDateTime = (eventDate, supplierPickupTime, finalOrderCloseHours) => {
-    const supplierPickupDateTime = addHours(eventDate, supplierPickupTime);
-    const closingDateTime = subHours(supplierPickupDateTime, finalOrderCloseHours)
-    const closingDate = setHours(closingDateTime, 0);
-    const closingTime = getHours(closingDateTime);
-    return {
-        closingDate,
-        closingTime
+        const supplierPickupDateTime = addHours(eventDate, supplierPickupTime);
+        const closingDateTime = subHours(supplierPickupDateTime, finalOrderCloseHours)
+        const closingDate = setHours(closingDateTime, 0);
+        const closingTime = getHours(closingDateTime);
+        return {
+            closingDate,
+            closingTime
+        }
     }
-}
+    //function for visualisating event Time in front end
+const timeString = (timeinH) => {
+    const decimalTimeString = timeinH.toString();
+    const n = new Date(0, 0);
+    const x = n.setSeconds(+decimalTimeString * 60 * 60);
+    return format(x, 'hh:mm a');
 
+}
 const createEventUsingEventTemplate = async(req, res) => {
 
     // create event template
@@ -498,14 +505,7 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.supplierPickupTime = eventTemplate.supplierPickupTime;
         event.eventVisibilityDate = sub(ed, { 'days': 7 });
         event.clientPickups = eventTemplate.clientPickups;
-        const timeString = (timeinH) => {
-            const decimalTimeString = timeinH.toString();
-            const n = new Date(0, 0);
-            let x = n.setSeconds(+decimalTimeString * 60 * 60);
-            return format(x, 'hh:mm a');
-
-        }
-        event.closingTimeString = timeString(closingTime)
+        event.closingTimeString = timeString(closingTime);
         event.supplierPickupTimeString = timeString(eventTemplate.supplierPickupTime);
         event.eventTemplate = eventTemplate._id;
         events.push(event);
