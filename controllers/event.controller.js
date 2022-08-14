@@ -499,11 +499,15 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.eventVisibilityDate = sub(ed, { 'days': 7 });
         event.clientPickups = eventTemplate.clientPickups;
         const closingTimeString = (ct) => {
-            return new Date(0, 0).setSeconds(closingTime * 60 * 60);
+            ct.toString();
+            const newTime = new Date(0, 0).setSeconds(+ct * 60 * 60);
+            return newTime.toTimeString().slice(0, 8);
         }
 
         const pickupTimeString = (pt) => {
-            return new Date(0, 0).setSeconds(closingTime * 60 * 60);
+            pt.toString();
+            const newTime = new Date(0, 0).setSeconds(+pt * 60 * 60);
+            return newTime.toTimeString().slice(0, 8);
 
         }
         event.closingTimeString = closingTimeString(closingTime)
