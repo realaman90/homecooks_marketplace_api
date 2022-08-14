@@ -502,7 +502,7 @@ const createEventUsingEventTemplate = async(req, res) => {
             const decimalTimeString = timeinH.toString();
             const n = new Date(0, 0);
             let x = n.setSeconds(+decimalTimeString * 60 * 60);
-            return format(x, 'hh:mm');
+            return format(x, 'hh:mm a');
 
         }
         event.closingTimeString = timeString(closingTime)
