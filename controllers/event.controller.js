@@ -499,7 +499,7 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.eventVisibilityDate = sub(ed, { 'days': 7 });
         event.clientPickups = eventTemplate.clientPickups;
         const timeString = (timeinH) => {
-            const decimalTimeString = "timeinH";
+            const decimalTimeString = timeinH.toString();
             const n = new Date(0, 0);
             n.setSeconds(+decimalTimeString * 60 * 60);
             return n.toTimeString().slice(0, 8);
