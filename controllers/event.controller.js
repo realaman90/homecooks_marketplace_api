@@ -6,8 +6,8 @@ const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const { eventStatus,orderStatus } = require('../constants');
-const { pickWith_idFromObjectArray, convertIdArrayToObjectID } = require('../utils/array');
-const { format, parseISO, differenceInCalendarDays, add, getDay, getDate, sub } = require('date-fns');
+const { parseWZeroTime } = require('../utils/datetime');;
+const { parseISO, differenceInCalendarDays, add, getDay, sub, setHours, getHours, addHours, subHours } = require('date-fns');
 const eventTemplateModel = require('../models/EventTemplate');
 const crypto = require('crypto');
 const { update } = require('../models/Event');
@@ -146,7 +146,8 @@ const getAllEvents = async(req, res) => {
             "eventDate":1,
             "eventVisibilityDate":1,
             "closingDate":1,
-            "eventTime":1,
+            "closingTime":1,
+            "supplierPickupTime":1,
             "bikerPickup": 1,
             "clientPickups": 1,
             "name": 1,
@@ -224,7 +225,8 @@ const getSupplierEvents = async(req, res) => {
                 "eventDate":1,
                 "eventVisibilityDate":1,
                 "closingDate":1,
-                "eventTime":1,
+                "closingTime":1,
+                "supplierPickupTime":1,
                 "bikerPickup": 1,
                 "name": 1,
                 "images": 1,
@@ -290,8 +292,8 @@ const getEventById = async(req, res) => {
                 "eventDate":1,
                 "eventVisibilityDate":1,
                 "closingDate":1,
-                "eventTime":1,
-                "closingDate": 1,
+                "closingTime":1,
+                "supplierPickupTime":1,
                 "bikerPickup": 1,
                 "clientPickups": 1,
                 "name": 1,
@@ -379,10 +381,10 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
 
     let dates = [];
 
-    // loop from start date to end date and filter the dates based on the "recurringType" and "days" fields
-    const startDateISO = parseISO(eventFrequncyData.startDate)
-    const endDateISO = parseISO(eventFrequncyData.endDate)
+    const startDateISO = eventFrequncyData.startDate
+    const endDateISO = eventFrequncyData.endDate
 
+    // loop from start date to end date and filter the dates based on the "recurringType" and "days" fields
     const calendarDays = differenceInCalendarDays(endDateISO, startDateISO) + 1;
 
     if (eventFrequncyData.eventFrequency == "recurring") {
@@ -436,22 +438,33 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
 
     }
 
-    // console.log(dates)
+    console.log(dates)
     return dates;
 }
 
 // calculateDatesFromEventFrequencyData(
 // {   "eventFrequency": "one_time",    
-//     "startDate": "2022-08-28",
-//     "endDate": "2022-09-28",    
+//     "startDate": parseWZeroTime("2022-08-28"),
+//     "endDate": parseWZeroTime("2022-09-28"),    
 //     "days": ["Mon", "Thur"]
 // })
 // calculateDatesFromEventFrequencyData({
 //     "eventFrequency": "recurring",    
-//     "startDate": "2022-08-28",
-//     "endDate": "2022-09-28",    
+//     "startDate": parseWZeroTime("2022-08-28"),
+//     "endDate": parseWZeroTime("2022-09-28"),    
 //     "days": ["Mon", "Thur"]
 // })
+
+const CalcClosingDateTime = (eventDate, supplierPickupTime, finalOrderCloseHours) => {
+    const supplierPickupDateTime = addHours(eventDate, supplierPickupTime);
+    const closingDateTime = subHours(supplierPickupDateTime, finalOrderCloseHours)    
+    const closingDate = setHours(closingDateTime, 0);
+    const closingTime = getHours(closingDateTime);
+    return {
+        closingDate,
+        closingTime
+    }
+}
 
 const createEventUsingEventTemplate = async(req, res) => {
 
@@ -463,16 +476,16 @@ const createEventUsingEventTemplate = async(req, res) => {
     // find out the event dates
     const eventDates = calculateDatesFromEventFrequencyData({
         "eventFrequency": eventTemplate.eventFrequency,        
-        "startDate": eventTemplate.startDate,
-        "endDate": eventTemplate.endDate,
+        "startDate": parseWZeroTime(eventTemplate.startDate),
+        "endDate": parseWZeroTime(eventTemplate.endDate),
         "days": eventTemplate.days        
     });
 
     // create event objects
     const events = [];
     eventDates.forEach(ed => {
-        let closingDate = sub(ed, { hours: eventTemplate.finalOrderCloseHours });
         const event = {};
+        const {closingDate, closingTime} = CalcClosingDateTime(ed, eventTemplate.supplierPickupTime, eventTemplate.finalOrderCloseHours)
         event._id = new mongoose.Types.ObjectId();
         event.viewId = 'event_' + crypto.randomBytes(6).toString('hex');
         event.supplier = eventTemplate.supplier;
@@ -480,8 +493,9 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.description = eventTemplate.description;
         event.images = eventTemplate.images;
         event.eventDate = ed;
-        event.eventTime = eventTemplate.eventTime;
         event.closingDate = closingDate;
+        event.closingTime = closingTime;
+        event.supplierPickupTime = eventTemplate.supplierPickupTime;
         event.eventVisibilityDate = sub(ed, { 'days': 7 });
         event.clientPickups = eventTemplate.clientPickups;
         event.eventTemplate = eventTemplate._id;
@@ -522,11 +536,12 @@ const createEventUsingEventTemplate = async(req, res) => {
                 costToSupplierPerOrder: d.costToSupplierPerOrder,
                 bikerPickupPoint: d.bikerPickupPoint,
                 clientPickups: e.clientPickups,
-                eventTime: eventTemplate.eventTime,
                 // event date related data
                 eventDate: e.eventDate,
-                eventVisibilityDate: e.eventVisibilityDate,
                 closingDate: e.closingDate,
+                closingTime: e.closingTime,
+                supplierPickupTime : e.supplierPickupTime,
+                eventVisibilityDate: e.eventVisibilityDate,
             })
         })
         e.dishItems = dishItemsIds

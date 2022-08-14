@@ -26,7 +26,8 @@ const EventSchema = mongoose.Schema({
     eventDate: Date, // in case of one time event
     eventVisibilityDate: Date,
     closingDate: Date,
-    eventTime: String,
+    closingTime: Number,
+    supplierPickupTime: Number,
     clientPickups: [{
         type: mongoose.Types.ObjectId,
         ref: 'ClientPickupPoint',

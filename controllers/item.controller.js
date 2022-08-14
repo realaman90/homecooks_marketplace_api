@@ -103,9 +103,11 @@ const getAllItems = async(req, res) => {
             "pricePerOrder": 1,
             "costToSupplierPerOrder": 1,
             "description": 1,
-            "eventDate": 1,
-            "eventVisibilityDate": 1,
-            "closingDate": 1,
+            "eventDate":1,
+            "eventVisibilityDate":1,
+            "closingDate":1,
+            "closingTime":1,
+            "supplierPickupTime":1,
         }
     })
 
@@ -216,9 +218,11 @@ const getAllItemsBySupplier = async(req, res) => {
             "pricePerOrder": 1,
             "costToSupplierPerOrder": 1,
             "description": 1,
-            "eventDate": 1,
-            "eventVisibilityDate": 1,
-            "closingDate": 1,
+            "eventDate":1,
+            "eventVisibilityDate":1,
+            "closingDate":1,
+            "closingTime":1,
+            "supplierPickupTime":1,
         }
     })
 
@@ -289,9 +293,11 @@ const getItem = async(req, res) => {
             "pricePerOrder": 1,
             "costToSupplierPerOrder": 1,
             "description": 1,
-            "eventDate": 1,
-            "eventVisibilityDate": 1,
-            "closingDate": 1,
+            "eventDate":1,
+            "eventVisibilityDate":1,
+            "closingDate":1,
+            "closingTime":1,
+            "supplierPickupTime":1,
         }
     }])
 
@@ -406,8 +412,11 @@ const getAllItemsForAdmin = async(req, res) => {
             "_id": 1,
             "name": 1,
             "viewId": 1,
-            "eventDate": 1,
-            "closingDate": 1,
+            "eventDate":1,
+            "eventVisibilityDate":1,
+            "closingDate":1,
+            "closingTime":1,
+            "supplierPickupTime":1,
             "minOrders": 1,
             "maxOrders": 1
 
@@ -453,7 +462,7 @@ const getItemByItemId = async(req, res) => {
 
     const itemId = req.params.itemId;
     const item = await dishItemModel
-        .findById(itemId, `_id name viewId eventDate closingDate minOrders maxOrders`)
+        .findById(itemId, `_id name viewId minOrders maxOrders eventDate eventVisibilityDate closingDate closingTime supplierPickupTime`)
         .populate('clientPickups', `name text viewId address suitableTimes`)
         .populate(`supplier`, `businessName viewId`)
 
@@ -495,12 +504,15 @@ const getItemByItemId = async(req, res) => {
     const product = {
         "_id": item._id,
         "name": item.name,
-        "viewId": item.viewId,
-        "eventDate": item.eventDate,
-        "closingDate": item.closingDate,
+        "viewId": item.viewId,        
         "minOrders": item.minOrders,
         "maxOrders": item.maxOrders,
         "clientPickups": item.clientPickups,
+        "eventDate": item.eventDate,
+        "eventVisibilityDate": item.eventVisibilityDate,
+        "closingDate": item.closingDate,
+        "closingTime": item.closingTime,
+        "supplierPickupTime": item.supplierPickupTime,
         "totalOrders": totalOrders
     }
 

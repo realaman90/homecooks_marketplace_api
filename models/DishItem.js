@@ -36,10 +36,11 @@ const DishItemSchema = mongoose.Schema({
     size: String,
     
     // event date related data 
-    eventDate: Date,
-    eventTime: String,
+    eventDate: Date,    
     eventVisibilityDate: Date,
-    closingDate: Date,
+    closingDate: Date,    
+    closingTime: Number,
+    supplierPickupTime: Number,
 
     // sale related data
     minOrders: Number,

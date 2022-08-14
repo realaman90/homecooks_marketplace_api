@@ -29,7 +29,7 @@ const EventTemplateSchema = mongoose.Schema({
     startDate: String,
     endDate: String,
     days: [String],    
-    eventTime: String,
+    supplierPickupTime: Number,
     finalOrderCloseHours: Number, // 12, 24, 48
     clientPickups: [{
         type: mongoose.Types.ObjectId,
