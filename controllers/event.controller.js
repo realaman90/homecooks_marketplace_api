@@ -7,7 +7,7 @@ const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const { eventStatus, orderStatus } = require('../constants');
 const { parseWZeroTime } = require('../utils/datetime');;
-const { parseISO, differenceInCalendarDays, add, getDay, sub, setHours, getHours, addHours, subHours } = require('date-fns');
+const { parseISO, differenceInCalendarDays, add, getDay, sub, setHours, getHours, addHours, subHours, format } = require('date-fns');
 const eventTemplateModel = require('../models/EventTemplate');
 const crypto = require('crypto');
 const { update } = require('../models/Event');
@@ -502,7 +502,7 @@ const createEventUsingEventTemplate = async(req, res) => {
             const decimalTimeString = timeinH.toString();
             const n = new Date(0, 0);
             n.setSeconds(+decimalTimeString * 60 * 60);
-            return n.toTimeString().slice(0, 8);
+            format(n.toTimeString().slice(0, 8), 'hh:mm A');
 
         }
         event.closingTimeString = timeString(closingTime)
