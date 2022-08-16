@@ -40,6 +40,7 @@ const items = require('./route/item.routes');
 const itemsForAdmin = require('./route/item.admin.routes')
 const notificationRouter = require('./route/notification.routes');
 const newsLetterRouter = require('./route/newsletter.routes');
+const enquiryRouter = require('./route/enquiry.routes');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -73,9 +74,6 @@ app.use('/api/v1/admin/payout', authenticateUser, authorizePermissions('admin'),
 app.use('/api/v1/admin/pickUpArea', authenticateUser, authorizePermissions('admin'), pickUpAreaRouter);
 app.use('/api/v1/admin/products', authenticateUser, authorizePermissions('admin'), itemsForAdmin);
 
-
-
-
 //apis for suppliers
 app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions('admin'), bikerPickupPoint);
 
@@ -87,7 +85,8 @@ app.use('/api/v1/customer', customerRouter);
 app.use('/api/v1/kart', authenticateUser, authorizePermissions('user'), kartRouter);
 app.use('/api/v1/checkout', authenticateUser, authorizePermissions('user'), checkoutRouter);
 app.use('/api/v1/products', authenticateUser, authorizePermissions('user'), items);
-app.use('/api/v1/newsletter', authenticateUser, newsLetterRouter);
+app.use('/api/v1/newsletter', newsLetterRouter);
+app.use('/api/v1/enquiry', enquiryRouter);
 
 // for both admin and user
 app.use('/api/v1/notification', authenticateUser, authorizePermissions('user', 'admin'), notificationRouter);
