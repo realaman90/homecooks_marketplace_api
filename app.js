@@ -39,6 +39,7 @@ const pickUpAreaRouter = require('./route/pickupArea.routes');
 const items = require('./route/item.routes');
 const itemsForAdmin = require('./route/item.admin.routes')
 const notificationRouter = require('./route/notification.routes');
+const newsLetterRouter = require('./route/newsletter.routes');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -86,7 +87,7 @@ app.use('/api/v1/customer', customerRouter);
 app.use('/api/v1/kart', authenticateUser, authorizePermissions('user'), kartRouter);
 app.use('/api/v1/checkout', authenticateUser, authorizePermissions('user'), checkoutRouter);
 app.use('/api/v1/products', authenticateUser, authorizePermissions('user'), items);
-
+app.use('/api/v1/newsletter', authenticateUser, newsLetterRouter);
 
 // for both admin and user
 app.use('/api/v1/notification', authenticateUser, authorizePermissions('user', 'admin'), notificationRouter);

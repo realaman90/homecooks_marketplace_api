@@ -561,6 +561,11 @@ const ListProducts = async (req, res)  => {
         // })
     }
 
+    // status filter (active)
+    andQuery.push({
+        status: 'active'
+    })
+
     // check the visibility of the product    
     // andQuery.push({
     //     eventVisibilityDate: {"$gte": todayDateWithZeroTime().toISOString()} 
@@ -645,8 +650,139 @@ const ListProducts = async (req, res)  => {
     let items = await dishItemModel.aggregate(aggreagatePipelineQueries)
 
     return res.status(StatusCodes.OK).json({ items });
-    
+
 }
+
+const ListProductDateFilters = async (req, res) => {
+
+    const skip = req.query.skip ? Number(req.query.skip) : 0;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+
+    const dates = await dishItemModel.aggregate([
+        {
+            "$match": {
+                "$and": [
+                    { status : 'active' },
+                ]
+            }
+        },
+        {
+            "$group": {
+                "_id": "$eventDate"
+            }
+        }, 
+        {
+            "$sort": {"_id": 1}
+        }, 
+        {
+            "$skip": skip
+        },
+        {
+            "$limit": limit
+        }
+    ])
+
+    return res.status(StatusCodes.OK).json({ dates });
+}
+
+
+const GetProductDetails = async (req, res) => {
+
+    const productId = req.params.itemId;
+
+    let aggreagatePipelineQueries = [];
+
+    aggreagatePipelineQueries.push({
+        "$match": {
+            "_id": mongoose.Types.ObjectId(productId)
+        }
+    })
+
+    aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "suppliers",
+            "localField": "supplier",
+            "foreignField": "_id",
+            "as": "supplier"
+        }
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
+
+    aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "clientpickuppoints",
+            "localField": "clientPickups",
+            "foreignField": "_id",
+            "as": "clientPickups"
+        }
+    })
+
+    // get order details
+    aggreagatePipelineQueries.push({ $lookup: {
+        from: "orders",
+        let: { "itemId": "$_id" },
+        pipeline: [          
+            { "$match": { "$expr": { "$eq": ["$$itemId", "$item"] }}},
+            //{ "$match": { "status": {"$ne": orderStatus.CANCELLED }}},          
+            {
+                "$group": {
+                    "_id": {
+                        "item": "$item",                        
+                    },
+                    "count": { $sum: '$quantity' },                    
+                }
+            }, {
+                "$project":{
+                    "count": 1
+                }
+            }
+        ],
+        as: "orders"
+    }
+    }),
+    aggreagatePipelineQueries.push({
+    "$unwind": {
+        path: '$orders',
+        preserveNullAndEmptyArrays: true
+    }
+    })
+    aggreagatePipelineQueries.push({
+        "$set": {
+            "order_count": "$orders.count"
+        }
+    })
+    aggreagatePipelineQueries.push({
+        "$project": {
+            "_id": 1,            
+            "supplierName": "$supplier.businessName",
+            "clientPickups.name": 1,
+            "clientPickups.text": 1,
+            "clientPickups.viewId": 1,
+            "clientPickups.address": 1,
+            "clientPickups.suitableTimes": 1,
+            "name": 1,
+            "images": 1,
+            "category": 1,
+            "cuisine": 1,
+            "mealTags": 1,
+            "minOrders": 1,
+            "maxOrders": 1,
+            "pricePerOrder": 1,                        
+            "eventDate":1,
+            "eventVisibilityDate":1,
+            "closingDate":1,
+            "closingTime":1,                        
+            "order_count":{ $ifNull: [ "$order_count", 0 ] }   
+        }
+    })
+    
+    let items = await dishItemModel.aggregate(aggreagatePipelineQueries)
+
+    return res.status(StatusCodes.OK).json({ item: items[0] });
+
+}
+
+
 
 // ListProducts({
 //   query : {
@@ -663,5 +799,7 @@ module.exports = {
     getAllItemsBySupplier,
     getAllItemsForAdmin,
     getItemByItemId,
-    ListProducts
+    ListProducts,
+    ListProductDateFilters,
+    GetProductDetails
 }
