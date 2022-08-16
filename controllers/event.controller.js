@@ -5,9 +5,9 @@ const dishItemModel = require('../models/DishItem');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
-const { eventStatus,orderStatus } = require('../constants');
+const { eventStatus, orderStatus } = require('../constants');
 const { parseWZeroTime } = require('../utils/datetime');;
-const { parseISO, differenceInCalendarDays, add, getDay, sub, setHours, getHours, addHours, subHours } = require('date-fns');
+const { parseISO, differenceInCalendarDays, add, getDay, sub, setHours, getHours, addHours, subHours, format } = require('date-fns');
 const eventTemplateModel = require('../models/EventTemplate');
 const crypto = require('crypto');
 const { update } = require('../models/Event');
@@ -143,17 +143,19 @@ const getAllEvents = async(req, res) => {
             "dishItems.maxOrders": 1,
             "dishItems.pricePerOrder": 1,
             "dishItems.costToSupplierPerOrder": 1,
-            "eventDate":1,
-            "eventVisibilityDate":1,
-            "closingDate":1,
-            "closingTime":1,
-            "supplierPickupTime":1,
+            "eventDate": 1,
+            "eventVisibilityDate": 1,
+            "closingDate": 1,
+            "closingTime": 1,
+            "supplierPickupTime": 1,
             "bikerPickup": 1,
             "clientPickups": 1,
             "name": 1,
             "images": 1,
             "description": 1,
             "viewId": 1,
+            "closingTimeString": 1,
+            "supplierPickupTimeString": 1,
         }
     })
 
@@ -222,11 +224,11 @@ const getSupplierEvents = async(req, res) => {
                 "dishItems.maxOrders": 1,
                 "dishItems.pricePerOrder": 1,
                 "dishItems.costToSupplierPerOrder": 1,
-                "eventDate":1,
-                "eventVisibilityDate":1,
-                "closingDate":1,
-                "closingTime":1,
-                "supplierPickupTime":1,
+                "eventDate": 1,
+                "eventVisibilityDate": 1,
+                "closingDate": 1,
+                "closingTime": 1,
+                "supplierPickupTime": 1,
                 "bikerPickup": 1,
                 "name": 1,
                 "images": 1,
@@ -237,6 +239,9 @@ const getSupplierEvents = async(req, res) => {
                 "clientPickups._id": 1,
                 "clientPickups.name": 1,
                 "viewId": 1,
+                "closingTimeString": 1,
+                "supplierPickupTimeString": 1,
+
             }
         }
     ])
@@ -289,11 +294,11 @@ const getEventById = async(req, res) => {
                 "dishItems.viewId": 1,
                 "dishItems.category": 1,
                 "dishItems.mealTags": 1,
-                "eventDate":1,
-                "eventVisibilityDate":1,
-                "closingDate":1,
-                "closingTime":1,
-                "supplierPickupTime":1,
+                "eventDate": 1,
+                "eventVisibilityDate": 1,
+                "closingDate": 1,
+                "closingTime": 1,
+                "supplierPickupTime": 1,
                 "bikerPickup": 1,
                 "clientPickups": 1,
                 "name": 1,
@@ -304,6 +309,8 @@ const getEventById = async(req, res) => {
                 "pickupLocation": 1,
                 "description": 1,
                 "viewId": 1,
+                "closingTimeString": 1,
+                "supplierPickupTimeString": 1,
             }
         }
     ])
@@ -353,12 +360,12 @@ const deleteEvent = async(req, res) => {
     // - check there are no orders against this event
     const ordersCount = await orderModel.find({
         $and: [
-            {status: { $ne: orderStatus.CANCELLED}},
-            {event: eventId}
+            { status: { $ne: orderStatus.CANCELLED } },
+            { event: eventId }
         ]
     }).countDocuments()
 
-    if (ordersCount){
+    if (ordersCount) {
         throw new CustomError.BadRequestError(`Cannot delete this event, it has ${ordersCount} orders against it`);
     }
 
@@ -368,7 +375,7 @@ const deleteEvent = async(req, res) => {
 
         // delete event dish items
         await dishItemModel.deleteMany({ event: eventId })
-                
+
     } catch (err) {
         throw new CustomError.BadRequestError(err.message);
     }
@@ -388,7 +395,7 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
     const calendarDays = differenceInCalendarDays(endDateISO, startDateISO) + 1;
 
     if (eventFrequncyData.eventFrequency == "recurring") {
-        
+
         for (let i = 0; i < calendarDays; i++) {
             const nextISODate = add(startDateISO, {
                 days: i
@@ -429,7 +436,7 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
 
                 if (dates.length < eventFrequncyData.days.length) {
                     dates.push(nextISODate)
-                }else {
+                } else {
                     break;
                 }
 
@@ -456,16 +463,23 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
 // })
 
 const CalcClosingDateTime = (eventDate, supplierPickupTime, finalOrderCloseHours) => {
-    const supplierPickupDateTime = addHours(eventDate, supplierPickupTime);
-    const closingDateTime = subHours(supplierPickupDateTime, finalOrderCloseHours)    
-    const closingDate = setHours(closingDateTime, 0);
-    const closingTime = getHours(closingDateTime);
-    return {
-        closingDate,
-        closingTime
+        const supplierPickupDateTime = addHours(eventDate, supplierPickupTime);
+        const closingDateTime = subHours(supplierPickupDateTime, finalOrderCloseHours)
+        const closingDate = setHours(closingDateTime, 0);
+        const closingTime = getHours(closingDateTime);
+        return {
+            closingDate,
+            closingTime
+        }
     }
-}
+    //function for visualisating event Time in front end
+const timeString = (timeinH) => {
+    const decimalTimeString = timeinH.toString();
+    const n = new Date(0, 0);
+    const x = n.setSeconds(+decimalTimeString * 60 * 60);
+    return format(x, 'hh:mm a');
 
+}
 const createEventUsingEventTemplate = async(req, res) => {
 
     // create event template
@@ -475,17 +489,17 @@ const createEventUsingEventTemplate = async(req, res) => {
 
     // find out the event dates
     const eventDates = calculateDatesFromEventFrequencyData({
-        "eventFrequency": eventTemplate.eventFrequency,        
+        "eventFrequency": eventTemplate.eventFrequency,
         "startDate": parseWZeroTime(eventTemplate.startDate),
         "endDate": parseWZeroTime(eventTemplate.endDate),
-        "days": eventTemplate.days        
+        "days": eventTemplate.days
     });
 
     // create event objects
     const events = [];
     eventDates.forEach(ed => {
         const event = {};
-        const {closingDate, closingTime} = CalcClosingDateTime(ed, eventTemplate.supplierPickupTime, eventTemplate.finalOrderCloseHours)
+        const { closingDate, closingTime } = CalcClosingDateTime(ed, eventTemplate.supplierPickupTime, eventTemplate.finalOrderCloseHours)
         event._id = new mongoose.Types.ObjectId();
         event.viewId = 'event_' + crypto.randomBytes(6).toString('hex');
         event.supplier = eventTemplate.supplier;
@@ -498,6 +512,8 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.supplierPickupTime = eventTemplate.supplierPickupTime;
         event.eventVisibilityDate = sub(ed, { 'days': 7 });
         event.clientPickups = eventTemplate.clientPickups;
+        event.closingTimeString = timeString(closingTime);
+        event.supplierPickupTimeString = timeString(eventTemplate.supplierPickupTime);
         event.eventTemplate = eventTemplate._id;
         events.push(event);
     })
@@ -540,7 +556,7 @@ const createEventUsingEventTemplate = async(req, res) => {
                 eventDate: e.eventDate,
                 closingDate: e.closingDate,
                 closingTime: e.closingTime,
-                supplierPickupTime : e.supplierPickupTime,
+                supplierPickupTime: e.supplierPickupTime,
                 eventVisibilityDate: e.eventVisibilityDate,
             })
         })
@@ -557,35 +573,35 @@ const createEventUsingEventTemplate = async(req, res) => {
 
 // case: recurring
 // createEventUsingEventTemplate({
-    // "supplier":"{{supplierId}}",
-    // "dishes":[ "62f6780c8bd7c51502c5253b", "62f678508bd7c51502c52543"],
-    // "name":"Murg Biryani",
-    // "description":"a spiced mix of meat and rice, traditionally cooked over an open fire in a leather pot. It is combined in different ways with a variety of components to create a number of highly tasty and unique flavor combinations",
-    // "images":["https://images.unsplash.com/photo-1599043513900-ed6fe01d3833?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8YmlyeWFuaXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60"],    
-    // "eventFrequency": "one_time",    
-    // "startDate": "2022-08-19",
-    // "endDate": "2022-10-22",    
-    // "days": ["Mon", "Thur"],    
-    // "clientPickups": [
-    //      "62f63a6caac1332c63a5a1c1"       
-    // ],
-    // "eventTime":"09:00 AM"
+// "supplier":"{{supplierId}}",
+// "dishes":[ "62f6780c8bd7c51502c5253b", "62f678508bd7c51502c52543"],
+// "name":"Murg Biryani",
+// "description":"a spiced mix of meat and rice, traditionally cooked over an open fire in a leather pot. It is combined in different ways with a variety of components to create a number of highly tasty and unique flavor combinations",
+// "images":["https://images.unsplash.com/photo-1599043513900-ed6fe01d3833?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8YmlyeWFuaXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60"],    
+// "eventFrequency": "one_time",    
+// "startDate": "2022-08-19",
+// "endDate": "2022-10-22",    
+// "days": ["Mon", "Thur"],    
+// "clientPickups": [
+//      "62f63a6caac1332c63a5a1c1"       
+// ],
+// "eventTime":"09:00 AM"
 // })
 
 // case: one time
 // createEventUsingEventTemplate({
-    // "supplier":"{{supplierId}}",
-    // "dishes":[ "62f6780c8bd7c51502c5253b", "62f678508bd7c51502c52543"],
-    // "name":"Murg Biryani",
-    // "description":"a spiced mix of meat and rice, traditionally cooked over an open fire in a leather pot. It is combined in different ways with a variety of components to create a number of highly tasty and unique flavor combinations",
-    // "images":["https://images.unsplash.com/photo-1599043513900-ed6fe01d3833?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8YmlyeWFuaXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60"],    
-    // "eventFrequency": "recurring",    
-    // "startDate": "2022-08-19",
-    // "endDate": "2022-10-22",    
-    // "days": ["Thur", "Mon"],   
-    // "clientPickups": [
-    //      "62f63a6caac1332c63a5a1c1"       
-    // ]
+// "supplier":"{{supplierId}}",
+// "dishes":[ "62f6780c8bd7c51502c5253b", "62f678508bd7c51502c52543"],
+// "name":"Murg Biryani",
+// "description":"a spiced mix of meat and rice, traditionally cooked over an open fire in a leather pot. It is combined in different ways with a variety of components to create a number of highly tasty and unique flavor combinations",
+// "images":["https://images.unsplash.com/photo-1599043513900-ed6fe01d3833?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8YmlyeWFuaXxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60"],    
+// "eventFrequency": "recurring",    
+// "startDate": "2022-08-19",
+// "endDate": "2022-10-22",    
+// "days": ["Thur", "Mon"],   
+// "clientPickups": [
+//      "62f63a6caac1332c63a5a1c1"       
+// ]
 // })
 
 

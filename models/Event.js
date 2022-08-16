@@ -28,6 +28,8 @@ const EventSchema = mongoose.Schema({
     closingDate: Date,
     closingTime: Number,
     supplierPickupTime: Number,
+    closingTimeString: String,
+    supplierPickupTimeString: String,
     clientPickups: [{
         type: mongoose.Types.ObjectId,
         ref: 'ClientPickupPoint',
