@@ -4,7 +4,9 @@ const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const crypto = require('crypto');
-const { eventStatus } = require('../constants');
+const { eventStatus, orderStatus } = require('../constants');
+const { parseWZeroTime, todayDateWithZeroTime} = require('../utils/datetime');
+
 
 const getAllItems = async(req, res) => {
 
@@ -19,6 +21,7 @@ const getAllItems = async(req, res) => {
             cuisine: { $regex: req.query.cuisine, $options: 'i' }
         })
     }
+
     if (req.query.category) {
         andQuery.push({
             category: req.query.category
@@ -36,8 +39,6 @@ const getAllItems = async(req, res) => {
             ]
         })
     }
-
-    console.log(andQuery)
 
     const aggreagatePipelineQueries = [];
     if (andQuery.length > 0) {
@@ -521,10 +522,146 @@ const getItemByItemId = async(req, res) => {
 }
 
 
+const ListProducts = async (req, res)  => {
+
+    const skip = req.query.skip ? Number(req.query.skip) : 0;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+
+    let andQuery = [];
+
+    // manage filters    
+    if (req.query.cuisine) {
+        andQuery.push({
+            cuisine: { $regex: req.query.cuisine, $options: 'i' }
+        })
+    }
+
+    if (req.query.category) {
+        andQuery.push({
+            category: req.query.category
+        })
+    }
+
+    if (req.query.search) {
+        andQuery.push({
+            "$or": [
+                { name: { $regex: req.query.search, $options: 'i' }, },
+                { description: { $regex: req.query.search, $options: 'i' }, },
+                { viewId: { $regex: req.query.search, $options: 'i' }, },
+                { cuisine: { $regex: req.query.search, $options: 'i' }, },
+                { category: { $regex: req.query.search, $options: 'i' }, },
+                { mealTags: { $elemMatch: { $regex: req.query.search } }, }
+            ]
+        })
+    }
+
+    if (req.query.deliveryDate) {
+        // andQuery.push({
+        //     eventDate: parseWZeroTime(req.query.deliveryDate).toISOString()
+        // })
+    }
+
+    // check the visibility of the product    
+    // andQuery.push({
+    //     eventVisibilityDate: {"$gte": todayDateWithZeroTime().toISOString()} 
+    // })
+    
+    const aggreagatePipelineQueries = [];
+    if (andQuery.length > 0) {
+        aggreagatePipelineQueries.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }
+
+    aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "suppliers",
+            "localField": "supplier",
+            "foreignField": "_id",
+            "as": "supplier"
+        }
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
+
+    // get order details
+    aggreagatePipelineQueries.push({ $lookup: {
+        from: "orders",
+        let: { "itemId": "$_id" },
+        pipeline: [          
+            { "$match": { "$expr": { "$eq": ["$$itemId", "$item"] }}},
+            //{ "$match": { "status": {"$ne": orderStatus.CANCELLED }}},          
+            {
+                "$group": {
+                    "_id": {
+                        "item": "$item",                        
+                    },
+                    "count": { $sum: '$quantity' },                    
+                }
+            }, {
+                "$project":{
+                    "count": 1
+                }
+            }
+        ],
+        as: "orders"
+      }
+    }),
+    aggreagatePipelineQueries.push({
+      "$unwind": {
+        path: '$orders',
+        preserveNullAndEmptyArrays: true
+      }
+    })
+    aggreagatePipelineQueries.push({
+        "$set": {
+            "order_count": "$orders.count"
+        }
+      })
+    aggreagatePipelineQueries.push({
+        "$project": {
+            "_id": 1,            
+            "supplierName": "$supplier.businessName",
+            "name": 1,
+            "images": 1,
+            "category": 1,
+            "cuisine": 1,
+            "mealTags": 1,
+            "minOrders": 1,
+            "maxOrders": 1,
+            "pricePerOrder": 1,                        
+            "eventDate":1,
+            "eventVisibilityDate":1,
+            "closingDate":1,
+            "closingTime":1,                        
+            "order_count":{ $ifNull: [ "$order_count", 0 ] }   
+        }
+    })
+    aggreagatePipelineQueries.push({ "$sort": { "order_count": -1 } })
+    aggreagatePipelineQueries.push({ "$skip": skip })
+    aggreagatePipelineQueries.push({ "$limit": limit })
+
+    let items = await dishItemModel.aggregate(aggreagatePipelineQueries)
+
+    return res.status(StatusCodes.OK).json({ items });
+    
+}
+
+// ListProducts({
+//   query : {
+//     //   cuisine: "Indian",
+//     //   category: "Gluten-Free",
+//       deliveryDate: "2022-08-22"
+//   }  
+// })
+
+
 module.exports = {
     getItem,
     getAllItems,
     getAllItemsBySupplier,
     getAllItemsForAdmin,
-    getItemByItemId
+    getItemByItemId,
+    ListProducts
 }

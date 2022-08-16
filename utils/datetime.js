@@ -9,6 +9,12 @@ function parseWZeroTime(dateStr) {
     return date;
 }
 
+function todayDateWithZeroTime() {
+    let currDate = new Date();
+    return parseWZeroTime(currDate.toISOString());
+}
+
 module.exports = {
-    parseWZeroTime
+    parseWZeroTime,
+    todayDateWithZeroTime
 }
