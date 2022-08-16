@@ -10,4 +10,4 @@ const newsLetterScehma = mongoose.Schema({
     strict: true
 });
 
-module.exports = mongoose.model('newsLetterScehma', newsLetterScehma)
+module.exports = mongoose.model('newsLetter', newsLetterScehma)
