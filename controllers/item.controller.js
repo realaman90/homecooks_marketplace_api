@@ -831,11 +831,21 @@ const getAvailableCuisines = async (req, res) => {
 
 const getAvailableEventDates = async (req, res) => {
 
+    let matchQuery = {
+        status: 'active'
+    }
+    
+    if (req.query.supplierId){
+        matchQuery.supplier = mongoose.Types.ObjectId(req.query.supplierId)
+    }
+
+    if (req.query.cuisine){
+        matchQuery.cuisine = req.query.cuisine
+    }
+
     const availableCuisines = await dishItemModel.aggregate([
         {
-            "$match": {
-                "status":"active"
-            }
+            "$match": matchQuery
         }, {
             "$group": {
                 _id: null, 
