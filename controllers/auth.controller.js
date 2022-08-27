@@ -142,12 +142,23 @@ const registerUser = async(req, res) => {
     res.status(StatusCodes.CREATED).json({ msg: "OTP sent on your phone" });
 };
 
+//sign in customer
+const fetchProfile = async(req, res) => {
+
+    const userProfile = await User.findOne({ _id: req.user.userId }, `notificationSettings _id fullName viewId profileImg email phone isPhoneVerified isEmailVerified sex role createdAt updatedAt`);
+    if (!userProfile) {
+        throw new customError.BadRequestError('please login again!');
+    }
+
+    res.status(StatusCodes.OK).json({ userProfile});
+};
+
 
 module.exports = {
     register,
     login,
     resetPasswordOTP,
     resetPassword,
-    registerUser
-
+    registerUser,
+    fetchProfile
 }

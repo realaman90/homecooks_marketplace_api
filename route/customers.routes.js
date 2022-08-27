@@ -11,9 +11,10 @@ const {
     getAllCustomers,
     getSingleCustomer,
 } = require('../controllers/user.controller');
-const { registerUser, login, resetPasswordOTP, resetPassword } = require('../controllers/auth.controller');
+const { registerUser, login, resetPasswordOTP, resetPassword, fetchProfile } = require('../controllers/auth.controller');
 const { verfyOTP } = require('../controllers/verification.otp');
 
+router.get('/profile', authenticateUser, fetchProfile)
 router.get('/', getAllCustomers);
 router.get('/:id', getSingleCustomer);
 router.route('/register').post(registerUser);
