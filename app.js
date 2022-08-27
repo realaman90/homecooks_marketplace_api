@@ -41,6 +41,7 @@ const itemsForAdmin = require('./route/item.admin.routes')
 const notificationRouter = require('./route/notification.routes');
 const newsLetterRouter = require('./route/newsletter.routes');
 const enquiryRouter = require('./route/enquiry.routes');
+const cuisineRouter = require('./route/cuisine.routers');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -64,7 +65,6 @@ app.use(express.static('./public'));
 app.use(expressFileUpload());
 
 //apis admin
-app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
 app.use('/api/v1/admin/event', authenticateUser, authorizePermissions('admin'), eventRouter);
@@ -73,6 +73,7 @@ app.use('/api/v1/admin/order', authenticateUser, authorizePermissions('admin'), 
 app.use('/api/v1/admin/payout', authenticateUser, authorizePermissions('admin'), payoutRouter);
 app.use('/api/v1/admin/pickUpArea', authenticateUser, authorizePermissions('admin'), pickUpAreaRouter);
 app.use('/api/v1/admin/products', authenticateUser, authorizePermissions('admin'), itemsForAdmin);
+app.use('/api/v1/admin/cuisine', authenticateUser, authorizePermissions('admin'), cuisineRouter);
 
 //apis for suppliers
 app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions('admin'), bikerPickupPoint);

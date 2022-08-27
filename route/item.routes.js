@@ -14,4 +14,8 @@ router.get('/', itemController.getAllItems);
 router.get('/supplier/:supplierId', itemController.getAllItemsBySupplier);
 router.get('/:itemId', itemController.getItem);
 
+// get filer list for products
+router.get('/filters/cuisine', itemController.getAvailableCuisines);
+router.get('/filters/eventDate', itemController.getAvailableEventDates);
+
 module.exports = router;

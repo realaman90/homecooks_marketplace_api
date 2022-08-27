@@ -782,16 +782,85 @@ const GetProductDetails = async (req, res) => {
 
 }
 
+const getAvailableCuisines = async (req, res) => {
 
+    const availableCuisines = await dishItemModel.aggregate([
+        {
+            "$match": {
+                "status":"active"
+            }
+        }, {
+            "$group": {
+                _id: null, 
+                cuisineName: {
+                    $addToSet: "$cuisine"
+                }
+            }
+        }, {
+            "$project": {
+                "_id": 0,
+                'cuisineName':1
+            }
+        }, {
+                "$unwind":"$cuisineName"
+        }, {
+                "$lookup": {                    
+                    "from": "cuisines",
+                    "localField": "cuisineName",
+                    "foreignField": "name",
+                    "as": "cuisines"
+                }
+        }, {
+                "$unwind":"$cuisines"
+        }, {
+            "$project": {
+                "cuisineName":0,                
+            }
+        }, {
+            $replaceRoot: { newRoot: "$cuisines" }
+        }, {
+            "$project":{
+                "name":1,
+                "image":1
+            }
+        }
+    ])
 
-// ListProducts({
-//   query : {
-//     //   cuisine: "Indian",
-//     //   category: "Gluten-Free",
-//       deliveryDate: "2022-08-22"
-//   }  
-// })
+    return res.status(StatusCodes.OK).json(availableCuisines);
+}
 
+const getAvailableEventDates = async (req, res) => {
+
+    const availableCuisines = await dishItemModel.aggregate([
+        {
+            "$match": {
+                "status":"active"
+            }
+        }, {
+            "$group": {
+                _id: null, 
+                eventDate: {
+                    $addToSet: "$eventDate"
+                }
+            }
+        }, {
+            "$project": {
+                "_id": 0,
+                'eventDate':1
+            }
+        }, {
+            "$unwind":"$eventDate"
+        }, {
+            "$sort": {
+                'eventDate': 1
+            }
+        }, {
+            "$limit": 8
+        }
+    ])
+
+    return res.status(StatusCodes.OK).json(availableCuisines);  
+}
 
 module.exports = {
     getItem,
@@ -801,5 +870,7 @@ module.exports = {
     getItemByItemId,
     ListProducts,
     ListProductDateFilters,
-    GetProductDetails
+    GetProductDetails,
+    getAvailableCuisines,
+    getAvailableEventDates
 }
