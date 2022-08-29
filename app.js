@@ -65,6 +65,7 @@ app.use(express.static('./public'));
 app.use(expressFileUpload());
 
 //apis admin
+app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
 app.use('/api/v1/admin/event', authenticateUser, authorizePermissions('admin'), eventRouter);
