@@ -1,5 +1,6 @@
 const enquiryModel = require('../models/Enquiry');
 const { StatusCodes } = require('http-status-codes');
+const CustomError = require('../errors');
 
 const create = async(req, res) => {
     const enquiryData = req.body;
