@@ -784,44 +784,67 @@ const GetProductDetails = async (req, res) => {
 
 const getAvailableCuisines = async (req, res) => {
 
+    let matchQuery = {
+        "$and": [
+            {status: 'active'}
+        ]
+    }
+
+    let eventDateFilterCount = 0;
+    if (req.query.eventDate){
+        let eventDate = req.query.eventDate;
+        eventDate = eventDate.split('|')
+        let dateOrQuery = []
+        dateOrQuery = [];
+        eventDate.forEach(e=>{
+            dateOrQuery.push({
+                "eventDate": new Date(e)
+            })
+        })
+        matchQuery["$and"].push(
+            {
+                "$or": dateOrQuery
+            })        
+        eventDateFilterCount = eventDate.length - 1
+    }
+
+    if (req.query.supplierId){
+        matchQuery["$and"].push({
+            "supplier": mongoose.Types.ObjectId(req.query.supplierId)
+        })                
+    }
+
     const availableCuisines = await dishItemModel.aggregate([
         {
-            "$match": {
-                "status":"active"
+            "$match": matchQuery
+        }, {
+            "$project":{
+                "cuisine":1,
+                "eventDate":1                
             }
         }, {
             "$group": {
-                _id: null, 
-                cuisineName: {
-                    $addToSet: "$cuisine"
-                }
+                _id: "$cuisine",                 
+                count:{$sum:1}
             }
+        }, {
+            "$match": {
+                count: {$gt: eventDateFilterCount}
+            }
+        }, {
+            "$lookup": {
+                "from": "cuisines",
+                "localField": "_id",
+                "foreignField": "name",
+                "as": "cuisines"
+            }
+        }, {
+            "$unwind":"$cuisines"
         }, {
             "$project": {
-                "_id": 0,
-                'cuisineName':1
-            }
-        }, {
-                "$unwind":"$cuisineName"
-        }, {
-                "$lookup": {                    
-                    "from": "cuisines",
-                    "localField": "cuisineName",
-                    "foreignField": "name",
-                    "as": "cuisines"
-                }
-        }, {
-                "$unwind":"$cuisines"
-        }, {
-            "$project": {
-                "cuisineName":0,                
-            }
-        }, {
-            $replaceRoot: { newRoot: "$cuisines" }
-        }, {
-            "$project":{
-                "name":1,
-                "image":1
+                "_id":0,
+                "name":"$cuisines.name",
+                "image":"$cuisines.image",
             }
         }
     ])

@@ -86,7 +86,7 @@ app.use('/api/v1/admin/clientPickupPoint', authenticateUser, authorizePermission
 app.use('/api/v1/customer', customerRouter);
 app.use('/api/v1/kart', authenticateUser, authorizePermissions('user'), kartRouter);
 app.use('/api/v1/checkout', authenticateUser, authorizePermissions('user'), checkoutRouter);
-app.use('/api/v1/products', authenticateUser, authorizePermissions('user'), items);
+app.use('/api/v1/products', items);
 app.use('/api/v1/newsletter', newsLetterRouter);
 app.use('/api/v1/enquiry', enquiryRouter);
 
