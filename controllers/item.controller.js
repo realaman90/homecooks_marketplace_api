@@ -628,6 +628,7 @@ const ListProducts = async (req, res)  => {
         "$project": {
             "_id": 1,            
             "supplierName": "$supplier.businessName",
+            "supplierId": "$supplier._id",
             "name": 1,
             "images": 1,
             "category": 1,

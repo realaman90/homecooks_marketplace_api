@@ -143,7 +143,7 @@ const getAllSuppliers = async(req, res) => {
 // get single supplier
 
 const getSingleSupplier = async(req, res) => {
-    const supplier = await Supplier.findOne({ _id: req.params.id });
+    const supplier = await Supplier.findOne({ _id: req.params.id || req.params.supplierId});
     if (!supplier) {
         throw new CustomError.NotFoundError(`Supplier with id: ${req.params.id} not found`)
     }
