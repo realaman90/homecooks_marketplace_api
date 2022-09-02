@@ -80,9 +80,18 @@ const addItemToKart = async(req, res) => {
             {customer: req.user.userId},
             {item: itemId},
         ]
-    }).countDocuments();
+    }, `supplier`);
 
     if (itemInKart){
+
+        // check item added is from the same supplier
+        // current kart supplier
+        const currSupplier = itemInKart[0].supplier
+
+        if (!item.supplier.equals(currSupplier)){            
+            throw new CustomError.BadRequestError(`can only order items from one supplier`);     
+        }
+
         // if yes, increase the count
         await kartModel.updateOne(
             {

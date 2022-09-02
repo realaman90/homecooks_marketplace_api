@@ -8,6 +8,7 @@ const { orderStatus, paymentStatus } = require('../constants');
 const crypto = require('crypto');
 const payoutController = require('./payout.controller');
 const notificationController = require('./notification.controller');
+const { deleteMany } = require('../models/Order');
 
 
 // currently manual payments require just one creat order api
@@ -37,7 +38,6 @@ const createOrder = async(req, res) => {
     return res.status(StatusCodes.CREATED).json({ order });
 
 }
-
 
 const getAllOrders = async(req, res) => {
 
@@ -332,7 +332,23 @@ const paymentCalcOnKartItems = (kartItems) => {
 
 }
 
-const createOrdersFromKart = async(kartItems) => {
+// refreshOrders("62f989526253b49a1bc0696a")
+
+
+const createOrdersFromKart = async(kartItems, prevOrders) => {
+
+    const prevOrderMeta = {};
+    if (prevOrders && prevOrders.length > 0){
+        prevOrders = await orderModel.find({
+            "_id": {$in: prevOrders}
+        }, `item pickupPoint instruction`)
+        prevOrders.forEach((po)=>{
+            prevOrderMeta[po.item] = {
+                pickupPoint: po.pickupPoint, 
+                instruction: po.instruction
+            }
+        })
+    }
 
     const orders = []
 
@@ -348,7 +364,9 @@ const createOrdersFromKart = async(kartItems) => {
             cost: ki.quantity * ki.item.pricePerOrder,
             costToSupplier: ki.quantity * ki.item.costToSupplierPerOrder,
             isPaid: false,
-            status: paymentStatus.PENDING_CHECKOUT
+            status: paymentStatus.PENDING_CHECKOUT,
+            pickupPoint: prevOrderMeta[ki.item._id]? prevOrderMeta[ki.item._id].pickupPoint : null,
+            instruction: prevOrderMeta[ki.item._id]? prevOrderMeta[ki.item._id].instruction : null,
         })
 
     })
@@ -408,38 +426,49 @@ const getCheckout = async(req, res) => {
 
     const calcObj = paymentCalcOnKartItems(kartItems)
 
-    let payment = null;
+    let orders = await createOrdersFromKart(kartItems, pendingCheckout ? pendingCheckout.orders: []);
+
+    let payment = {
+        customer: userId,
+        supplier: kartItems[0].item.supplier,
+        cost: calcObj.cost,
+        serviceFee: calcObj.serviceFee,
+        tax: calcObj.tax,
+        subTotal: calcObj.subTotal,
+        costToSupplier: calcObj.costToSupplier,
+        status: paymentStatus.PENDING_CHECKOUT,
+        orders,
+    }
+
+    if (kartItems.length == 0) {
+        throw new Error(`There are no items in the cart to checkout`);
+    }
 
     if (!pendingCheckout) {
-
-        if (kartItems.length == 0) {
-            throw new Error(`There are no items in the cart to checkout`);
-        }
-
-        // create and insert orders
-        const orders = await createOrdersFromKart(kartItems);
-
-        // create the object save and return
-        payment = {
-            customer: userId,
-            supplier: kartItems[0].item.supplier,
-            cost: calcObj.cost,
-            serviceFee: calcObj.serviceFee,
-            tax: calcObj.tax,
-            subTotal: calcObj.subTotal,
-            costToSupplier: calcObj.costToSupplier,
-            status: paymentStatus.PENDING_CHECKOUT,
-            orders,
-        }
 
         payment = await paymentModel.create(payment);
 
     } else {
 
-        payment = pendingCheckout;
+        // delete old orders
+        await orderModel.deleteMany({
+            _id: {$in:pendingCheckout.orders}
+        })
+
+        // update payment object
+        await paymentModel.updateOne({"_id":pendingCheckout._id }, {$set: { 
+            supplier:payment.supplier,
+            cost:payment.cost,
+            serviceFee:payment.serviceFee,
+            tax:payment.tax,
+            subTotal:payment.subTotal,
+            costToSupplier:payment.costToSupplier, 
+            orders        
+        }})
+
     }
 
-    let orders = await orderModel.aggregate([{
+    orders = await orderModel.aggregate([{
         "$match": {
             "_id": { "$in": payment.orders }
         }
@@ -464,12 +493,14 @@ const getCheckout = async(req, res) => {
             "_id": 1,
             "quantity": 1,
             "pickupPoint": 1,
+            "instruction": 1,
             "item._id": 1,
             "item.name": 1,
             "item.description": 1,
             "item.images": 1,
             "item.pricePerOrder": 1,
             "item.costToSupplierPerOrder": 1,
+            "item.clientPickups._id": 1,
             "item.clientPickups.name": 1,
             "item.clientPickups.text": 1,
             "item.clientPickups.viewId": 1,
@@ -482,24 +513,25 @@ const getCheckout = async(req, res) => {
 
 }
 
-const updatePickupAddressOnOrder = async(req, res) => {
+const updatePickupAddressOnOrder = async (req, res) => {
 
-    const orderId = req.params.orderId;
-    const pickupPoint = req.body.pickupPoint;
-    const instruction = req.body.instruction
+    const orders = req.body.orders;
 
-    await orderModel.updateOne({
-        _id: orderId
-    }, {
-        $set: {
-            pickupPoint,
-            instruction,
-        }
-    })
+    for (let i=0; i< orders.length; i++ ){
+        let o = orders[i];
+        let resp = await orderModel.updateOne({
+            _id: o.orderId
+        }, {
+            $set: {
+                pickupPoint: o.pickupPoint,
+                instruction: o.instruction,
+            }
+        })
+    }
 
     return res.status(StatusCodes.OK).json({ message: "pickup point updated on the order" });
-
 }
+
 
 const updatePaymentMethod = async(req, res) => {
 
