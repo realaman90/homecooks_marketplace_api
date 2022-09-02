@@ -94,6 +94,7 @@ const getAllItems = async(req, res) => {
             "supplier.businessImages": 1,
             "supplier.address": 1,
             "supplier.contactInfo": 1,
+            "dish":1,
             "name": 1,
             "images": 1,
             "category": 1,
@@ -155,6 +156,24 @@ const getAllItemsBySupplier = async(req, res) => {
         })
     }
 
+    let eventDateFilterCount = 0;
+    if (req.query.eventDate){
+        let eventDate = req.query.eventDate;
+        eventDate = eventDate.split('|')
+        let dateOrQuery = []
+        dateOrQuery = [];
+        eventDate.forEach(e=>{
+            dateOrQuery.push({
+                "eventDate": new Date(e)
+            })
+        })
+        andQuery.push(
+            {
+                "$or": dateOrQuery
+            })        
+        eventDateFilterCount = eventDate.length - 1
+    }
+
     const aggreagatePipelineQueries = [];
     if (andQuery.length > 0) {
         aggreagatePipelineQueries.push({
@@ -163,6 +182,36 @@ const getAllItemsBySupplier = async(req, res) => {
             }
         })
     }
+    // loopkup to get the dish based count
+    aggreagatePipelineQueries.push({ 
+        "$lookup": {
+            from: "dishitems",
+            let: { "dishId": "$dish" },
+            pipeline: [          
+                { "$match" : {
+                    "$and": andQuery, 
+                    }, 
+                }, { 
+                    "$match": { "$expr": { "$eq": ["$$dishId", "$dish"] }}
+                }, {
+                    "$group": {
+                        "_id": "$dish",                            
+                        "count": { $sum: 1 },                    
+                    }
+                }, {
+                    "$project":{
+                        "count": 1
+                    }
+                }
+            ],
+            as: "dishes"
+        }
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$dishes' })
+    aggreagatePipelineQueries.push({"$match": {
+            "dishes.count": {$gt: eventDateFilterCount}
+        }
+    })  
     aggreagatePipelineQueries.push({ "$sort": { "createdAt": -1 } })
     aggreagatePipelineQueries.push({ "$skip": skip })
     aggreagatePipelineQueries.push({ "$limit": limit })
@@ -555,10 +604,22 @@ const ListProducts = async (req, res)  => {
         })
     }
 
-    if (req.query.deliveryDate) {
-        // andQuery.push({
-        //     eventDate: parseWZeroTime(req.query.deliveryDate).toISOString()
-        // })
+    let eventDateFilterCount = 0;
+    if (req.query.eventDate){
+        let eventDate = req.query.eventDate;
+        eventDate = eventDate.split('|')
+        let dateOrQuery = []
+        dateOrQuery = [];
+        eventDate.forEach(e=>{
+            dateOrQuery.push({
+                "eventDate": new Date(e)
+            })
+        })
+        andQuery.push(
+            {
+                "$or": dateOrQuery
+            })        
+        eventDateFilterCount = eventDate.length - 1
     }
 
     // status filter (active)
@@ -579,6 +640,39 @@ const ListProducts = async (req, res)  => {
             }
         })
     }
+
+    // loopkup to get the dish based count
+    aggreagatePipelineQueries.push({ 
+        "$lookup": {
+            from: "dishitems",
+            let: { "dishId": "$dish" },
+            pipeline: [          
+                { "$match" : {
+                    "$and": andQuery, 
+                    }, 
+                }, { 
+                    "$match": { "$expr": { "$eq": ["$$dishId", "$dish"] }}
+                }, {
+                    "$group": {
+                        "_id": "$dish",                            
+                        "count": { $sum: 1 },                    
+                    }
+                }, {
+                    "$project":{
+                        "count": 1
+                    }
+                }
+            ],
+            as: "dishes"
+        }
+    })
+
+    aggreagatePipelineQueries.push({ "$unwind": '$dishes' })
+
+    aggreagatePipelineQueries.push({"$match": {
+            "dishes.count": {$gt: eventDateFilterCount}
+        }
+    })  
 
     aggreagatePipelineQueries.push({
         "$lookup": {
@@ -626,9 +720,11 @@ const ListProducts = async (req, res)  => {
       })
     aggreagatePipelineQueries.push({
         "$project": {
-            "_id": 1,            
+            "_id": 1,
+            // "dishes":1,
             "supplierName": "$supplier.businessName",
             "supplierId": "$supplier._id",
+            "dish":1,
             "name": 1,
             "images": 1,
             "category": 1,
