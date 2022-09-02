@@ -412,6 +412,10 @@ const getCheckout = async(req, res) => {
         }
     }]);
 
+    if (kartItems.length == 0){
+        throw new Error(`No item in kart to checkout`);
+    }
+
     // check for any pending checkouts    
     let pendingCheckout = await paymentModel.aggregate([{
         "$match": {

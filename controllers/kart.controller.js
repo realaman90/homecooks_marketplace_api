@@ -82,7 +82,7 @@ const addItemToKart = async(req, res) => {
         ]
     }, `supplier`);
 
-    if (itemInKart){
+    if (itemInKart && itemInKart.length > 0){
 
         // check item added is from the same supplier
         // current kart supplier
