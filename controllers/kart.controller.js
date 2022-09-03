@@ -55,7 +55,9 @@ const getUserKart = async(req, res) => {
         totalCost = totalCost + (ki.quantity*ki.item.pricePerOrder)
     })
 
-    return res.status(StatusCodes.OK).json({ kart: {kartItems}, totalCost });
+    let kartCount = kartItems.length;
+
+    return res.status(StatusCodes.OK).json({ kart: {kartItems, kartCount}, totalCost });
 
 }
 
