@@ -69,7 +69,11 @@ const CreateUserWelcomeNotification = async (userId) => {
 
     return null
 }
-// CreateUserWelcomeNotification("62e63bd836790e1946536498")
+
+// setTimeout(()=>{
+//     CreateUserWelcomeNotification("62f989526253b49a1bc0696a")
+// }, 4000)
+
 
 ///////////////////////////////// Notification towards admin ////////////////////////////////
 
@@ -120,8 +124,6 @@ const UserSignUpNotificationForAdmin = async (userId) => {
         refId: userId
     }
 
-    // console.log(notificationRecod)
-
     notificationRecod = await NotificationModel.create(notificationRecod);
     
     // send email
@@ -130,10 +132,8 @@ const UserSignUpNotificationForAdmin = async (userId) => {
 }
 
 // setTimeout(()=>{
-//     UserSignUpNotificationForAdmin("62f215ba3045d8c79228e2d1")
+//     UserSignUpNotificationForAdmin("62f989526253b49a1bc0696a")
 // }, 4000)
-
-
 
 // admin notification for supplier signup
 const SupplierSignUpNotificationForAdmin = async (supplierId) => {

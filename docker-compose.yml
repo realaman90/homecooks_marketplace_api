@@ -24,7 +24,7 @@ services:
       - SENDGRID_API_KEY=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
       - SGSENDER=dev@noudada.com
       - OTPTEMPLATEID=d-1785b3f16f1e4ea8af9306436218bd8a
-      - SUPER_ADMIN_EMAIL=utkarsh17ife@gmail.com
+      - SUPER_ADMIN_EMAIL=amanrawatamg@gmail.com
     networks:
       - noudata_net
 
