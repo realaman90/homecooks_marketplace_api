@@ -1,6 +1,7 @@
 const orderModel = require('../models/Order');
 const kartModel = require('../models/Kart');
 const paymentModel = require('../models/Payment');
+const {multiply, sum, round} = require('mathjs');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
@@ -158,7 +159,6 @@ const getAllOrders = async(req, res) => {
 const getOrderById = async(req, res) => {
 
     const orderId = req.params.orderId;
-    console.log(orderId);
 
     let orders = await orderModel.aggregate([{
         "$match": {
@@ -300,7 +300,6 @@ const deleteOrder = async(req, res) => {
 
 }
 
-
 // perform checkout calculations on kart data
 const paymentCalcOnKartItems = (kartItems) => {
 
@@ -313,24 +312,49 @@ const paymentCalcOnKartItems = (kartItems) => {
         totalCostToSupplier = totalCostToSupplier + (ki.quantity * ki.item.costToSupplierPerOrder)
     })
 
-    // service fee
-    let serviceFee = 20
+    let itemTotal = totalCost;
 
-    // tax and charges
-    let tax = 30
+    let serviceFee = multiply(itemTotal, .2)
 
-    // subtotal
-    let subTotal = totalCost + serviceFee + tax
+    let deliveryFee = 4.99
+
+    let taxableAmpunt = sum(itemTotal, serviceFee, deliveryFee);
+
+    let tax = round(multiply(".09375", taxableAmpunt),2)
+
+    let total = round(sum(taxableAmpunt, tax),2)
 
     return {
         cost: totalCost,
         serviceFee,
+        deliveryFee,
         tax,
-        subTotal,
+        total,
         costToSupplier: totalCostToSupplier
     }
 
 }
+
+// paymentCalcOnKartItems(
+//     [
+//         {
+//             "quantity":1,
+//             "item":{
+//                 "pricePerOrder":100,
+//                 "costToSupplierPerOrder":120
+//             },
+            
+//         },
+//         {
+//             "quantity":2,
+//             "item":{
+//                 "pricePerOrder":100,
+//                 "costToSupplierPerOrder":120
+//             },
+            
+//         }
+//     ]
+// )
 
 // refreshOrders("62f989526253b49a1bc0696a")
 
@@ -437,8 +461,9 @@ const getCheckout = async(req, res) => {
         supplier: kartItems[0].item.supplier,
         cost: calcObj.cost,
         serviceFee: calcObj.serviceFee,
+        deliveryFee: calcObj.deliveryFee,
         tax: calcObj.tax,
-        subTotal: calcObj.subTotal,
+        total: calcObj.total,
         costToSupplier: calcObj.costToSupplier,
         status: paymentStatus.PENDING_CHECKOUT,
         orders,
@@ -463,9 +488,10 @@ const getCheckout = async(req, res) => {
         await paymentModel.updateOne({"_id":pendingCheckout._id }, {$set: { 
             supplier:payment.supplier,
             cost:payment.cost,
+            deliveryFee: payment.deliveryFee,
             serviceFee:payment.serviceFee,
             tax:payment.tax,
-            subTotal:payment.subTotal,
+            total:payment.total,
             costToSupplier:payment.costToSupplier, 
             orders        
         }})

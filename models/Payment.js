@@ -20,11 +20,15 @@ const PaymentSchema = mongoose.Schema({
         type: String,
         required: [true]
     },
+    deliveryFee: {
+        type: String,
+        required: [true]
+    },
     tax:{
         type: String,
         required: [true]
     },
-    subTotal:{
+    total:{
         type: String,
         required: [true]
     },
