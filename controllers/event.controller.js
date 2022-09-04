@@ -10,7 +10,6 @@ const { parseWZeroTime } = require('../utils/datetime');;
 const { parseISO, differenceInCalendarDays, add, getDay, sub, setHours, getHours, addHours, subHours, format } = require('date-fns');
 const eventTemplateModel = require('../models/EventTemplate');
 const crypto = require('crypto');
-const { update } = require('../models/Event');
 
 const createEvent = async(req, res) => {
 
@@ -83,21 +82,15 @@ const getAllEvents = async(req, res) => {
                 { description: { $regex: req.query.search, $options: 'i' }, },
                 { cuisine: { $regex: req.query.search, $options: 'i' }, },
                 { category: { $regex: req.query.search, $options: 'i' }, },
+                { 'supplier.businessName' : { $regex: req.query.search, $options: 'i' }, },
             ]
         })
     }
 
     const aggreagatePipelineQueries = [];
-    if (andQuery.length > 0) {
-        aggreagatePipelineQueries.push({
-            "$match": {
-                "$and": andQuery
-            }
-        })
-    }
+    
     aggreagatePipelineQueries.push({ "$sort": { "createdAt": -1 } })
-    aggreagatePipelineQueries.push({ "$skip": skip })
-    aggreagatePipelineQueries.push({ "$limit": limit })
+    
     aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "suppliers",
@@ -107,6 +100,15 @@ const getAllEvents = async(req, res) => {
         }
     })
     aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
+    if (andQuery.length > 0) {
+        aggreagatePipelineQueries.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }
+    aggreagatePipelineQueries.push({ "$skip": skip })
+    aggreagatePipelineQueries.push({ "$limit": limit })
     aggreagatePipelineQueries.push({
             "$lookup": {
                 "from": "dishitems",
@@ -115,7 +117,6 @@ const getAllEvents = async(req, res) => {
                 "as": "dishItems"
             }
         })
-        // aggreagatePipelineQueries.push({"$unwind": '$dish'})
     aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "clientpickuppoints",
@@ -171,9 +172,34 @@ const getSupplierEvents = async(req, res) => {
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 
+    let andQuery = [];
+    andQuery.push({
+        "supplier": mongoose.Types.ObjectId(supplierId)
+    })
+    if (req.query.category) {
+        andQuery.push({
+            category: req.query.category
+        })
+    }
+    if (req.query.mealTag) {
+        andQuery.push({
+            mealTags: { $elemMatch: { $regex: req.query.mealTag } }
+        })
+    }
+    if (req.query.search) {
+        andQuery.push({
+            "$or": [
+                { name: { $regex: req.query.search, $options: 'i' }, },
+                { description: { $regex: req.query.search, $options: 'i' }, },
+                { cuisine: { $regex: req.query.search, $options: 'i' }, },
+                { category: { $regex: req.query.search, $options: 'i' }, },
+            ]
+        })
+    }
+
     let events = await eventModel.aggregate([{
             "$match": {
-                "supplier": mongoose.Types.ObjectId(supplierId)
+                "$and": andQuery                
             }
         }, {
             "$sort": { "createdAt": -1 }
