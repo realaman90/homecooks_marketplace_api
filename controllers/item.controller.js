@@ -690,7 +690,7 @@ const ListProducts = async (req, res)  => {
         let: { "itemId": "$_id" },
         pipeline: [          
             { "$match": { "$expr": { "$eq": ["$$itemId", "$item"] }}},
-            //{ "$match": { "status": {"$ne": orderStatus.CANCELLED }}},          
+            { "$match": { "status": {"$in": [orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.ACTIVE] }}},                 
             {
                 "$group": {
                     "_id": {
@@ -820,7 +820,7 @@ const GetProductDetails = async (req, res) => {
         let: { "itemId": "$_id" },
         pipeline: [          
             { "$match": { "$expr": { "$eq": ["$$itemId", "$item"] }}},
-            //{ "$match": { "status": {"$ne": orderStatus.CANCELLED }}},          
+            { "$match": { "status": {"$in": [orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.ACTIVE] }}},          
             {
                 "$group": {
                     "_id": {
@@ -872,12 +872,17 @@ const GetProductDetails = async (req, res) => {
             "order_count":{ $ifNull: [ "$order_count", 0 ] }   
         }
     })
-    
+
     let items = await dishItemModel.aggregate(aggreagatePipelineQueries)
 
     return res.status(StatusCodes.OK).json({ item: items[0] });
-
 }
+
+// GetProductDetails({
+//     "params":{
+//         "itemId":"630dd797337962486eae516d"
+//     }
+// })
 
 const getAvailableCuisines = async (req, res) => {
 
