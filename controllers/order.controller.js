@@ -484,6 +484,8 @@ const getCheckout = async(req, res) => {
             _id: {$in:pendingCheckout.orders}
         })
 
+        payment._id = pendingCheckout._id
+
         // update payment object
         await paymentModel.updateOne({"_id":pendingCheckout._id }, {$set: { 
             supplier:payment.supplier,

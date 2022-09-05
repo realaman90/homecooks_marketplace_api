@@ -52,6 +52,9 @@ const UserSchema = mongoose.Schema({
     supplier: {
         type: mongoose.Types.ObjectId,
         ref: 'Supplier'
+    },
+    stripeCustId: {
+        type: String
     }
 }, { timestamps: true });
 
