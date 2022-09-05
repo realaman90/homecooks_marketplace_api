@@ -38,6 +38,7 @@ const PaymentSchema = mongoose.Schema({
     },
     eventPickupAddressMapping: [Object],
     orders: [mongoose.Types.ObjectId],    
+    paymentMethodType: String,
     paymentMethod: String,
     paymentIntent: String,
     isPaid: {

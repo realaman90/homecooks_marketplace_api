@@ -209,6 +209,25 @@ const updateUserBySupplierId = async(req, res) => {
     res.status(StatusCodes.OK).json({ user });
 };
 
+// setup stripe cust id
+const setStripeCustId = async (userId) => {
+
+    const stripeCustId = await CreateStripeCustomer()
+
+    const resp = await User.updateOne({
+        _id: userId
+    }, {
+        stripeCustId,
+        updatedAt: new Date()
+    })
+
+    console.log(resp);
+}
+
+// setStripeCustId("62f989526253b49a1bc0696a")
+
+
+
 
 module.exports = {
     registerUser,

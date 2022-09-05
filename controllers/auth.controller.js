@@ -3,6 +3,7 @@ const { StatusCodes } = require('http-status-codes');
 const customError = require('../errors');
 const { sendOTP, createUserToken } = require('../utils');
 const notificationController = require('./notification.controller');
+const { CreateStripeCustomer, SetupIntentFrCard } = require('../utils/stripe');
 
 const register = async(req, res) => {
     const {
@@ -122,11 +123,13 @@ const registerUser = async(req, res) => {
 
     userData.role = 'user';
 
+    // create stripe customer id
+    userData.stripeCustId = await CreateStripeCustomer();
+
     const emailAlreadyExists = await User.findOne({ email: userData.email });
     if (emailAlreadyExists) {
         throw new customError.BadRequestError('Email  already registered')
     }
-
 
     const user = await User.create(userData);
 

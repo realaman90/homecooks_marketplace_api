@@ -1,7 +1,7 @@
 const stripe = require('stripe')(process.env.SECRET_KEY);
 
 // create customer
-const CreateStripeCutomer = async (name, email) => {
+const CreateStripeCustomer = async (name, email) => {
 
     const customer = await stripe.customers.create({
       name,
@@ -11,6 +11,8 @@ const CreateStripeCutomer = async (name, email) => {
     return customer.id;
 
 };
+
+// CreateStripeCustomer("Test Notification", "amanrawatamg@gmail.com")
 
 const SetupIntentFrCard = async (stripeCustId) => {
 
@@ -24,7 +26,7 @@ const SetupIntentFrCard = async (stripeCustId) => {
 
 // (async () => {
 //     console.log("asdflajsdkfjlasjdkf")
-//     const cust = await CreateStripeCutomer()
+//     const cust = await CreateStripeCustomer()
 
 //     console.log(cust)
     
@@ -35,7 +37,7 @@ const SetupIntentFrCard = async (stripeCustId) => {
 
 
 module.exports = {
-    CreateStripeCutomer,
+    CreateStripeCustomer,
     SetupIntentFrCard
 }
 

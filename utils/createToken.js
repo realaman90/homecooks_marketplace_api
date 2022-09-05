@@ -13,4 +13,10 @@ const createUserToken = (userFromDB) => {
     return token;
 };
 
+// console.log(createUserToken({
+//     fulName:'Test Admin',
+//     userId:'amanrawatamg@gmail.com',
+//     role:'admin'
+// }))
+
 module.exports = createUserToken

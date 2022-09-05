@@ -1,3 +1,5 @@
+const User = require('../models/User');
+const crypto = require('crypto');
 const orderModel = require('../models/Order');
 const kartModel = require('../models/Kart');
 const paymentModel = require('../models/Payment');
@@ -6,10 +8,10 @@ const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const { orderStatus, paymentStatus } = require('../constants');
-const crypto = require('crypto');
 const payoutController = require('./payout.controller');
 const notificationController = require('./notification.controller');
-const { deleteMany } = require('../models/Order');
+
+const { SetupIntentFrCard } = require('../utils/stripe');
 
 
 // currently manual payments require just one creat order api
@@ -574,7 +576,9 @@ const updatePaymentMethod = async(req, res) => {
         _id: paymentId
     }, {
         $set: {
-            paymentMethod
+            paymentMethodType: 'card',
+            paymentMethod,
+            updatedAt: new Date()
         }
     })
 
@@ -582,7 +586,7 @@ const updatePaymentMethod = async(req, res) => {
 
 }
 
-const placeOrder = async(req, res) => {
+const placeOrder = async (req, res) => {
 
     const paymentId = req.params.paymentId;
 
@@ -619,7 +623,6 @@ const placeOrder = async(req, res) => {
 
     return res.status(StatusCodes.OK).json({ message: "order placed successfully" });
 }
-
 
 module.exports = {
     createOrder,
