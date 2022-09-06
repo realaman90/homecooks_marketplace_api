@@ -188,7 +188,7 @@ const getSupplierEvents = async(req, res) => {
     }
     if (req.query.search) {
         andQuery.push({
-            "$or": [
+            "$and": [
                 { name: { $regex: req.query.search, $options: 'i' }, },
                 // { description: { $regex: req.query.search, $options: 'i' }, },
                 // { cuisine: { $regex: req.query.search, $options: 'i' }, },
