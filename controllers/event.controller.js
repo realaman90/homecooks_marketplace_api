@@ -79,9 +79,9 @@ const getAllEvents = async(req, res) => {
         andQuery.push({
             "$or": [
                 { name: { $regex: req.query.search, $options: 'i' }, },
-                { description: { $regex: req.query.search, $options: 'i' }, },
-                { cuisine: { $regex: req.query.search, $options: 'i' }, },
-                { category: { $regex: req.query.search, $options: 'i' }, },
+                // { description: { $regex: req.query.search, $options: 'i' }, },
+                // { cuisine: { $regex: req.query.search, $options: 'i' }, },
+                // { category: { $regex: req.query.search, $options: 'i' }, },
                 { 'supplier.businessName' : { $regex: req.query.search, $options: 'i' }, },
             ]
         })
@@ -190,9 +190,9 @@ const getSupplierEvents = async(req, res) => {
         andQuery.push({
             "$or": [
                 { name: { $regex: req.query.search, $options: 'i' }, },
-                { description: { $regex: req.query.search, $options: 'i' }, },
-                { cuisine: { $regex: req.query.search, $options: 'i' }, },
-                { category: { $regex: req.query.search, $options: 'i' }, },
+                // { description: { $regex: req.query.search, $options: 'i' }, },
+                // { cuisine: { $regex: req.query.search, $options: 'i' }, },
+                // { category: { $regex: req.query.search, $options: 'i' }, },
             ]
         })
     }

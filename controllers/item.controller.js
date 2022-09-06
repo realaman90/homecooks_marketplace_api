@@ -31,11 +31,11 @@ const getAllItems = async(req, res) => {
         andQuery.push({
             "$or": [
                 { name: { $regex: req.query.search, $options: 'i' }, },
-                { description: { $regex: req.query.search, $options: 'i' }, },
-                { viewId: { $regex: req.query.search, $options: 'i' }, },
-                { cuisine: { $regex: req.query.search, $options: 'i' }, },
-                { category: { $regex: req.query.search, $options: 'i' }, },
-                { mealTags: { $elemMatch: { $regex: req.query.search } }, }
+                // { description: { $regex: req.query.search, $options: 'i' }, },
+                // { viewId: { $regex: req.query.search, $options: 'i' }, },
+                // { cuisine: { $regex: req.query.search, $options: 'i' }, },
+                // { category: { $regex: req.query.search, $options: 'i' }, },
+                // { mealTags: { $elemMatch: { $regex: req.query.search } }, }
             ]
         })
     }
@@ -147,11 +147,11 @@ const getAllItemsBySupplier = async(req, res) => {
         andQuery.push({
             "$or": [
                 { name: { $regex: req.query.search, $options: 'i' }, },
-                { description: { $regex: req.query.search, $options: 'i' }, },
-                { viewId: { $regex: req.query.search, $options: 'i' }, },
-                { cuisine: { $regex: req.query.search, $options: 'i' }, },
-                { category: { $regex: req.query.search, $options: 'i' }, },
-                { mealTags: { $elemMatch: { $regex: req.query.search } }, }
+                // { description: { $regex: req.query.search, $options: 'i' }, },
+                // { viewId: { $regex: req.query.search, $options: 'i' }, },
+                // { cuisine: { $regex: req.query.search, $options: 'i' }, },
+                // { category: { $regex: req.query.search, $options: 'i' }, },
+                // { mealTags: { $elemMatch: { $regex: req.query.search } }, }
             ]
         })
     }
@@ -400,11 +400,11 @@ const getAllItemsForAdmin = async(req, res) => {
         andQuery.push({
             "$or": [
                 { name: { $regex: req.query.search, $options: 'i' }, },
-                { description: { $regex: req.query.search, $options: 'i' }, },
-                { viewId: { $regex: req.query.search, $options: 'i' }, },
-                { cuisine: { $regex: req.query.search, $options: 'i' }, },
-                { category: { $regex: req.query.search, $options: 'i' }, },
-                { mealTags: { $elemMatch: { $regex: req.query.search } }, }
+                // { description: { $regex: req.query.search, $options: 'i' }, },
+                // { viewId: { $regex: req.query.search, $options: 'i' }, },
+                // { cuisine: { $regex: req.query.search, $options: 'i' }, },
+                // { category: { $regex: req.query.search, $options: 'i' }, },
+                // { mealTags: { $elemMatch: { $regex: req.query.search } }, }
             ]
         })
     }
@@ -595,11 +595,11 @@ const ListProducts = async (req, res)  => {
         andQuery.push({
             "$or": [
                 { name: { $regex: req.query.search, $options: 'i' }, },
-                { description: { $regex: req.query.search, $options: 'i' }, },
-                { viewId: { $regex: req.query.search, $options: 'i' }, },
-                { cuisine: { $regex: req.query.search, $options: 'i' }, },
-                { category: { $regex: req.query.search, $options: 'i' }, },
-                { mealTags: { $elemMatch: { $regex: req.query.search } }, }
+                // { description: { $regex: req.query.search, $options: 'i' }, },
+                // { viewId: { $regex: req.query.search, $options: 'i' }, },
+                // { cuisine: { $regex: req.query.search, $options: 'i' }, },
+                // { category: { $regex: req.query.search, $options: 'i' }, },
+                // { mealTags: { $elemMatch: { $regex: req.query.search } }, }
             ]
         })
     }

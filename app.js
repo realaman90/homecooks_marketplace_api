@@ -42,6 +42,7 @@ const notificationRouter = require('./route/notification.routes');
 const newsLetterRouter = require('./route/newsletter.routes');
 const enquiryRouter = require('./route/enquiry.routes');
 const cuisineRouter = require('./route/cuisine.routers');
+const stripeRouter = require('./route/stripe.routes');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -81,6 +82,9 @@ app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions
 
 //apis for clients
 app.use('/api/v1/admin/clientPickupPoint', authenticateUser, authorizePermissions('admin'), clientPickupPointRouter);
+
+app.use('/api/v1/stripe', authenticateUser, authorizePermissions('user'), stripeRouter);
+
 
 //apis for customers
 app.use('/api/v1/customer', customerRouter);
