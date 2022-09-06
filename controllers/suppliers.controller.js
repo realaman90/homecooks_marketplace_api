@@ -6,12 +6,12 @@ const crypto = require('crypto');
 const BikerPickupPoint = require('../models/BikerPickupPoint');
 const { IDGen } = require('../utils/viewId');
 
-const createDefaultSupplierUser = async (supplier) => {
-    
+const createDefaultSupplierUser = async(supplier) => {
+
     const { viewId, businessName, businessImages, businessPhone, businessEmail, address } = supplier;
 
     const userData = {};
-    
+
     const password = crypto.randomBytes(9).toString('hex');
     userData.fullName = businessName;
     userData.profileImg = businessImages[0];
@@ -27,9 +27,9 @@ const createDefaultSupplierUser = async (supplier) => {
     return user
 }
 
-const createDefaultSupplierBikerPickupPoint = async (supplier) => {
+const createDefaultSupplierBikerPickupPoint = async(supplier) => {
 
-    const { businessName, pickupAddress,  _id } = supplier;
+    const { businessName, pickupAddress, _id } = supplier;
 
     const bickerPickupPointData = {};
 
@@ -55,11 +55,11 @@ const createSupplier = async(req, res) => {
 
     // registered user is an admin
     const supplier = await Supplier.create(supplierData);
-    
+
     const defaultSetupResp = await Promise.all([
-                createDefaultSupplierUser(supplier), 
-                createDefaultSupplierBikerPickupPoint(supplier)
-            ]);
+        createDefaultSupplierUser(supplier),
+        createDefaultSupplierBikerPickupPoint(supplier)
+    ]);
     const user = defaultSetupResp[0]
     const bickerPickupPoint = defaultSetupResp[1]
 
@@ -78,7 +78,8 @@ const updateSupplier = async(req, res) => {
         address,
         contactInfo,
         pickupAddress,
-        bankInfo
+        bankInfo,
+        paymentMethod
     } = req.body;
     if (!businessName || !contactInfo.businessPhone) {
         throw new CustomError.BadRequestError('Business Name and Phone mandatory')
@@ -98,6 +99,7 @@ const updateSupplier = async(req, res) => {
     supplier.pickupAddress = pickupAddress;
     supplier.bankInfo = bankInfo;
     supplier.description = description;
+    supplier.paymentMethod = paymentMethod;
 
     await supplier.save()
     res.status(StatusCodes.OK).json({ supplier })
@@ -143,7 +145,7 @@ const getAllSuppliers = async(req, res) => {
 // get single supplier
 
 const getSingleSupplier = async(req, res) => {
-    const supplier = await Supplier.findOne({ _id: req.params.id || req.params.supplierId});
+    const supplier = await Supplier.findOne({ _id: req.params.id || req.params.supplierId });
     if (!supplier) {
         throw new CustomError.NotFoundError(`Supplier with id: ${req.params.id} not found`)
     }
