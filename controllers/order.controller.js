@@ -154,6 +154,8 @@ const getAllOrders = async(req, res) => {
 
     let orders = await orderModel.aggregate(aggreagatePipelineQueries)
 
+
+
     return res.status(StatusCodes.OK).json({ orders });
 
 }

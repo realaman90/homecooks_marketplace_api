@@ -7,6 +7,7 @@ const SupplierSchema = mongoose.Schema({
     description: String,
     licenses: [String],
     address: {
+        fullAddress: String,
         street: String,
         appartment_house: String,
         city: String,
@@ -21,6 +22,7 @@ const SupplierSchema = mongoose.Schema({
 
     },
     pickupAddress: {
+        fullAddress: String,
         street: String,
         appartment_house: String,
         city: String,
