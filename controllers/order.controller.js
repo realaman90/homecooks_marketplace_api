@@ -62,12 +62,21 @@ const getAllOrders = async(req, res) => {
         andQuery.push({
             status: req.query.status
         })
+    } else {
+        andQuery.push({
+            status: { $ne: orderStatus.PENDING_CHECKOUT } 
+        })
     }
+    
     if (req.query.isPaid) {
         andQuery.push({
             isPaid: req.query.isPaid == "true" ? true : false
         })
     }
+
+    andQuery.push({
+        pickupPoint: { $ne: null } 
+    })
 
     const aggreagatePipelineQueries = [];
     if (andQuery.length > 0) {

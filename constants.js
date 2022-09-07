@@ -1,4 +1,4 @@
-const eventStatus = {
+const eventStatus = { 
   PENDING: "pending",
   ACTIVE: "active",
   CANCELLED: "cancelled",
@@ -7,6 +7,7 @@ const eventStatus = {
 };
 
 const orderStatus = {
+  PENDING_CHECKOUT: "pending_checkout",
   ACTIVE: "active",
   CONFIRMED: "confirmed",
   COMPLETED: "completed",
