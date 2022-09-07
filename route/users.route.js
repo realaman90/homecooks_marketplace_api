@@ -18,7 +18,7 @@ const {
     getAllUsers,
     getSingleUser,
 } = require('../controllers/user.controller');
-
+const { fetchProfile } = require('../controllers/auth.controller')
 router
     .route('/create')
     .post([authenticateUser, authorizePermissions('admin')], registerUser);
@@ -33,7 +33,7 @@ router
         updateUser
     )
     .delete([authenticateUser, authorizePermissions('admin')], deleteUser)
-    .get([authenticateUser, authorizePermissions('admin')], getSingleUser);
+    .get([authenticateUser, authorizePermissions('admin')], fetchProfile);
 router
     .route('/:id/updatephone')
     .patch([authenticateUser, authorizePermissions('admin')], updateUserPhone);
