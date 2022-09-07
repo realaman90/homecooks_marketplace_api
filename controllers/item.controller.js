@@ -628,9 +628,9 @@ const ListProducts = async (req, res)  => {
     })
 
     // check the visibility of the product    
-    // andQuery.push({
-    //     eventVisibilityDate: {"$gte": todayDateWithZeroTime().toISOString()} 
-    // })
+    andQuery.push({
+        eventVisibilityDate: {"$gte": todayDateWithZeroTime().toISOString()} 
+    })
     
     const aggreagatePipelineQueries = [];
     if (andQuery.length > 0) {
