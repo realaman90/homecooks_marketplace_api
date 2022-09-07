@@ -749,7 +749,59 @@ const ListProducts = async (req, res)  => {
 
     let items = await dishItemModel.aggregate(aggreagatePipelineQueries)
 
-    return res.status(StatusCodes.OK).json({ items });
+    // count
+    const aggreagatePipelineQueriesCount = []
+    if (andQuery.length > 0) {
+        aggreagatePipelineQueriesCount.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }
+
+    // loopkup to get the dish based count
+    aggreagatePipelineQueriesCount.push({ 
+        "$lookup": {
+            from: "dishitems",
+            let: { "dishId": "$dish" },
+            pipeline: [          
+                { "$match" : {
+                    "$and": andQuery, 
+                    }, 
+                }, { 
+                    "$match": { "$expr": { "$eq": ["$$dishId", "$dish"] }}
+                }, {
+                    "$group": {
+                        "_id": "$dish",                            
+                        "count": { $sum: 1 },                    
+                    }
+                }, {
+                    "$project":{
+                        "count": 1
+                    }
+                }
+            ],
+            as: "dishes"
+        }
+    })
+
+    aggreagatePipelineQueriesCount.push({ "$unwind": '$dishes' })
+
+    aggreagatePipelineQueriesCount.push({"$match": {
+            "dishes.count": {$gt: eventDateFilterCount}
+        }
+    })  
+
+    aggreagatePipelineQueriesCount.push(
+        {
+            "$count": "count"
+        })  
+
+    let itemCount = await dishItemModel.aggregate(aggreagatePipelineQueriesCount)
+
+    itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0
+
+    return res.status(StatusCodes.OK).json({ items, itemCount });
 
 }
 
