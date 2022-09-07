@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const orderModel = require('../models/Order');
 const kartModel = require('../models/Kart');
 const paymentModel = require('../models/Payment');
-const {multiply, sum, round} = require('mathjs');
+const { multiply, sum, round } = require('mathjs');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
@@ -162,8 +162,11 @@ const getAllOrders = async(req, res) => {
     })
 
     let orders = await orderModel.aggregate(aggreagatePipelineQueries)
+    const itemCount = orders.length;
 
-    return res.status(StatusCodes.OK).json({ orders });
+
+
+    return res.status(StatusCodes.OK).json({ orders, itemCount });
 
 }
 
@@ -331,9 +334,9 @@ const paymentCalcOnKartItems = (kartItems) => {
 
     let taxableAmpunt = sum(itemTotal, serviceFee, deliveryFee);
 
-    let tax = round(multiply(".09375", taxableAmpunt),2)
+    let tax = round(multiply(".09375", taxableAmpunt), 2)
 
-    let total = round(sum(taxableAmpunt, tax),2)
+    let total = round(sum(taxableAmpunt, tax), 2)
 
     return {
         cost: totalCost,
@@ -354,7 +357,7 @@ const paymentCalcOnKartItems = (kartItems) => {
 //                 "pricePerOrder":100,
 //                 "costToSupplierPerOrder":120
 //             },
-            
+
 //         },
 //         {
 //             "quantity":2,
@@ -362,7 +365,7 @@ const paymentCalcOnKartItems = (kartItems) => {
 //                 "pricePerOrder":100,
 //                 "costToSupplierPerOrder":120
 //             },
-            
+
 //         }
 //     ]
 // )
@@ -373,13 +376,13 @@ const paymentCalcOnKartItems = (kartItems) => {
 const createOrdersFromKart = async(kartItems, prevOrders) => {
 
     const prevOrderMeta = {};
-    if (prevOrders && prevOrders.length > 0){
+    if (prevOrders && prevOrders.length > 0) {
         prevOrders = await orderModel.find({
-            "_id": {$in: prevOrders}
+            "_id": { $in: prevOrders }
         }, `item pickupPoint instruction`)
-        prevOrders.forEach((po)=>{
+        prevOrders.forEach((po) => {
             prevOrderMeta[po.item] = {
-                pickupPoint: po.pickupPoint, 
+                pickupPoint: po.pickupPoint,
                 instruction: po.instruction
             }
         })
@@ -400,8 +403,8 @@ const createOrdersFromKart = async(kartItems, prevOrders) => {
             costToSupplier: ki.quantity * ki.item.costToSupplierPerOrder,
             isPaid: false,
             status: paymentStatus.PENDING_CHECKOUT,
-            pickupPoint: prevOrderMeta[ki.item._id]? prevOrderMeta[ki.item._id].pickupPoint : null,
-            instruction: prevOrderMeta[ki.item._id]? prevOrderMeta[ki.item._id].instruction : null,
+            pickupPoint: prevOrderMeta[ki.item._id] ? prevOrderMeta[ki.item._id].pickupPoint : null,
+            instruction: prevOrderMeta[ki.item._id] ? prevOrderMeta[ki.item._id].instruction : null,
         })
 
     })
@@ -438,8 +441,8 @@ const getCheckout = async(req, res) => {
             "customer": 1,
             "quantity": 1,
             "pickupPoint": 1,
-            "event":1,
-            "supplier":1, 
+            "event": 1,
+            "supplier": 1,
             "item._id": 1,
             "item.supplier": 1,
             "item.pricePerOrder": 1,
@@ -447,7 +450,7 @@ const getCheckout = async(req, res) => {
         }
     }]);
 
-    if (kartItems.length == 0){
+    if (kartItems.length == 0) {
         throw new Error(`No item in kart to checkout`);
     }
 
@@ -465,7 +468,7 @@ const getCheckout = async(req, res) => {
 
     const calcObj = paymentCalcOnKartItems(kartItems)
 
-    let orders = await createOrdersFromKart(kartItems, pendingCheckout ? pendingCheckout.orders: []);
+    let orders = await createOrdersFromKart(kartItems, pendingCheckout ? pendingCheckout.orders : []);
 
     let payment = {
         customer: userId,
@@ -492,22 +495,24 @@ const getCheckout = async(req, res) => {
 
         // delete old orders
         await orderModel.deleteMany({
-            _id: {$in:pendingCheckout.orders}
+            _id: { $in: pendingCheckout.orders }
         })
 
         payment._id = pendingCheckout._id
 
         // update payment object
-        await paymentModel.updateOne({"_id":pendingCheckout._id }, {$set: { 
-            supplier:payment.supplier,
-            cost:payment.cost,
-            deliveryFee: payment.deliveryFee,
-            serviceFee:payment.serviceFee,
-            tax:payment.tax,
-            total:payment.total,
-            costToSupplier:payment.costToSupplier, 
-            orders        
-        }})
+        await paymentModel.updateOne({ "_id": pendingCheckout._id }, {
+            $set: {
+                supplier: payment.supplier,
+                cost: payment.cost,
+                deliveryFee: payment.deliveryFee,
+                serviceFee: payment.serviceFee,
+                tax: payment.tax,
+                total: payment.total,
+                costToSupplier: payment.costToSupplier,
+                orders
+            }
+        })
 
     }
 
@@ -540,6 +545,7 @@ const getCheckout = async(req, res) => {
             "item._id": 1,
             "item.name": 1,
             "item.description": 1,
+            "item.eventDate": 1,
             "item.images": 1,
             "item.pricePerOrder": 1,
             "item.costToSupplierPerOrder": 1,
@@ -556,11 +562,11 @@ const getCheckout = async(req, res) => {
 
 }
 
-const updatePickupAddressOnOrder = async (req, res) => {
+const updatePickupAddressOnOrder = async(req, res) => {
 
     const orders = req.body.orders;
 
-    for (let i=0; i< orders.length; i++ ){
+    for (let i = 0; i < orders.length; i++) {
         let o = orders[i];
         let resp = await orderModel.updateOne({
             _id: o.orderId
@@ -595,7 +601,7 @@ const updatePaymentMethod = async(req, res) => {
 
 }
 
-const placeOrder = async (req, res) => {
+const placeOrder = async(req, res) => {
 
     const paymentId = req.params.paymentId;
 
@@ -624,9 +630,9 @@ const placeOrder = async (req, res) => {
     await payoutController.createPayoutsForPayment(paymentId);
 
     //clear user kart
-    await kartModel.deleteMany({customer: req.user.userId})        
+    await kartModel.deleteMany({ customer: req.user.userId })
 
-    process.nextTick(()=>{
+    process.nextTick(() => {
         notificationController.OrderCreatedNotificationForAdmin(paymentId)
     })
 

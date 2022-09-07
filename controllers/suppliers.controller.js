@@ -120,26 +120,43 @@ const deleteSupplier = async(req, res) => {
 
 const getAllSuppliers = async(req, res) => {
 
-    let query = {};
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
-    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
 
+    let andQuery = [];
     if (req.query.search) {
-        query = {
-            $or: [
-                { businessName: { $regex: req.query.search, $options: 'i' } },
-                { speciality: { $regex: req.query.search, $options: 'i' } },
+        andQuery.push({
+            "$or": [
+                { businessName: { $regex: req.query.search, $options: 'i' }, },
+
             ]
-        }
+        })
     }
+    const aggreagatePipelineQueries = [];
+    if (andQuery.length > 0) {
+        aggreagatePipelineQueries.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }
+    aggreagatePipelineQueries.push({ "$sort": { "createdAt": -1 } })
+    aggreagatePipelineQueries.push({ "$skip": skip })
+    aggreagatePipelineQueries.push({ "$limit": limit });
 
-    const suppliers = await Supplier
-        .find(query)
-        .skip(skip)
-        .limit(limit);
 
-    res.status(StatusCodes.OK).json({ suppliers });
+    let suppliers = await Supplier.aggregate(aggreagatePipelineQueries);
+
+    let itemCount
+    if (andQuery.length === 0) {
+        itemCount = await Supplier.find().countDocuments();
+    } else {
+        itemCount = await Supplier.find({ "$and": andQuery }).countDocuments();
+    }
+    return res.status(StatusCodes.OK).json({ suppliers, itemCount });
+
+
 }
 
 // get single supplier

@@ -19,6 +19,7 @@ const ClientPickupPointSchema = mongoose.Schema({
         default: 'custpickup_' + crypto.randomBytes(6).toString('hex'),
     },
     address: {
+        fullAddress: String,
         street: String,
         appartment_house: String,
         city: String,

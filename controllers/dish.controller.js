@@ -4,7 +4,7 @@ const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const crypto = require('crypto');
-const {IDGen} = require('../utils/viewId');
+const { IDGen } = require('../utils/viewId');
 const dishItemModel = require('../models/DishItem');
 
 const createDish = async(req, res) => {
@@ -42,7 +42,7 @@ const getAllDishs = async(req, res) => {
     if (req.query.suitableDays) {
         andQuery.push({
             suitableDays: {
-                $in : req.query.suitableDays.split('|')
+                $in: req.query.suitableDays.split('|')
             }
         })
     }
@@ -147,7 +147,7 @@ const getAllDishsBySupplier = async(req, res) => {
     if (req.query.suitableDays) {
         andQuery.push({
             suitableDays: {
-                $in : req.query.suitableDays.split('|')
+                $in: req.query.suitableDays.split('|')
             }
         })
     }
@@ -222,8 +222,14 @@ const getAllDishsBySupplier = async(req, res) => {
     })
 
     let dishes = await dishModel.aggregate(aggreagatePipelineQueries)
+    let itemCount
+    if (andQuery.length === 0) {
+        itemCount = await dishModel.find().countDocuments();
+    } else {
+        itemCount = await dishModel.find({ "$and": andQuery }).countDocuments();
+    }
 
-    return res.status(StatusCodes.OK).json({ dishes });
+    return res.status(StatusCodes.OK).json({ dishes, itemCount });
 
 }
 
@@ -270,7 +276,7 @@ const getDish = async(req, res) => {
                 "images": 1,
                 "category": 1,
                 "cuisine": 1,
-                "description": 1,                
+                "description": 1,
                 "price": 1,
                 "quantity": 1,
                 "size": 1,
@@ -329,7 +335,7 @@ const deleteDish = async(req, res) => {
         dish: dishId
     }).countDocuments()
 
-    if (productCount){
+    if (productCount) {
         throw new CustomError.BadRequestError('dish is mapped to an event, cannot delete');
     }
 
@@ -351,11 +357,11 @@ const deleteDish = async(req, res) => {
 
 }
 
-const getDishesCommonDays = async (req, res) => {
+const getDishesCommonDays = async(req, res) => {
 
     let dishIds = req.query.dishIds.split('|');
 
-    dishIds = dishIds.map(d=>mongoose.Types.ObjectId(d));
+    dishIds = dishIds.map(d => mongoose.Types.ObjectId(d));
 
     const dishesDetails = await dishModel.find({
         _id: {
@@ -365,11 +371,11 @@ const getDishesCommonDays = async (req, res) => {
 
     const daysCount = {}
 
-    dishesDetails.forEach(d=>{
-        d.suitableDays.forEach(s=>{
-            if (daysCount[s]){
-                daysCount[s] = daysCount[s]+1
-            }else {
+    dishesDetails.forEach(d => {
+        d.suitableDays.forEach(s => {
+            if (daysCount[s]) {
+                daysCount[s] = daysCount[s] + 1
+            } else {
                 daysCount[s] = 1
             }
         })
@@ -377,7 +383,7 @@ const getDishesCommonDays = async (req, res) => {
 
     const commonDays = [];
     for (const day in daysCount) {
-        if (daysCount[day] == dishesDetails.length){            
+        if (daysCount[day] == dishesDetails.length) {
             commonDays.push(day)
         }
     }
