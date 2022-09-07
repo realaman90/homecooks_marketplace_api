@@ -286,7 +286,7 @@ const getCustomerOrders = async(req, res) => {
         pickupPoint: { $ne: null }
     })
     andQuery.push({
-        "customerId": mongoose.Types.ObjectId(customerId)
+        "customer": mongoose.Types.ObjectId(customerId)
     })
 
 

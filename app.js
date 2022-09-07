@@ -93,7 +93,8 @@ app.use('/api/v1/checkout', authenticateUser, authorizePermissions('user'), chec
 app.use('/api/v1/products', items);
 app.use('/api/v1/newsletter', newsLetterRouter);
 app.use('/api/v1/enquiry', enquiryRouter);
-app.use('/api/v1/order/customer', authenticateUser, authorizePermissions('user'), orderRouter);
+app.use('/api/v1/orders', authenticateUser, authorizePermissions('admin', 'user'), orderRouter)
+
 
 // for both admin and user
 app.use('/api/v1/notification', authenticateUser, authorizePermissions('user', 'admin'), notificationRouter);
