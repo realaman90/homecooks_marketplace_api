@@ -157,7 +157,11 @@ const getListOfPayouts = async(req, res) => {
             }
         }
     ]);
-    const itemCount = payouts.length;
+    if (andQuery.length === 0) {
+        itemCount = await paymentModel.find().countDocuments();
+    } else {
+        itemCount = await paymentModel.find({ "$and": andQuery }).countDocuments();
+    }
 
     return res.status(StatusCodes.OK).json({ payouts, itemCount });
 }

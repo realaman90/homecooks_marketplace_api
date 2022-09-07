@@ -162,7 +162,11 @@ const getAllOrders = async(req, res) => {
     })
 
     let orders = await orderModel.aggregate(aggreagatePipelineQueries)
-    const itemCount = orders.length;
+    if (andQuery.length === 0) {
+        itemCount = await orderModel.find().countDocuments();
+    } else {
+        itemCount = await orderModel.find({ "$and": andQuery }).countDocuments();
+    }
 
 
 

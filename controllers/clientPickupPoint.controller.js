@@ -77,8 +77,14 @@ const getAllClientPickupPoint = async(req, res) => {
     })
 
     let clientPickupPoints = await clientPickupPointModel.aggregate(aggreagatePipelineQueries)
+    let itemCount
+    if (andQuery.length === 0) {
+        itemCount = await clientPickupPointModel.find().countDocuments();
+    } else {
+        itemCount = await clientPickupPointModel.find({ "$and": andQuery }).countDocuments();
+    }
 
-    return res.status(StatusCodes.OK).json({ clientPickupPoints });
+    return res.status(StatusCodes.OK).json({ clientPickupPoints, itemCount });
 
 }
 
