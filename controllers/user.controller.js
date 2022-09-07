@@ -9,12 +9,12 @@ const registerUser = async(req, res) => {
     const userData = req.body;
 
     if (userData.role === 'user') {
-        
+
         const chars = userData.fullName.substr(0, 3).toUpperCase();
         userData.viewId = 'CUS' + Math.floor(10000 + Math.random() * 90000) + chars;
         const emailAlreadyExists = await User.findOne({ email: userData.email });
         const phoneAlreadyExists = await User.findOneAndDelete({ phone: userData.phone });
-        
+
         if (emailAlreadyExists || phoneAlreadyExists) {
             throw new CustomError.BadRequestError('Email or Phone is already registered in the platform')
         }
@@ -27,14 +27,14 @@ const registerUser = async(req, res) => {
         res.status(StatusCodes.CREATED).json({ user })
 
     } else {
-        
+
         const emailAlreadyExists = await User.findOne({ email: userData.email });
         const phoneAlreadyExists = await User.findOneAndDelete({ phone: userData.phone });
-        
+
         if (emailAlreadyExists || phoneAlreadyExists) {
             throw new CustomError.BadRequestError('Email or Phone is already registered in the platform')
         }
-        
+
         const user = await User.create(userData);
 
         res.status(StatusCodes.CREATED).json({ user })
@@ -42,26 +42,17 @@ const registerUser = async(req, res) => {
 
 };
 const updateUser = async(req, res) => {
-    const { id: userId } = req.params;
-    const {
-        fullName,
-        email,
-        profileImg,
-        sex,
-    } = req.body;
-    if (!email || !fullName) {
-        throw new CustomError.BadRequestError('Please provide email & Full Name')
-    };
+    const userId = req.params;
 
-    const user = await User.findOne({ _id: userId }).select('-password');
+    const userData = req.body;
+    const user = await User.findOne({ id: userId }).select('-password');
     if (!user) {
         throw new CustomError.NotFoundError(`user with id: ${userId} not found`)
     }
 
-    user.email = email;
-    user.fullName = fullName;
-    user.profileImg = profileImg;
-    user.sex = sex;
+    user.email = userData.email;
+    user.fullName = userData.fullName;
+    user.phone = userData.phone;
     await user.save()
     res.status(StatusCodes.OK).json({ user })
 };
@@ -210,7 +201,7 @@ const updateUserBySupplierId = async(req, res) => {
 };
 
 // setup stripe cust id
-const setStripeCustId = async (userId) => {
+const setStripeCustId = async(userId) => {
 
     const stripeCustId = await CreateStripeCustomer()
 

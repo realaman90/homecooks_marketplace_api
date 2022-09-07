@@ -64,10 +64,10 @@ const getAllOrders = async(req, res) => {
         })
     } else {
         andQuery.push({
-            status: { $ne: orderStatus.PENDING_CHECKOUT } 
+            status: { $ne: orderStatus.PENDING_CHECKOUT }
         })
     }
-    
+
     if (req.query.isPaid) {
         andQuery.push({
             isPaid: req.query.isPaid == "true" ? true : false
@@ -75,7 +75,7 @@ const getAllOrders = async(req, res) => {
     }
 
     andQuery.push({
-        pickupPoint: { $ne: null } 
+        pickupPoint: { $ne: null }
     })
 
     const aggreagatePipelineQueries = [];
@@ -174,58 +174,180 @@ const getAllOrders = async(req, res) => {
 
 const getOrderById = async(req, res) => {
 
-    const orderId = req.params.orderId;
+        const orderId = req.params.orderId;
 
-    let orders = await orderModel.aggregate([{
-        "$match": {
-            "_id": mongoose.Types.ObjectId(orderId)
+        let orders = await orderModel.aggregate([{
+            "$match": {
+                "_id": mongoose.Types.ObjectId(orderId)
+            }
+        }, {
+            "$lookup": {
+                "from": "users",
+                "localField": "customer",
+                "foreignField": "_id",
+                "as": "customer"
+            },
+        }, {
+            "$unwind": '$customer'
+        }, {
+            "$lookup": {
+                "from": "dishitems",
+                "localField": "item",
+                "foreignField": "_id",
+                "as": "item"
+            }
+        }, {
+            "$unwind": '$item'
+        }, {
+            "$lookup": {
+                "from": "suppliers",
+                "localField": "item.supplier",
+                "foreignField": "_id",
+                "as": "item.supplier"
+            }
+        }, {
+            "$unwind": '$item.supplier'
+        }, {
+            "$lookup": {
+                "from": "clientpickuppoints",
+                "localField": "pickupPoint",
+                "foreignField": "_id",
+                "as": "pickupPoint"
+            }
+        }, {
+            "$unwind": '$pickupPoint'
+        }, {
+            "$project": {
+                "_id": 1,
+                "quantity": 1,
+                "instruction": 1,
+                "viewId": 1,
+                "item._id": 1,
+                "item.name": 1,
+                "item.images": 1,
+                "item.viewId": 1,
+                "item.category": 1,
+                "item.cuisine": 1,
+                "item.mealTags": 1,
+                "item.minOrders": 1,
+                "item.maxOrders": 1,
+                "item.pricePerOrder": 1,
+                "item.costToSupplierPerOrder": 1,
+                "item.description": 1,
+                "item.eventDate": 1,
+                "item.eventVisibilityDate": 1,
+                "item.closingDate": 1,
+                "item.supplier.businessName": 1,
+                "item.supplier.businessImages": 1,
+                "item.supplier.address": 1,
+                "item.supplier.contactInfo": 1,
+                "customer.fullName": 1,
+                "customer.profileImg": 1,
+                "customer.email": 1,
+                "customer.phone": 1,
+                "cost": 1,
+                "isPaid": 1,
+                "status": 1,
+                "pickupPoint.name": 1,
+                "pickupPoint.text": 1,
+                "pickupPoint.address": 1,
+            }
+        }])
+
+        if (orders.length < 1) {
+            throw new CustomError.BadRequestError('Invalid Order Id');
         }
-    }, {
+
+        return res.status(StatusCodes.OK).json({ order: orders[0] });
+
+    }
+    //to revisit 
+const getCustomerOrders = async(req, res) => {
+    const customerId = req.params.customerId;
+    const skip = req.query.skip ? Number(req.query.skip) : 0;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+
+    let andQuery = [];
+
+    // manage filters
+    if (req.query.status) {
+        andQuery.push({
+            status: req.query.status
+        })
+    }
+
+    if (req.query.isPaid) {
+        andQuery.push({
+            isPaid: req.query.isPaid == "true" ? true : false
+        })
+    }
+
+    andQuery.push({
+        pickupPoint: { $ne: null }
+    })
+    andQuery.push({
+        "customerId": mongoose.Types.ObjectId(customerId)
+    })
+
+
+    const aggreagatePipelineQueries = [];
+    if (andQuery.length > 0) {
+        aggreagatePipelineQueries.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }
+    aggreagatePipelineQueries.push({ "$sort": { "createdAt": -1 } })
+    aggreagatePipelineQueries.push({ "$skip": skip })
+    aggreagatePipelineQueries.push({ "$limit": limit })
+    aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "users",
             "localField": "customer",
             "foreignField": "_id",
             "as": "customer"
-        },
-    }, {
-        "$unwind": '$customer'
-    }, {
+        }
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$customer' })
+    aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "dishitems",
             "localField": "item",
             "foreignField": "_id",
             "as": "item"
         }
-    }, {
-        "$unwind": '$item'
-    }, {
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$item' })
+    aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "suppliers",
             "localField": "item.supplier",
             "foreignField": "_id",
             "as": "item.supplier"
         }
-    }, {
-        "$unwind": '$item.supplier'
-    }, {
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$item.supplier' })
+    aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "clientpickuppoints",
             "localField": "pickupPoint",
             "foreignField": "_id",
             "as": "pickupPoint"
         }
-    }, {
-        "$unwind": '$pickupPoint'
-    }, {
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$pickupPoint' })
+    aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
-            "quantity": 1,
-            "instruction": 1,
             "viewId": 1,
+            "quantity": 1,
+            "cost": 1,
+            "isPaid": 1,
+            "status": 1,
             "item._id": 1,
             "item.name": 1,
             "item.images": 1,
-            "item.viewId": 1,
             "item.category": 1,
             "item.cuisine": 1,
             "item.mealTags": 1,
@@ -245,24 +367,22 @@ const getOrderById = async(req, res) => {
             "customer.profileImg": 1,
             "customer.email": 1,
             "customer.phone": 1,
-            "cost": 1,
-            "isPaid": 1,
-            "status": 1,
             "pickupPoint.name": 1,
             "pickupPoint.text": 1,
             "pickupPoint.address": 1,
         }
-    }])
+    })
 
-    if (orders.length < 1) {
-        throw new CustomError.BadRequestError('Invalid Order Id');
+    let orders = await orderModel.aggregate(aggreagatePipelineQueries)
+    if (andQuery.length === 0) {
+        itemCount = await orderModel.find().countDocuments();
+    } else {
+        itemCount = await orderModel.find({ "$and": andQuery }).countDocuments();
     }
 
-    return res.status(StatusCodes.OK).json({ order: orders[0] });
 
-}
 
-const getCustomerOrders = async(req, res) => {
+    return res.status(StatusCodes.OK).json({ orders, itemCount });
 
 }
 

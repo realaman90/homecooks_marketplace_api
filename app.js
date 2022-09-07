@@ -71,7 +71,7 @@ app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
 app.use('/api/v1/admin/event', authenticateUser, authorizePermissions('admin'), eventRouter);
 app.use('/api/v1/admin/dish', authenticateUser, authorizePermissions('admin'), dishRouter);
-app.use('/api/v1/admin/order', authenticateUser, authorizePermissions('admin'), orderRouter);
+app.use('/api/v1/admin/order', authenticateUser, authorizePermissions('admin', 'user'), orderRouter);
 app.use('/api/v1/admin/payout', authenticateUser, authorizePermissions('admin'), payoutRouter);
 app.use('/api/v1/admin/pickUpArea', authenticateUser, authorizePermissions('admin'), pickUpAreaRouter);
 app.use('/api/v1/admin/products', authenticateUser, authorizePermissions('admin'), itemsForAdmin);
@@ -93,6 +93,7 @@ app.use('/api/v1/checkout', authenticateUser, authorizePermissions('user'), chec
 app.use('/api/v1/products', items);
 app.use('/api/v1/newsletter', newsLetterRouter);
 app.use('/api/v1/enquiry', enquiryRouter);
+app.use('/api/v1/order/customer', authenticateUser, authorizePermissions('user'), orderRouter);
 
 // for both admin and user
 app.use('/api/v1/notification', authenticateUser, authorizePermissions('user', 'admin'), notificationRouter);
