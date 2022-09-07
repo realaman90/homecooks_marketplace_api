@@ -156,9 +156,10 @@ const getListOfPayouts = async(req, res) => {
                 "totalAmount": 1
             }
         }
-    ])
+    ]);
+    const itemCount = payouts.length;
 
-    return res.status(StatusCodes.OK).json({ payouts });
+    return res.status(StatusCodes.OK).json({ payouts, itemCount });
 }
 
 const getSupplierPayouts = async(req, res) => {

@@ -82,15 +82,15 @@ const getAllEvents = async(req, res) => {
                 // { description: { $regex: req.query.search, $options: 'i' }, },
                 // { cuisine: { $regex: req.query.search, $options: 'i' }, },
                 // { category: { $regex: req.query.search, $options: 'i' }, },
-                { 'supplier.businessName' : { $regex: req.query.search, $options: 'i' }, },
+                { 'supplier.businessName': { $regex: req.query.search, $options: 'i' }, },
             ]
         })
     }
 
     const aggreagatePipelineQueries = [];
-    
+
     aggreagatePipelineQueries.push({ "$sort": { "createdAt": -1 } })
-    
+
     aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "suppliers",
@@ -110,13 +110,13 @@ const getAllEvents = async(req, res) => {
     aggreagatePipelineQueries.push({ "$skip": skip })
     aggreagatePipelineQueries.push({ "$limit": limit })
     aggreagatePipelineQueries.push({
-            "$lookup": {
-                "from": "dishitems",
-                "localField": "dishItems",
-                "foreignField": "_id",
-                "as": "dishItems"
-            }
-        })
+        "$lookup": {
+            "from": "dishitems",
+            "localField": "dishItems",
+            "foreignField": "_id",
+            "as": "dishItems"
+        }
+    })
     aggreagatePipelineQueries.push({
         "$lookup": {
             "from": "clientpickuppoints",
@@ -161,8 +161,15 @@ const getAllEvents = async(req, res) => {
     })
 
     let events = await eventModel.aggregate(aggreagatePipelineQueries)
+    let itemCount
+    if (andQuery.length === 0) {
+        itemCount = await eventModel.find().countDocuments();
+    } else {
+        itemCount = await eventModel.find({ "$and": andQuery }).countDocuments();
+    }
 
-    return res.status(StatusCodes.OK).json({ events });
+
+    return res.status(StatusCodes.OK).json({ events, itemCount });
 
 }
 
@@ -199,7 +206,7 @@ const getSupplierEvents = async(req, res) => {
 
     let events = await eventModel.aggregate([{
             "$match": {
-                "$and": andQuery                
+                "$and": andQuery
             }
         }, {
             "$sort": { "createdAt": -1 }
@@ -270,9 +277,15 @@ const getSupplierEvents = async(req, res) => {
 
             }
         }
-    ])
+    ]);
+    let itemCount
+    if (andQuery.length === 0) {
+        itemCount = await eventModel.find().countDocuments();
+    } else {
+        itemCount = await eventModel.find({ "$and": andQuery }).countDocuments();
+    }
 
-    return res.status(StatusCodes.OK).json({ events });
+    return res.status(StatusCodes.OK).json({ events, itemCount });
 
 }
 
