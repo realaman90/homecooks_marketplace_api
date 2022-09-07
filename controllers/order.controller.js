@@ -168,8 +168,6 @@ const getAllOrders = async(req, res) => {
         itemCount = await orderModel.find({ "$and": andQuery }).countDocuments();
     }
 
-
-
     return res.status(StatusCodes.OK).json({ orders, itemCount });
 
 }

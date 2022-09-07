@@ -157,10 +157,27 @@ const getListOfPayouts = async(req, res) => {
             }
         }
     ]);
-    if (andQuery.length === 0) {
+
+    if (payouts.length === 0) {
         itemCount = await paymentModel.find().countDocuments();
-    } else {
-        itemCount = await paymentModel.find({ "$and": andQuery }).countDocuments();
+    } else {        
+        itemCount = await payoutModel.aggregate([{
+            '$match': {
+                "status": status
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "item": "$item",
+                    "supplier": "$supplier",
+                },                
+            }
+        }, {
+            "$count": "count"
+        }
+    ]);
+    itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0
     }
 
     return res.status(StatusCodes.OK).json({ payouts, itemCount });
