@@ -42,10 +42,10 @@ const registerUser = async(req, res) => {
 
 };
 const updateUser = async(req, res) => {
-    const userId = req.params;
+    const { id: userId } = req.params;
 
     const userData = req.body;
-    const user = await User.findOne({ id: userId }).select('-password');
+    const user = await User.findOne({ _id: userId }).select('-password');
     if (!user) {
         throw new CustomError.NotFoundError(`user with id: ${userId} not found`)
     }
