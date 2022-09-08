@@ -12,6 +12,7 @@ router.delete('/:orderId', orderController.deleteOrder);
 
 // customer orders
 router.get('/customer/:customerId', orderController.getCustomerOrders);
+router.get('/customer/:orderId', orderController.getOrderById);
 // event orders
 // router.get('/event/:eventId', orderController.getCustomerOrders);
 // supplier orders

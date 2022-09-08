@@ -19,7 +19,7 @@ const { SetupIntentFrCard } = require('../utils/stripe');
 const createOrder = async(req, res) => {
 
     const orderData = req.body;
-    orderData.viewId = 'order_' + crypto.randomBytes(6).toString('hex');
+    orderData.viewId = crypto.randomBytes(3).toString('hex');
 
     // check if the event has not reached max orders ??
 
@@ -178,94 +178,95 @@ const getAllOrders = async(req, res) => {
 
 const getOrderById = async(req, res) => {
 
-        const orderId = req.params.orderId;
+    const orderId = req.params.orderId;
 
-        let orders = await orderModel.aggregate([{
-            "$match": {
-                "_id": mongoose.Types.ObjectId(orderId)
-            }
-        }, {
-            "$lookup": {
-                "from": "users",
-                "localField": "customer",
-                "foreignField": "_id",
-                "as": "customer"
-            },
-        }, {
-            "$unwind": '$customer'
-        }, {
-            "$lookup": {
-                "from": "dishitems",
-                "localField": "item",
-                "foreignField": "_id",
-                "as": "item"
-            }
-        }, {
-            "$unwind": '$item'
-        }, {
-            "$lookup": {
-                "from": "suppliers",
-                "localField": "item.supplier",
-                "foreignField": "_id",
-                "as": "item.supplier"
-            }
-        }, {
-            "$unwind": '$item.supplier'
-        }, {
-            "$lookup": {
-                "from": "clientpickuppoints",
-                "localField": "pickupPoint",
-                "foreignField": "_id",
-                "as": "pickupPoint"
-            }
-        }, {
-            "$unwind": '$pickupPoint'
-        }, {
-            "$project": {
-                "_id": 1,
-                "quantity": 1,
-                "instruction": 1,
-                "viewId": 1,
-                "item._id": 1,
-                "item.name": 1,
-                "item.images": 1,
-                "item.viewId": 1,
-                "item.category": 1,
-                "item.cuisine": 1,
-                "item.mealTags": 1,
-                "item.minOrders": 1,
-                "item.maxOrders": 1,
-                "item.pricePerOrder": 1,
-                "item.costToSupplierPerOrder": 1,
-                "item.description": 1,
-                "item.eventDate": 1,
-                "item.eventVisibilityDate": 1,
-                "item.closingDate": 1,
-                "item.supplier.businessName": 1,
-                "item.supplier.businessImages": 1,
-                "item.supplier.address": 1,
-                "item.supplier.contactInfo": 1,
-                "customer.fullName": 1,
-                "customer.profileImg": 1,
-                "customer.email": 1,
-                "customer.phone": 1,
-                "cost": 1,
-                "isPaid": 1,
-                "status": 1,
-                "pickupPoint.name": 1,
-                "pickupPoint.text": 1,
-                "pickupPoint.address": 1,
-            }
-        }])
-
-        if (orders.length < 1) {
-            throw new CustomError.BadRequestError('Invalid Order Id');
+    let orders = await orderModel.aggregate([{
+        "$match": {
+            "_id": mongoose.Types.ObjectId(orderId)
         }
+    }, {
+        "$lookup": {
+            "from": "users",
+            "localField": "customer",
+            "foreignField": "_id",
+            "as": "customer"
+        },
+    }, {
+        "$unwind": '$customer'
+    }, {
+        "$lookup": {
+            "from": "dishitems",
+            "localField": "item",
+            "foreignField": "_id",
+            "as": "item"
+        }
+    }, {
+        "$unwind": '$item'
+    }, {
+        "$lookup": {
+            "from": "suppliers",
+            "localField": "item.supplier",
+            "foreignField": "_id",
+            "as": "item.supplier"
+        }
+    }, {
+        "$unwind": '$item.supplier'
+    }, {
+        "$lookup": {
+            "from": "clientpickuppoints",
+            "localField": "pickupPoint",
+            "foreignField": "_id",
+            "as": "pickupPoint"
+        }
+    }, {
+        "$unwind": '$pickupPoint'
+    }, {
+        "$project": {
+            "_id": 1,
+            "quantity": 1,
+            "instruction": 1,
+            "viewId": 1,
+            "createdAt": 1,
+            "item._id": 1,
+            "item.name": 1,
+            "item.images": 1,
+            "item.viewId": 1,
+            "item.category": 1,
+            "item.cuisine": 1,
+            "item.mealTags": 1,
+            "item.minOrders": 1,
+            "item.maxOrders": 1,
+            "item.pricePerOrder": 1,
+            "item.costToSupplierPerOrder": 1,
+            "item.description": 1,
+            "item.eventDate": 1,
+            "item.eventVisibilityDate": 1,
+            "item.closingDate": 1,
+            "item.supplier.businessName": 1,
+            "item.supplier.businessImages": 1,
+            "item.supplier.address": 1,
+            "item.supplier.contactInfo": 1,
+            "customer.fullName": 1,
+            "customer.profileImg": 1,
+            "customer.email": 1,
+            "customer.phone": 1,
+            "cost": 1,
+            "isPaid": 1,
+            "status": 1,
+            "pickupPoint.name": 1,
+            "pickupPoint.text": 1,
+            "pickupPoint.address": 1,
+        }
+    }])
 
-        return res.status(StatusCodes.OK).json({ order: orders[0] });
-
+    if (orders.length < 1) {
+        throw new CustomError.BadRequestError('Invalid Order Id');
     }
-    //to revisit 
+
+    return res.status(StatusCodes.OK).json({ order: orders[0] });
+
+}
+
 const getCustomerOrders = async(req, res) => {
     const customerId = req.params.customerId;
     const skip = req.query.skip ? Number(req.query.skip) : 0;
