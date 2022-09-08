@@ -1023,6 +1023,9 @@ const getAvailableEventDates = async (req, res) => {
         matchQuery.cuisine = req.query.cuisine
     }
 
+    matchQuery.eventVisibilityDate = {"$lte": todayDateWithZeroTime()} 
+    matchQuery.closingDate = {"$gt": todayDateWithZeroTime()} 
+    
     const availableCuisines = await dishItemModel.aggregate([
         {
             "$match": matchQuery

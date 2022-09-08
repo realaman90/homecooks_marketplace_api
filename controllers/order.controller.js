@@ -62,11 +62,11 @@ const getAllOrders = async(req, res) => {
         andQuery.push({
             status: req.query.status
         })
-    } else {
-        andQuery.push({
-            status: { $ne: orderStatus.PENDING_CHECKOUT }
-        })
-    }
+    } 
+
+    andQuery.push({
+        status: { $ne: orderStatus.PENDING_CHECKOUT }
+    })
 
     if (req.query.isPaid) {
         andQuery.push({
@@ -75,8 +75,15 @@ const getAllOrders = async(req, res) => {
     }
 
     andQuery.push({
+        pickupPoint: { $exists: true }
+    })
+    andQuery.push({
         pickupPoint: { $ne: null }
     })
+    andQuery.push({
+        pickupPoint: { $ne: undefined }
+    })
+
 
     const aggreagatePipelineQueries = [];
     if (andQuery.length > 0) {
@@ -162,12 +169,8 @@ const getAllOrders = async(req, res) => {
     })
 
     let orders = await orderModel.aggregate(aggreagatePipelineQueries)
-    if (andQuery.length === 0) {
-        itemCount = await orderModel.find().countDocuments();
-    } else {
-        itemCount = await orderModel.find({ "$and": andQuery }).countDocuments();
-    }
-
+    itemCount = await orderModel.find({ "$and": andQuery }).countDocuments();
+    
     return res.status(StatusCodes.OK).json({ orders, itemCount });
 
 }
