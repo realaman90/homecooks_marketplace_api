@@ -62,7 +62,7 @@ const getAllOrders = async(req, res) => {
         andQuery.push({
             status: req.query.status
         })
-    } 
+    }
 
     andQuery.push({
         status: { $ne: orderStatus.PENDING_CHECKOUT }
@@ -140,6 +140,7 @@ const getAllOrders = async(req, res) => {
             "cost": 1,
             "isPaid": 1,
             "status": 1,
+            "createdAt": 1,
             "item._id": 1,
             "item.name": 1,
             "item.images": 1,
@@ -170,7 +171,7 @@ const getAllOrders = async(req, res) => {
 
     let orders = await orderModel.aggregate(aggreagatePipelineQueries)
     itemCount = await orderModel.find({ "$and": andQuery }).countDocuments();
-    
+
     return res.status(StatusCodes.OK).json({ orders, itemCount });
 
 }
@@ -348,6 +349,7 @@ const getCustomerOrders = async(req, res) => {
             "cost": 1,
             "isPaid": 1,
             "status": 1,
+            "createdAt": 1,
             "item._id": 1,
             "item.name": 1,
             "item.images": 1,
