@@ -43,6 +43,7 @@ const newsLetterRouter = require('./route/newsletter.routes');
 const enquiryRouter = require('./route/enquiry.routes');
 const cuisineRouter = require('./route/cuisine.routers');
 const stripeRouter = require('./route/stripe.routes');
+const paymentRouter = require('./route/payment.routes');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -76,6 +77,7 @@ app.use('/api/v1/admin/payout', authenticateUser, authorizePermissions('admin'),
 app.use('/api/v1/admin/pickUpArea', authenticateUser, authorizePermissions('admin'), pickUpAreaRouter);
 app.use('/api/v1/admin/products', authenticateUser, authorizePermissions('admin'), itemsForAdmin);
 app.use('/api/v1/admin/cuisine', authenticateUser, authorizePermissions('admin'), cuisineRouter);
+app.use('/api/v1/admin/payments', authenticateUser, authorizePermissions('admin'), paymentRouter)
 
 //apis for suppliers
 app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions('admin'), bikerPickupPoint);
@@ -84,7 +86,6 @@ app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions
 app.use('/api/v1/admin/clientPickupPoint', authenticateUser, authorizePermissions('admin'), clientPickupPointRouter);
 
 app.use('/api/v1/stripe', authenticateUser, authorizePermissions('user'), stripeRouter);
-
 
 //apis for customers
 app.use('/api/v1/customer', customerRouter);

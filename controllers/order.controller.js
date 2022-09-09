@@ -783,6 +783,95 @@ const placeOrder = async(req, res) => {
     return res.status(StatusCodes.OK).json({ message: "order placed successfully" });
 }
 
+const getPayments = async (req, res) => {
+
+    const skip = req.query.skip ? Number(req.query.skip) : 0;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+
+    const payments = await paymentModel.aggregate([                
+        {
+            "$match": {
+                "status": paymentStatus.ORDER_PLACED
+            }
+        },  {
+            "$skip": skip
+        }, {
+            "$limit": limit
+        }, 
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "customer",
+                "foreignField": "_id",
+                "as": "customer"
+                }
+        }, { 
+            "$unwind": '$customer' 
+        }, {
+            "$lookup": {
+                "from": "suppliers",
+                "localField": "supplier",
+                "foreignField": "_id",
+                "as": "supplier"
+                }
+        }, { 
+            "$unwind": '$supplier' 
+        }, { 
+            "$lookup": {
+                "from": "orders",
+                "let": { "orders": "$orders" },
+                "pipeline": [
+                    { "$match": 
+                        { 
+                            "$expr": { "$in": [ "$_id", "$$orders"] } 
+                        }
+                    },
+                    {
+                        "$lookup": {
+                            "from": "dishitems",
+                            "localField": "item",
+                            "foreignField": "_id",
+                            "as": "item"
+                        }
+                    }, { 
+                        "$unwind": '$item'
+                    }, 
+                ],
+                "as": "orders"
+            }
+        }, {
+            "$project": {                
+                "cost":1,
+                "serviceFee":1,
+                "deliveryFee":1,
+                "tax":1,
+                "total":1,
+                "costToSupplier":1,
+                "eventPickupAddressMapping":1,                
+                "isPaid":1,
+                "false":1,
+                "status":1,
+                "customer.fullName": 1,
+                "customer.profileImg": 1,
+                "customer.email": 1,
+                "customer.phone": 1,
+                "supplier.businessName": 1,
+                "supplier.businessImages": 1,
+                "supplier.address": 1,
+                "supplier.contactInfo": 1,
+                "orders":1                
+            }  
+        } 
+    ])
+
+    const paymentCount = await paymentModel.find({"status": paymentStatus.ORDER_PLACED}).countDocuments()
+
+    return res.status(StatusCodes.OK).json({ payments, paymentCount });
+
+}
+// getPayments()
+
+
 module.exports = {
     createOrder,
     getAllOrders,
@@ -793,5 +882,6 @@ module.exports = {
     getCheckout,
     placeOrder,
     updatePickupAddressOnOrder,
-    updatePaymentMethod
+    updatePaymentMethod,
+    getPayments
 }
