@@ -47,7 +47,7 @@ const PaymentSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        enum: [paymentStatus.PENDING_CHECKOUT, paymentStatus.ORDER_PLACED],
+        enum: [paymentStatus.PENDING_CHECKOUT, paymentStatus.ORDER_PLACED, paymentStatus.COMPLETED],
         default: paymentStatus.PENDING_CHECKOUT
     },
     itemsHash: String,

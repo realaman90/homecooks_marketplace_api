@@ -44,6 +44,7 @@ const enquiryRouter = require('./route/enquiry.routes');
 const cuisineRouter = require('./route/cuisine.routers');
 const stripeRouter = require('./route/stripe.routes');
 const paymentRouter = require('./route/payment.routes');
+const customerPaymentRouter = require('./route/customerPayment.routes');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -94,8 +95,8 @@ app.use('/api/v1/checkout', authenticateUser, authorizePermissions('user'), chec
 app.use('/api/v1/products', items);
 app.use('/api/v1/newsletter', newsLetterRouter);
 app.use('/api/v1/enquiry', enquiryRouter);
-app.use('/api/v1/orders', authenticateUser, authorizePermissions('admin', 'user'), orderRouter)
-
+app.use('/api/v1/orders', authenticateUser, authorizePermissions('admin', 'user'), orderRouter);
+app.use('/api/v1/payments', authenticateUser, authorizePermissions('admin', 'user'), customerPaymentRouter);
 
 // for both admin and user
 app.use('/api/v1/notification', authenticateUser, authorizePermissions('user', 'admin'), notificationRouter);

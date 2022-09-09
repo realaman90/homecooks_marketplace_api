@@ -17,7 +17,8 @@ const orderStatus = {
 
 const paymentStatus = {
   PENDING_CHECKOUT: "pending_checkout",
-  ORDER_PLACED: "order_placed"
+  ORDER_PLACED: "order_placed",
+  COMPLETED: "completed"
 }
 
 const notificationTypes = {
