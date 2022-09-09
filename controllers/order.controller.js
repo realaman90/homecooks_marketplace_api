@@ -694,9 +694,15 @@ const updatePickupAddressOnOrder = async(req, res) => {
 
     const orders = req.body.orders;
 
+    console.log("request body");
+    console.log(body)
 
     for (let i = 0; i < orders.length; i++) {
         let o = orders[i];
+
+        console.log(`order: ${i}`)
+        console.log(o)
+        
         let resp = await orderModel.updateOne({
             _id: o.orderId
         }, {
@@ -705,6 +711,9 @@ const updatePickupAddressOnOrder = async(req, res) => {
                 instruction: o.instruction,
             }
         })
+        console.log("resp")
+        console.log(resp)
+
         let orderUpdated = await orderModel.findOne({ _id: o.orderId });
         console.log(orderUpdated)
     }
