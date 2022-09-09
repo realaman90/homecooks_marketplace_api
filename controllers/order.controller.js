@@ -511,16 +511,25 @@ const createOrdersFromKart = async(kartItems, prevOrders) => {
         prevOrders.forEach((po) => {
             prevOrderMeta[po.item] = {
                 pickupPoint: po.pickupPoint,
-                instruction: po.instruction
+                instruction: po.instruction,
+                orderId: po._id
             }
         })
     }
+
+    let prevOrderIds = prevOrders.map(o=> o._id);
+
+    // remove prev orders
+    await orderModel.deleteMany({
+        _id: { $in: prevOrderIds }
+    })
 
     const orders = []
 
     kartItems.forEach(ki => {
 
         orders.push({
+            _id: prevOrderMeta[ki.item._id] ? prevOrderMeta[ki.item._id].orderId : mongoose.Types.ObjectId(),
             customer: ki.customer,
             viewId: 'order_' + crypto.randomBytes(6).toString('hex'),
             item: ki.item._id,
@@ -620,11 +629,6 @@ const getCheckout = async(req, res) => {
         payment = await paymentModel.create(payment);
 
     } else {
-
-        // delete old orders
-        await orderModel.deleteMany({
-            _id: { $in: pendingCheckout.orders }
-        })
 
         payment._id = pendingCheckout._id
 
