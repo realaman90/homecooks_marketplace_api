@@ -694,6 +694,7 @@ const updatePickupAddressOnOrder = async(req, res) => {
 
     const orders = req.body.orders;
 
+
     for (let i = 0; i < orders.length; i++) {
         let o = orders[i];
         let resp = await orderModel.updateOne({
@@ -704,9 +705,11 @@ const updatePickupAddressOnOrder = async(req, res) => {
                 instruction: o.instruction,
             }
         })
+        let orderUpdated = await orderModel.findOne({ _id: o.orderId });
+        console.log(orderUpdated)
     }
 
-    return res.status(StatusCodes.OK).json({ message: "pickup point updated on the order" });
+    return res.status(StatusCodes.OK).json({ message: "pickup point updated on the order", });
 }
 
 
