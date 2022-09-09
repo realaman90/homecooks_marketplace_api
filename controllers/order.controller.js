@@ -695,7 +695,7 @@ const updatePickupAddressOnOrder = async(req, res) => {
     const orders = req.body.orders;
 
     console.log("request body");
-    console.log(body)
+    console.log(orders)
 
     for (let i = 0; i < orders.length; i++) {
         let o = orders[i];
