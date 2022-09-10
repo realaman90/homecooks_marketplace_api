@@ -113,8 +113,6 @@ const resetPassword = async(req, res) => {
     res.status(StatusCodes.OK).json({ msg: 'Password changerd successfully', token })
 }
 
-
-
 //sign in customer
 const registerUser = async(req, res) => {
     const userData = req.body;
@@ -124,7 +122,7 @@ const registerUser = async(req, res) => {
     userData.role = 'user';
 
     // create stripe customer id
-    userData.stripeCustId = await CreateStripeCustomer();
+    userData.stripeCustId = await CreateStripeCustomer(userData.fullName, userData.email);
 
     const emailAlreadyExists = await User.findOne({ email: userData.email });
     if (emailAlreadyExists) {

@@ -9,7 +9,6 @@ const CreateStripeCustomer = async (name, email) => {
     });
 
     return customer.id;
-
 };
 
 // CreateStripeCustomer("Test Notification", "amanrawatamg@gmail.com")
@@ -23,6 +22,18 @@ const SetupIntentFrCard = async (stripeCustId) => {
 
     return setupIntent.client_secret;
 }
+
+const FetchPaymentMethods = async (stripeCustId) => {
+
+    const paymentMethods = await stripe.customers.listPaymentMethods(
+        stripeCustId,
+        {type: 'card'}
+    );
+
+    return paymentMethods.data;
+}
+
+// FetchPaymentMethods("cus_MPJQi5K86sVVrV")
 
 // (async () => {
 //     console.log("asdflajsdkfjlasjdkf")
@@ -38,7 +49,8 @@ const SetupIntentFrCard = async (stripeCustId) => {
 
 module.exports = {
     CreateStripeCustomer,
-    SetupIntentFrCard
+    SetupIntentFrCard,
+    FetchPaymentMethods
 }
 
 
