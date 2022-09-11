@@ -14,45 +14,40 @@ const notificationController = require('./notification.controller');
 const { SetupIntentFrCard } = require('../utils/stripe');
 const utils = require('nodemon/lib/utils');
 
-const tryToCompleteTransaction = async (paymentId) => {
+const tryToCompleteTransaction = async(paymentId) => {
 
-    let payment = await paymentModel.aggregate([
-        {
-            "$match":{
-                "_id": mongoose.Types.ObjectId(paymentId)
-            }
-        }, { 
-            "$lookup": {
-                "from": "orders",
-                "let": { "orders": "$orders" },
-                "pipeline": [
-                    { 
-                        "$match": 
-                        { 
-                            "$expr": { "$in": [ "$_id", "$$orders"] } 
-                        }
-                    }, {
-                        "$project": {
-                            "status":1
-                        }
-                    }
-                ],
-                "as": "orders"
-            }
-        }, {
-            "$project":{
-                "orders":1
-            }
+    let payment = await paymentModel.aggregate([{
+        "$match": {
+            "_id": mongoose.Types.ObjectId(paymentId)
         }
-    ])
+    }, {
+        "$lookup": {
+            "from": "orders",
+            "let": { "orders": "$orders" },
+            "pipeline": [{
+                "$match": {
+                    "$expr": { "$in": ["$_id", "$$orders"] }
+                }
+            }, {
+                "$project": {
+                    "status": 1
+                }
+            }],
+            "as": "orders"
+        }
+    }, {
+        "$project": {
+            "orders": 1
+        }
+    }])
 
     payment = payment[0];
 
     let isTransactionCompleted = true;
 
-    if (payment){
-        payment.orders.forEach(o=>{
-            if (o.status != orderStatus.COMPLETED && o.status !=  orderStatus.DELIVERED && o.status !=  orderStatus.CANCELLED){
+    if (payment) {
+        payment.orders.forEach(o => {
+            if (o.status != orderStatus.COMPLETED && o.status != orderStatus.DELIVERED && o.status != orderStatus.CANCELLED) {
                 isTransactionCompleted = false
             }
         })
@@ -60,17 +55,17 @@ const tryToCompleteTransaction = async (paymentId) => {
 
     console.log(isTransactionCompleted);
 
-    if (isTransactionCompleted){
+    if (isTransactionCompleted) {
         await paymentModel.updateOne({
-            "_id":paymentId
+            "_id": paymentId
         }, {
-            "$set":{
+            "$set": {
                 "status": paymentStatus.COMPLETED,
                 "updatedAt": new Date()
             }
         })
     }
-    
+
     console.log("tryToCompleteTransaction completed!")
 
     return
@@ -581,7 +576,7 @@ const createOrdersFromKart = async(kartItems, prevOrders) => {
         })
     }
 
-    let prevOrderIds = prevOrders.map(o=> o._id);
+    let prevOrderIds = prevOrders.map(o => o._id);
 
     // remove prev orders
     await orderModel.deleteMany({
@@ -672,6 +667,7 @@ const getCheckout = async(req, res) => {
     let orders = await createOrdersFromKart(kartItems, pendingCheckout ? pendingCheckout.orders : []);
 
     let payment = {
+        viewId: crypto.randomBytes(3).toString('hex'),
         customer: userId,
         supplier: kartItems[0].item.supplier,
         cost: calcObj.cost,
@@ -699,6 +695,7 @@ const getCheckout = async(req, res) => {
         // update payment object
         await paymentModel.updateOne({ "_id": pendingCheckout._id }, {
             $set: {
+
                 supplier: payment.supplier,
                 cost: payment.cost,
                 deliveryFee: payment.deliveryFee,
@@ -770,7 +767,7 @@ const updatePickupAddressOnOrder = async(req, res) => {
 
         console.log(`order: ${i}`)
         console.log(o)
-        
+
         let resp = await orderModel.updateOne({
             _id: o.orderId
         }, {
@@ -847,58 +844,156 @@ const placeOrder = async(req, res) => {
     return res.status(StatusCodes.OK).json({ message: "order placed successfully" });
 }
 
-const getPayments = async (req, res) => {
+const getPayments = async(req, res) => {
+
+        const skip = req.query.skip ? Number(req.query.skip) : 0;
+        const limit = req.query.limit ? Number(req.query.limit) : 10;
+
+        let status = req.query.status;
+        if (status) {
+            if (status == "active") {
+                status = paymentStatus.ORDER_PLACED
+            } else if (status == "past") {
+                status = paymentStatus.COMPLETED
+            }
+        } else {
+            status = paymentStatus.ORDER_PLACED
+        }
+
+        const payments = await paymentModel.aggregate([{
+                "$match": {
+                    "status": status
+                }
+            }, {
+                "$skip": skip
+            }, {
+                "$limit": limit
+            },
+            {
+                "$lookup": {
+                    "from": "users",
+                    "localField": "customer",
+                    "foreignField": "_id",
+                    "as": "customer"
+                }
+            }, {
+                "$unwind": '$customer'
+            }, {
+                "$lookup": {
+                    "from": "suppliers",
+                    "localField": "supplier",
+                    "foreignField": "_id",
+                    "as": "supplier"
+                }
+            }, {
+                "$unwind": '$supplier'
+            }, {
+                "$lookup": {
+                    "from": "orders",
+                    "let": { "orders": "$orders" },
+                    "pipeline": [{
+                            "$match": {
+                                "$expr": { "$in": ["$_id", "$$orders"] }
+                            }
+                        },
+                        {
+                            "$lookup": {
+                                "from": "dishitems",
+                                "localField": "item",
+                                "foreignField": "_id",
+                                "as": "item"
+                            }
+                        }, {
+                            "$unwind": '$item'
+                        },
+                    ],
+                    "as": "orders"
+                }
+            }, {
+                "$project": {
+                    "cost": 1,
+                    "serviceFee": 1,
+                    "deliveryFee": 1,
+                    "tax": 1,
+                    "total": 1,
+                    "costToSupplier": 1,
+                    "eventPickupAddressMapping": 1,
+                    "isPaid": 1,
+                    "false": 1,
+                    "status": 1,
+                    "customer.fullName": 1,
+                    "customer.profileImg": 1,
+                    "customer.email": 1,
+                    "customer.phone": 1,
+                    "supplier.businessName": 1,
+                    "supplier.businessImages": 1,
+                    "supplier.address": 1,
+                    "supplier.contactInfo": 1,
+                    "orders": 1
+                }
+            }
+        ])
+
+        const paymentCount = await paymentModel.find({ "status": paymentStatus.ORDER_PLACED }).countDocuments()
+
+        return res.status(StatusCodes.OK).json({ payments, paymentCount });
+
+    }
+    // getPayments()
+
+const getPaymentsFrCustomer = async(req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 
     let status = req.query.status;
-    if (status) {        
-        if (status == "active"){
+    if (status) {
+        if (status == "active") {
             status = paymentStatus.ORDER_PLACED
         } else if (status == "past") {
             status = paymentStatus.COMPLETED
-        }  
+        }
     } else {
         status = paymentStatus.ORDER_PLACED
     }
 
-    const payments = await paymentModel.aggregate([                
-        {
+    const payments = await paymentModel.aggregate([{
             "$match": {
-                "status": status
+                "$and": [
+                    { "status": status },
+                    { "customer": mongoose.Types.ObjectId(req.user.userId) }
+                ]
             }
-        },  {
+        }, {
             "$skip": skip
         }, {
             "$limit": limit
-        }, 
+        },
         {
             "$lookup": {
                 "from": "users",
                 "localField": "customer",
                 "foreignField": "_id",
                 "as": "customer"
-                }
-        }, { 
-            "$unwind": '$customer' 
+            }
+        }, {
+            "$unwind": '$customer'
         }, {
             "$lookup": {
                 "from": "suppliers",
                 "localField": "supplier",
                 "foreignField": "_id",
                 "as": "supplier"
-                }
-        }, { 
-            "$unwind": '$supplier' 
-        }, { 
+            }
+        }, {
+            "$unwind": '$supplier'
+        }, {
             "$lookup": {
                 "from": "orders",
                 "let": { "orders": "$orders" },
-                "pipeline": [
-                    { "$match": 
-                        { 
-                            "$expr": { "$in": [ "$_id", "$$orders"] } 
+                "pipeline": [{
+                        "$match": {
+                            "$expr": { "$in": ["$_id", "$$orders"] }
                         }
                     },
                     {
@@ -908,126 +1003,24 @@ const getPayments = async (req, res) => {
                             "foreignField": "_id",
                             "as": "item"
                         }
-                    }, { 
+                    }, {
                         "$unwind": '$item'
-                    }, 
-                ],
-                "as": "orders"
-            }
-        }, {
-            "$project": {                
-                "cost":1,
-                "serviceFee":1,
-                "deliveryFee":1,
-                "tax":1,
-                "total":1,
-                "costToSupplier":1,
-                "eventPickupAddressMapping":1,                
-                "isPaid":1,
-                "false":1,
-                "status":1,
-                "customer.fullName": 1,
-                "customer.profileImg": 1,
-                "customer.email": 1,
-                "customer.phone": 1,
-                "supplier.businessName": 1,
-                "supplier.businessImages": 1,
-                "supplier.address": 1,
-                "supplier.contactInfo": 1,
-                "orders":1                
-            }  
-        } 
-    ])
-
-    const paymentCount = await paymentModel.find({"status": paymentStatus.ORDER_PLACED}).countDocuments()
-
-    return res.status(StatusCodes.OK).json({ payments, paymentCount });
-
-}
-// getPayments()
-
-const getPaymentsFrCustomer = async (req, res) => {
-
-    const skip = req.query.skip ? Number(req.query.skip) : 0;
-    const limit = req.query.limit ? Number(req.query.limit) : 10;
-
-    let status = req.query.status;
-    if (status) {        
-        if (status == "active"){
-            status = paymentStatus.ORDER_PLACED
-        } else if (status == "past") {
-            status = paymentStatus.COMPLETED
-        }  
-    } else {
-        status = paymentStatus.ORDER_PLACED
-    }
-
-    const payments = await paymentModel.aggregate([                
-        {
-            "$match": {
-                "$and":[
-                    {"status": status},
-                    {"customer": mongoose.Types.ObjectId(req.user.userId)}
-                ]                
-            }
-        },  {
-            "$skip": skip
-        }, {
-            "$limit": limit
-        }, 
-        {
-            "$lookup": {
-                "from": "users",
-                "localField": "customer",
-                "foreignField": "_id",
-                "as": "customer"
-                }
-        }, { 
-            "$unwind": '$customer' 
-        }, {
-            "$lookup": {
-                "from": "suppliers",
-                "localField": "supplier",
-                "foreignField": "_id",
-                "as": "supplier"
-                }
-        }, { 
-            "$unwind": '$supplier' 
-        }, { 
-            "$lookup": {
-                "from": "orders",
-                "let": { "orders": "$orders" },
-                "pipeline": [
-                    { "$match": 
-                        { 
-                            "$expr": { "$in": [ "$_id", "$$orders"] } 
-                        }
                     },
-                    {
-                        "$lookup": {
-                            "from": "dishitems",
-                            "localField": "item",
-                            "foreignField": "_id",
-                            "as": "item"
-                        }
-                    }, { 
-                        "$unwind": '$item'
-                    }, 
                 ],
                 "as": "orders"
             }
         }, {
-            "$project": {                
-                "cost":1,
-                "serviceFee":1,
-                "deliveryFee":1,
-                "tax":1,
-                "total":1,
-                "costToSupplier":1,
-                "eventPickupAddressMapping":1,                
-                "isPaid":1,
-                "false":1,
-                "status":1,
+            "$project": {
+                "cost": 1,
+                "serviceFee": 1,
+                "deliveryFee": 1,
+                "tax": 1,
+                "total": 1,
+                "costToSupplier": 1,
+                "eventPickupAddressMapping": 1,
+                "isPaid": 1,
+                "false": 1,
+                "status": 1,
                 "customer.fullName": 1,
                 "customer.profileImg": 1,
                 "customer.email": 1,
@@ -1036,12 +1029,12 @@ const getPaymentsFrCustomer = async (req, res) => {
                 "supplier.businessImages": 1,
                 "supplier.address": 1,
                 "supplier.contactInfo": 1,
-                "orders":1                
-            }  
-        } 
+                "orders": 1
+            }
+        }
     ])
 
-    const paymentCount = await paymentModel.find({"status": paymentStatus.ORDER_PLACED}).countDocuments()
+    const paymentCount = await paymentModel.find({ "status": paymentStatus.ORDER_PLACED }).countDocuments()
 
     return res.status(StatusCodes.OK).json({ payments, paymentCount });
 
@@ -1051,68 +1044,65 @@ function checkMongoIdsAreSame(_id1, _id2) {
     const id1 = mongoose.Types.ObjectId(_id1);
     const id2 = mongoose.Types.ObjectId(_id2);
     if (id1.equals(id2)) {
-      return true;
+        return true;
     }
     return false;
 }
 
-const updateOrder = async (req, res) => {
+const updateOrder = async(req, res) => {
 
     const orderId = req.params.orderId;
     const status = req.body.status;
 
-     // get orders data for recalculations
-     let payment = await paymentModel.aggregate([                
-        {
-            "$match": {
-                orders: { $elemMatch: { $eq: mongoose.Types.ObjectId(orderId) } },
-            }
-        }, { 
-            "$lookup": {
-                "from": "orders",
-                "let": { "orders": "$orders" },
-                "pipeline": [
-                    { "$match": 
-                        { 
-                            "$expr": { "$in": [ "$_id", "$$orders"] } 
-                        }
-                    },
-                    {
-                        "$lookup": {
-                            "from": "dishitems",
-                            "localField": "item",
-                            "foreignField": "_id",
-                            "as": "item"
-                        }
-                    }, { 
-                        "$unwind": '$item'
-                    }, {
-                        "$project":{
-                            "_id":1,
-                            "status":1,
-                            "quantity":1,
-                            "item.pricePerOrder":1,
-                            "item.costToSupplierPerOrder":1
-                        }                    
-                    }
-                ],
-                "as": "orders"
-            }
-        }, {
-            "$project":{
-                "_id":1,
-                "total":1,
-                "orders":1
-            }
+    // get orders data for recalculations
+    let payment = await paymentModel.aggregate([{
+        "$match": {
+            orders: { $elemMatch: { $eq: mongoose.Types.ObjectId(orderId) } },
         }
-    ])
+    }, {
+        "$lookup": {
+            "from": "orders",
+            "let": { "orders": "$orders" },
+            "pipeline": [{
+                    "$match": {
+                        "$expr": { "$in": ["$_id", "$$orders"] }
+                    }
+                },
+                {
+                    "$lookup": {
+                        "from": "dishitems",
+                        "localField": "item",
+                        "foreignField": "_id",
+                        "as": "item"
+                    }
+                }, {
+                    "$unwind": '$item'
+                }, {
+                    "$project": {
+                        "_id": 1,
+                        "status": 1,
+                        "quantity": 1,
+                        "item.pricePerOrder": 1,
+                        "item.costToSupplierPerOrder": 1
+                    }
+                }
+            ],
+            "as": "orders"
+        }
+    }, {
+        "$project": {
+            "_id": 1,
+            "total": 1,
+            "orders": 1
+        }
+    }])
 
-    payment = payment[0];   
-    
+    payment = payment[0];
+
     if (status == "cancelled") {
 
-        let unCancelledOrders = payment.orders.filter(o=>{
-            if (checkMongoIdsAreSame(o._id, orderId) || o.status == "cancelled"){
+        let unCancelledOrders = payment.orders.filter(o => {
+            if (checkMongoIdsAreSame(o._id, orderId) || o.status == "cancelled") {
                 return false
             } else {
                 return true
@@ -1131,7 +1121,7 @@ const updateOrder = async (req, res) => {
         console.log(updateResp)
     }
 
-        
+
     await orderModel.updateOne({
         _id: orderId
     }, {

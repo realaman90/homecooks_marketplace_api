@@ -6,7 +6,7 @@ const PaymentSchema = mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true
-    },    
+    },
     supplier: {
         type: mongoose.Types.ObjectId,
         ref: 'Supplier',
@@ -16,7 +16,7 @@ const PaymentSchema = mongoose.Schema({
         type: String,
         required: [true]
     },
-    serviceFee:{
+    serviceFee: {
         type: String,
         required: [true]
     },
@@ -24,11 +24,11 @@ const PaymentSchema = mongoose.Schema({
         type: String,
         required: [true]
     },
-    tax:{
+    tax: {
         type: String,
         required: [true]
     },
-    total:{
+    total: {
         type: String,
         required: [true]
     },
@@ -37,10 +37,11 @@ const PaymentSchema = mongoose.Schema({
         required: [true]
     },
     eventPickupAddressMapping: [Object],
-    orders: [mongoose.Types.ObjectId],    
+    orders: [mongoose.Types.ObjectId],
     paymentMethodType: String,
     paymentMethod: String,
     paymentIntent: String,
+    viewId: String,
     isPaid: {
         type: Boolean,
         default: false
