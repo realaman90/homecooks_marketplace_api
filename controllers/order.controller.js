@@ -1020,6 +1020,8 @@ const getPaymentsFrCustomer = async(req, res) => {
                 "tax": 1,
                 "total": 1,
                 "viewId": 1,
+                "createdAt": 1,
+                "updatedAt": 1,
                 "costToSupplier": 1,
                 "eventPickupAddressMapping": 1,
                 "isPaid": 1,
