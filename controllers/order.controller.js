@@ -846,6 +846,7 @@ const placeOrder = async(req, res) => {
 
 const getPayments = async(req, res) => {
 
+
         const skip = req.query.skip ? Number(req.query.skip) : 0;
         const limit = req.query.limit ? Number(req.query.limit) : 10;
 
@@ -914,6 +915,7 @@ const getPayments = async(req, res) => {
                     "cost": 1,
                     "serviceFee": 1,
                     "deliveryFee": 1,
+                    "viewId": 1,
                     "tax": 1,
                     "total": 1,
                     "costToSupplier": 1,
@@ -942,6 +944,7 @@ const getPayments = async(req, res) => {
     // getPayments()
 
 const getPaymentsFrCustomer = async(req, res) => {
+
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
@@ -1016,6 +1019,7 @@ const getPaymentsFrCustomer = async(req, res) => {
                 "deliveryFee": 1,
                 "tax": 1,
                 "total": 1,
+                "viewId": 1,
                 "costToSupplier": 1,
                 "eventPickupAddressMapping": 1,
                 "isPaid": 1,
