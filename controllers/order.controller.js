@@ -946,31 +946,131 @@ const getPayments = async(req, res) => {
 const getPaymentsFrCustomer = async(req, res) => {
 
 
-    const skip = req.query.skip ? Number(req.query.skip) : 0;
-    const limit = req.query.limit ? Number(req.query.limit) : 10;
+        const skip = req.query.skip ? Number(req.query.skip) : 0;
+        const limit = req.query.limit ? Number(req.query.limit) : 10;
 
-    let status = req.query.status;
-    if (status) {
-        if (status == "active") {
-            status = paymentStatus.ORDER_PLACED
-        } else if (status == "past") {
-            status = paymentStatus.COMPLETED
-        }
-    } else {
-        status = paymentStatus.ORDER_PLACED
-    }
-
-    const payments = await paymentModel.aggregate([{
-            "$match": {
-                "$and": [
-                    { "status": status },
-                    { "customer": mongoose.Types.ObjectId(req.user.userId) }
-                ]
+        let status = req.query.status;
+        if (status) {
+            if (status == "active") {
+                status = paymentStatus.ORDER_PLACED
+            } else if (status == "past") {
+                status = paymentStatus.COMPLETED
             }
-        }, {
-            "$skip": skip
-        }, {
-            "$limit": limit
+        } else {
+            status = paymentStatus.ORDER_PLACED
+        }
+
+        const payments = await paymentModel.aggregate([{
+                "$match": {
+                    "$and": [
+                        { "status": status },
+                        { "customer": mongoose.Types.ObjectId(req.user.userId) }
+                    ]
+                }
+            }, {
+                "$skip": skip
+            }, {
+                "$limit": limit
+            },
+            {
+                "$lookup": {
+                    "from": "users",
+                    "localField": "customer",
+                    "foreignField": "_id",
+                    "as": "customer"
+                }
+            }, {
+                "$unwind": '$customer'
+            }, {
+                "$lookup": {
+                    "from": "suppliers",
+                    "localField": "supplier",
+                    "foreignField": "_id",
+                    "as": "supplier"
+                }
+            }, {
+                "$unwind": '$supplier'
+            }, {
+                "$lookup": {
+                    "from": "orders",
+                    "let": { "orders": "$orders" },
+                    "pipeline": [{
+                            "$match": {
+                                "$expr": { "$in": ["$_id", "$$orders"] }
+                            }
+                        }, {
+                            "$lookup": {
+                                "from": "dishitems",
+                                "localField": "item",
+                                "foreignField": "_id",
+                                "as": "item"
+                            }
+                        }, {
+                            "$unwind": '$item'
+                        },
+                        {
+                            "$lookup": {
+                                "from": "clientpickuppoints",
+                                "localField": "pickupPoint",
+                                "foreignField": "_id",
+                                "as": "pickupPoint"
+                            }
+                        }, {
+                            "$unwind": '$pickupPoint'
+                        },
+                    ],
+                    "as": "orders"
+                }
+            }, {
+                "$project": {
+                    "cost": 1,
+                    "serviceFee": 1,
+                    "deliveryFee": 1,
+                    "tax": 1,
+                    "total": 1,
+                    "viewId": 1,
+                    "createdAt": 1,
+                    "updatedAt": 1,
+                    "costToSupplier": 1,
+                    "eventPickupAddressMapping": 1,
+                    "isPaid": 1,
+                    "false": 1,
+                    "status": 1,
+                    "customer.fullName": 1,
+                    "customer.profileImg": 1,
+                    "customer.email": 1,
+                    "customer.phone": 1,
+                    "supplier.businessName": 1,
+                    "supplier.businessImages": 1,
+                    "supplier.address": 1,
+                    "supplier.contactInfo": 1,
+                    "orders": 1
+                }
+            }
+        ])
+
+        const paymentCount = await paymentModel.find({
+            "$and": [
+                { "status": status },
+                { "customer": mongoose.Types.ObjectId(req.user.userId) }
+            ]
+        }).countDocuments()
+
+        return res.status(StatusCodes.OK).json({ payments, paymentCount });
+
+    }
+    // get single payment details for customer
+const getSinglePaymentFrCustomer = async(req, res) => {
+    const { paymentId } = req.params;
+    console.log(paymentId);
+
+
+    const payment = await paymentModel.aggregate([{
+            "$match": {
+
+                "_id": mongoose.Types.ObjectId(paymentId)
+
+            }
         },
         {
             "$lookup": {
@@ -1007,7 +1107,7 @@ const getPaymentsFrCustomer = async(req, res) => {
                         }
                     }, {
                         "$unwind": '$item'
-                    }, 
+                    },
                     {
                         "$lookup": {
                             "from": "clientpickuppoints",
@@ -1015,9 +1115,9 @@ const getPaymentsFrCustomer = async(req, res) => {
                             "foreignField": "_id",
                             "as": "pickupPoint"
                         }
-                    }, { 
+                    }, {
                         "$unwind": '$pickupPoint'
-                    }, 
+                    },
                 ],
                 "as": "orders"
             }
@@ -1049,14 +1149,11 @@ const getPaymentsFrCustomer = async(req, res) => {
         }
     ])
 
-    const paymentCount = await paymentModel.find({"$and":[
-        {"status": status},
-        {"customer": mongoose.Types.ObjectId(req.user.userId)}
-    ]}).countDocuments()
 
-    return res.status(StatusCodes.OK).json({ payments, paymentCount });
 
-}
+    return res.status(StatusCodes.OK).json({ payment });
+
+};
 
 function checkMongoIdsAreSame(_id1, _id2) {
     const id1 = mongoose.Types.ObjectId(_id1);
@@ -1158,6 +1255,7 @@ const updateOrder = async(req, res) => {
 module.exports = {
     updateOrder,
     getPaymentsFrCustomer,
+    getSinglePaymentFrCustomer,
     createOrder,
     getAllOrders,
     getOrderById,
