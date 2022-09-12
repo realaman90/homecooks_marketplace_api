@@ -1002,8 +1002,7 @@ const getPaymentsFrCustomer = async (req, res) => {
                         { 
                             "$expr": { "$in": [ "$_id", "$$orders"] } 
                         }
-                    },
-                    {
+                    }, {
                         "$lookup": {
                             "from": "dishitems",
                             "localField": "item",
@@ -1012,6 +1011,16 @@ const getPaymentsFrCustomer = async (req, res) => {
                         }
                     }, { 
                         "$unwind": '$item'
+                    }, 
+                    {
+                        "$lookup": {
+                            "from": "clientpickuppoints",
+                            "localField": "pickupPoint",
+                            "foreignField": "_id",
+                            "as": "pickupPoint"
+                        }
+                    }, { 
+                        "$unwind": '$pickupPoint'
                     }, 
                 ],
                 "as": "orders"
@@ -1041,7 +1050,10 @@ const getPaymentsFrCustomer = async (req, res) => {
         } 
     ])
 
-    const paymentCount = await paymentModel.find({"status": paymentStatus.ORDER_PLACED}).countDocuments()
+    const paymentCount = await paymentModel.find({"$and":[
+        {"status": status},
+        {"customer": mongoose.Types.ObjectId(req.user.userId)}
+    ]}).countDocuments()
 
     return res.status(StatusCodes.OK).json({ payments, paymentCount });
 
