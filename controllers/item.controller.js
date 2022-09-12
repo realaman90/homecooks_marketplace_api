@@ -1063,22 +1063,10 @@ const getAvailableEventDates = async (req, res) => {
 // const SearchItem = async (req, res) => {
 const SearchItem = async (req, res) => {
 
-    let andQuery = [];
-
     if (!req.query.search) {
         res.status(StatusCodes.OK).json({ items:[], itemCount:0 });
         return  
     } 
-
-    andQuery.push({
-        status: 'active'
-    })
-    andQuery.push({
-        eventVisibilityDate: {"$lte": todayDateWithZeroTime()} 
-    })
-    andQuery.push({
-        closingDate: {"$gt": todayDateWithZeroTime()} 
-    })
     
     let searchItems = await dishItemModel.aggregate([
         {

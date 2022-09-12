@@ -2,6 +2,7 @@ const Wishlist = require('../models/Wishlist');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
+const { todayDateWithZeroTime} = require('../utils/datetime');
 
 // Create a supplier or a customer
 const ToggleAddToWishlist = async(req, res) => {
@@ -32,6 +33,9 @@ const ToggleAddToWishlist = async(req, res) => {
 
 const GetWishList = async (req, res) => {
 
+    const skip = req.query.skip ? Number(req.query.skip) : 0;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+
     const items = await Wishlist.aggregate([
         {
             "$match":{
@@ -51,6 +55,18 @@ const GetWishList = async (req, res) => {
             "$replaceRoot": { 
                 "newRoot": { $ifNull: [ "$item", {} ] } 
             }
+        }, {
+            "$match":{
+                $and: [
+                    {status: 'active'},
+                    {eventVisibilityDate: {"$lte": todayDateWithZeroTime()}},
+                    {closingDate: {"$gt": todayDateWithZeroTime()}}
+                ]                    
+            }
+        }, {
+            "$skip": skip
+        }, {
+            "$limit":limit
         }, {
             "$lookup": {
                 "from": "dishes",
@@ -95,7 +111,39 @@ const GetWishList = async (req, res) => {
         }
     ])
 
-    res.status(StatusCodes.OK).json({ items })
+    const wishlistCount = await Wishlist.aggregate([
+        {
+            "$match":{
+                customer: mongoose.Types.ObjectId(req.user.userId)
+            }
+        },
+        {
+            "$lookup": {
+                "from": "dishitems",
+                "localField": "item",
+                "foreignField": "_id",
+                "as": "item"
+            }
+        }, {
+            "$unwind":"$item"
+        }, {
+            "$replaceRoot": { 
+                "newRoot": { $ifNull: [ "$item", {} ] } 
+            }
+        }, {
+            "$match":{
+                $and: [
+                    {status: 'active'},
+                    {eventVisibilityDate: {"$lte": todayDateWithZeroTime()}},
+                    {closingDate: {"$gt": todayDateWithZeroTime()}}
+                ]                    
+            }
+        }, {
+            "$count":"count"
+        }
+    ])
+
+    res.status(StatusCodes.OK).json({ items, itemCount: wishlistCount[0].count })
     return 
 
 };
