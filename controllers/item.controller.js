@@ -603,6 +603,12 @@ const ListProducts = async (req, res)  => {
         })
     }
 
+    if (req.query.dish) {
+        andQuery.push({
+            dish: mongoose.Types.ObjectId(req.query.dish)
+        })
+    }
+
     let eventDateFilterCount = 0;
     if (req.query.eventDate){
         let eventDate = req.query.eventDate;
