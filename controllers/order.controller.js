@@ -1062,14 +1062,10 @@ const getPaymentsFrCustomer = async(req, res) => {
     // get single payment details for customer
 const getSinglePaymentFrCustomer = async(req, res) => {
     const { paymentId } = req.params;
-    console.log(paymentId);
 
-
-    const payment = await paymentModel.aggregate([{
+    let payment = await paymentModel.aggregate([{
             "$match": {
-
                 "_id": mongoose.Types.ObjectId(paymentId)
-
             }
         },
         {
@@ -1149,7 +1145,7 @@ const getSinglePaymentFrCustomer = async(req, res) => {
         }
     ])
 
-
+    payment = payment[0];
 
     return res.status(StatusCodes.OK).json({ payment });
 
