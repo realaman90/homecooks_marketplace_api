@@ -726,9 +726,25 @@ const ListProducts = async (req, res)  => {
             "order_count": "$orders.count"
         }
       })
+
+    aggreagatePipelineQueries.push({ $lookup: {
+        from: "wishlists",
+        let: { "item": "$_id" },
+        pipeline: [
+          { "$match": { "$expr": { "$eq": ["$$item", "$item"] }}},          
+        ],
+        as: "wishlist"
+      }
+    })
+    aggreagatePipelineQueries.push({        
+        "$addFields": {                   
+          "in_wishlist": { $gt: [ {$size: "$wishlist" }, 0 ] }
+        }      
+    })
     aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
+            "in_wishlist":1,
             // "dishes":1,
             "supplierName": "$supplier.businessName",
             "supplierId": "$supplier._id",
@@ -908,9 +924,24 @@ const GetProductDetails = async (req, res) => {
             "order_count": "$orders.count"
         }
     })
+    aggreagatePipelineQueries.push({ $lookup: {
+        from: "wishlists",
+        let: { "item": "$_id" },
+        pipeline: [
+          { "$match": { "$expr": { "$eq": ["$$item", "$item"] }}},          
+        ],
+        as: "wishlist"
+      }
+    })
+    aggreagatePipelineQueries.push({        
+        "$addFields": {                   
+          "in_wishlist": { $gt: [ {$size: "$wishlist" }, 0 ] }
+        }      
+    })
     aggreagatePipelineQueries.push({
         "$project": {
-            "_id": 1,            
+            "_id": 1,        
+            "in_wishlist":1,
             "supplierName": "$supplier.businessName",
             "clientPickups.name": 1,
             "clientPickups.text": 1,
