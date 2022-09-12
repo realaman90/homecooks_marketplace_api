@@ -11,7 +11,6 @@ const { orderStatus, paymentStatus } = require('../constants');
 const payoutController = require('./payout.controller');
 const notificationController = require('./notification.controller');
 
-const { SetupIntentFrCard } = require('../utils/stripe');
 const utils = require('nodemon/lib/utils');
 
 const tryToCompleteTransaction = async(paymentId) => {
@@ -142,7 +141,6 @@ const getAllOrders = async(req, res) => {
     andQuery.push({
         pickupPoint: { $ne: undefined }
     })
-
 
     const aggreagatePipelineQueries = [];
     if (andQuery.length > 0) {

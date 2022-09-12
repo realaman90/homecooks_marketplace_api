@@ -7,7 +7,6 @@ const crypto = require('crypto');
 const { eventStatus, orderStatus } = require('../constants');
 const { parseWZeroTime, todayDateWithZeroTime} = require('../utils/datetime');
 
-
 const getAllItems = async(req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
@@ -1055,7 +1054,68 @@ const getAvailableEventDates = async (req, res) => {
     return res.status(StatusCodes.OK).json(availableCuisines);  
 }
 
+// const SearchItem = async (req, res) => {
+const SearchItem = async (req, res) => {
+
+    let andQuery = [];
+
+    if (!req.query.search) {
+        res.status(StatusCodes.OK).json({ items:[], itemCount:0 });
+        return  
+    } 
+
+    andQuery.push({
+        status: 'active'
+    })
+    andQuery.push({
+        eventVisibilityDate: {"$lte": todayDateWithZeroTime()} 
+    })
+    andQuery.push({
+        closingDate: {"$gt": todayDateWithZeroTime()} 
+    })
+    
+    let searchItems = await dishItemModel.aggregate([
+        {
+            "$match": {
+                "$and": [
+                    {
+                        status: 'active'
+                    },{
+                        eventVisibilityDate: {"$lte": todayDateWithZeroTime()} 
+                    },{
+                        closingDate: {"$gt": todayDateWithZeroTime()} 
+                    }
+                ]
+            }
+        }, { 
+            "$lookup": {
+                "from": "dishes",
+                "localField": "dish",
+                "foreignField": "_id",
+                "as": "dish"
+            }
+        }, {
+            "$unwind": '$dish' 
+        }, {
+            "$match":{ 
+                name: { $regex: req.query.search, $options: 'i' }, 
+            }
+        }, {
+            "$group": {
+            "_id": "$dish._id",                            
+            "name": {$first: '$name'},
+            }
+        }
+    ])
+
+
+    res.status(StatusCodes.OK).json({ items:searchItems });
+
+    return
+}
+
 module.exports = {
+    SearchItem,
     getItem,
     getAllItems,
     getAllItemsBySupplier,
