@@ -11,6 +11,7 @@ const { parseISO, differenceInCalendarDays, add, getDay, sub, setHours, getHours
 const eventTemplateModel = require('../models/EventTemplate');
 const crypto = require('crypto');
 const { date } = require('joi');
+const differenceInHours = require('date-fns/differenceInHours')
 
 const createEvent = async(req, res) => {
 
@@ -544,7 +545,7 @@ const createEventUsingEventTemplate = async(req, res) => {
     });
 
     // create event objects
-    const events = [];
+    let events = [];
     eventDates.forEach(ed => {
         const event = {};
         const { closingDate, closingTime } = CalcClosingDateTime(ed, eventTemplate.supplierPickupTime, eventTemplate.finalOrderCloseHours)
@@ -612,10 +613,21 @@ const createEventUsingEventTemplate = async(req, res) => {
     })
 
     // filter out invalid events, event for which closing date 24 hours away
-    events.forEach(e=>{        
+    events = events.filter(e=>{        
         const closingDateTime = addHours(new Date(e.closingDate), e.closingTime)
         e.closingDateTime = closingDateTime;
+        console.log(new Date(), e.closingDate)
+        const hoursFarFrmNow = differenceInHours(e.closingDate, new Date());
+        console.log(hoursFarFrmNow)
+        if (hoursFarFrmNow < 24){
+            return false
+        }
+        return true
     })
+
+    if (events.length == 0) {
+        throw new CustomError.BadRequestError(`Cannot create event for closing date less thn 24 hours from now!`);
+    }
 
     // insert many events, create events based on those dates
     const respEvents = await eventModel.create(events);
