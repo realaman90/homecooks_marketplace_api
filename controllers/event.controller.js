@@ -10,6 +10,7 @@ const { parseWZeroTime } = require('../utils/datetime');;
 const { parseISO, differenceInCalendarDays, add, getDay, sub, setHours, getHours, addHours, subHours, format } = require('date-fns');
 const eventTemplateModel = require('../models/EventTemplate');
 const crypto = require('crypto');
+const { date } = require('joi');
 
 const createEvent = async(req, res) => {
 
@@ -429,6 +430,7 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
 
     const startDateISO = eventFrequncyData.startDate
     const endDateISO = eventFrequncyData.endDate
+    const eventDateISO = eventFrequncyData.eventDate
 
     // loop from start date to end date and filter the dates based on the "recurringType" and "days" fields
     const calendarDays = differenceInCalendarDays(endDateISO, startDateISO) + 1;
@@ -455,32 +457,34 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
             }
         }
     } else {
+        
+        dates.push(new Date(eventDateISO));
 
-        for (let i = 0; i < calendarDays; i++) {
-            const nextISODate = add(startDateISO, {
-                days: i
-            });
+        // for (let i = 0; i < calendarDays; i++) {
+        //     const nextISODate = add(startDateISO, {
+        //         days: i
+        //     });
 
-            // 0 | 1 | 2 | 3 | 4 | 5 | 6 the day of week, 0 represents Sunday
-            const dayOfWeek = getDay(nextISODate);
+        //     // 0 | 1 | 2 | 3 | 4 | 5 | 6 the day of week, 0 represents Sunday
+        //     const dayOfWeek = getDay(nextISODate);
 
-            if (eventFrequncyData.days.indexOf('Mon') > -1 && dayOfWeek == 1 ||
-                eventFrequncyData.days.indexOf('Tue') > -1 && dayOfWeek == 2 ||
-                eventFrequncyData.days.indexOf('Wed') > -1 && dayOfWeek == 3 ||
-                eventFrequncyData.days.indexOf('Thur') > -1 && dayOfWeek == 4 ||
-                eventFrequncyData.days.indexOf('Fri') > -1 && dayOfWeek == 5 ||
-                eventFrequncyData.days.indexOf('Sat') > -1 && dayOfWeek == 6 ||
-                eventFrequncyData.days.indexOf('Sun') > -1 && dayOfWeek == 0
-            ) {
+        //     if (eventFrequncyData.days.indexOf('Mon') > -1 && dayOfWeek == 1 ||
+        //         eventFrequncyData.days.indexOf('Tue') > -1 && dayOfWeek == 2 ||
+        //         eventFrequncyData.days.indexOf('Wed') > -1 && dayOfWeek == 3 ||
+        //         eventFrequncyData.days.indexOf('Thur') > -1 && dayOfWeek == 4 ||
+        //         eventFrequncyData.days.indexOf('Fri') > -1 && dayOfWeek == 5 ||
+        //         eventFrequncyData.days.indexOf('Sat') > -1 && dayOfWeek == 6 ||
+        //         eventFrequncyData.days.indexOf('Sun') > -1 && dayOfWeek == 0
+        //     ) {
 
-                if (dates.length < eventFrequncyData.days.length) {
-                    dates.push(nextISODate)
-                } else {
-                    break;
-                }
+        //         if (dates.length < eventFrequncyData.days.length) {
+        //             dates.push(nextISODate)
+        //         } else {
+        //             break;
+        //         }
 
-            }
-        }
+        //     }
+        // }
 
     }
 
@@ -519,6 +523,7 @@ const timeString = (timeinH) => {
     return format(x, 'hh:mm a');
 
 }
+
 const createEventUsingEventTemplate = async(req, res) => {
 
     // create event template
@@ -534,11 +539,9 @@ const createEventUsingEventTemplate = async(req, res) => {
         "eventFrequency": eventTemplate.eventFrequency,
         "startDate": parseWZeroTime(eventTemplate.startDate),
         "endDate": parseWZeroTime(eventTemplate.endDate),
-        "days": eventTemplate.days
+        "days": eventTemplate.days,
+        "eventDate": eventTemplate.eventDate
     });
-
-    console.log("eventDates")
-    console.log(eventDates)
 
     // create event objects
     const events = [];
@@ -562,9 +565,6 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.eventTemplate = eventTemplate._id;
         events.push(event);
     })
-
-    console.log("eventDates")
-    console.log(eventDates)
 
     const dishItems = [];
 
@@ -611,19 +611,16 @@ const createEventUsingEventTemplate = async(req, res) => {
         e.dishItems = dishItemsIds
     })
 
+    // filter out invalid events, event for which closing date 24 hours away
+    events.forEach(e=>{        
+        const closingDateTime = addHours(new Date(e.closingDate), e.closingTime)
+        e.closingDateTime = closingDateTime;
+    })
+
     // insert many events, create events based on those dates
     const respEvents = await eventModel.create(events);
 
-    console.log("respEvents")
-    console.log(respEvents)
-
-
     const respDishItems = await dishItemModel.create(dishItems);
-
-
-    console.log("respDishItems")
-    console.log(respDishItems)
-
 
     return res.status(StatusCodes.CREATED).json({ msg: `${respEvents.length} event created, ${respDishItems.length} dish items created` });
 }
