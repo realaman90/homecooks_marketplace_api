@@ -240,6 +240,54 @@ const getAllItemsBySupplier = async(req, res) => {
             "as": "clientPickups"
         }
     })
+    // get order details
+    aggreagatePipelineQueries.push({ $lookup: {
+        from: "orders",
+        let: { "itemId": "$_id" },
+        pipeline: [          
+            { "$match": { "$expr": { "$eq": ["$$itemId", "$item"] }}},
+            { "$match": { "status": {"$in": [orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.ACTIVE] }}},                 
+            {
+                "$group": {
+                    "_id": {
+                        "item": "$item",                        
+                    },
+                    "count": { $sum: '$quantity' },                    
+                }
+            }, {
+                "$project":{
+                    "count": 1
+                }
+            }
+        ],
+        as: "orders"
+      }
+    }),
+    aggreagatePipelineQueries.push({
+      "$unwind": {
+        path: '$orders',
+        preserveNullAndEmptyArrays: true
+      }
+    })
+    aggreagatePipelineQueries.push({
+        "$set": {
+            "order_count": "$orders.count"
+        }
+    })
+    aggreagatePipelineQueries.push({ $lookup: {
+        from: "wishlists",
+        let: { "item": "$_id" },
+        pipeline: [
+          { "$match": { "$expr": { "$eq": ["$$item", "$item"] }}},          
+        ],
+        as: "wishlist"
+      }
+    })
+    aggreagatePipelineQueries.push({        
+        "$addFields": {                   
+          "in_wishlist": { $gt: [ {$size: "$wishlist" }, 0 ] }
+        }      
+    })
     aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,
@@ -272,6 +320,8 @@ const getAllItemsBySupplier = async(req, res) => {
             "closingDate":1,
             "closingTime":1,
             "supplierPickupTime":1,
+            "in_wishlist":1,
+            "order_count":{ $ifNull: [ "$order_count", 0 ] }   
         }
     })
 
