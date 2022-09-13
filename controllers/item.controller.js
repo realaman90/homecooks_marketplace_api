@@ -339,7 +339,8 @@ const getItem = async(req, res) => {
         "$match": {
             "_id": mongoose.Types.ObjectId(dishItemId)
         }
-    }, {
+    }, 
+    {
         "$lookup": {
             "from": "suppliers",
             "localField": "supplier",
@@ -365,9 +366,22 @@ const getItem = async(req, res) => {
             "as": "clientPickups"
         }
     }, {
+        "$lookup": {
+            "from": "dishes",
+            "localField": "dish",
+            "foreignField": "_id",
+            "as": "dish"
+        }
+    }, {
+        "$unwind": '$dish'
+    }, 
+    {
         "$project": {
-            "_id": 1,
-            "supplier._id": 1,
+            "_id": 1,            
+            // "bikerPickupPoint":1,
+            // "clientPickups":1,
+            // "supplier":1,
+            // "dish":1,
             "bikerPickupPoint.name": 1,
             "bikerPickupPoint.text": 1,
             "bikerPickupPoint.viewId": 1,
@@ -378,10 +392,17 @@ const getItem = async(req, res) => {
             "clientPickups.viewId": 1,
             "clientPickups.address": 1,
             "clientPickups.suitableTimes": 1,
+            "supplier._id": 1,
             "supplier.businessName": 1,
             "supplier.businessImages": 1,
             "supplier.address": 1,
             "supplier.contactInfo": 1,
+            "dish.name":1,
+            "dish.viewId":1,
+            "dish.images":1,
+            "dish.description":1,
+            "dish.quantity":1,
+            "dish.size":1,
             "name": 1,
             "images": 1,
             "category": 1,
@@ -989,6 +1010,17 @@ const GetProductDetails = async (req, res) => {
         }      
     })
     aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "dishes",
+            "localField": "dish",
+            "foreignField": "_id",
+            "as": "dish"
+        }
+    })
+    aggreagatePipelineQueries.push({
+        "$unwind": '$dish'
+    })
+    aggreagatePipelineQueries.push({
         "$project": {
             "_id": 1,        
             "in_wishlist":1,
@@ -998,6 +1030,12 @@ const GetProductDetails = async (req, res) => {
             "clientPickups.viewId": 1,
             "clientPickups.address": 1,
             "clientPickups.suitableTimes": 1,
+            "dish.name":1,
+            "dish.viewId":1,
+            "dish.images":1,
+            "dish.description":1,
+            "dish.quantity":1,
+            "dish.size":1,
             "name": 1,
             "images": 1,
             "category": 1,
