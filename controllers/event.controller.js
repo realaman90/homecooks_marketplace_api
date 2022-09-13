@@ -526,6 +526,9 @@ const createEventUsingEventTemplate = async(req, res) => {
     // save the event template in the db (saving this can be kept optional)
     const eventTemplate = await eventTemplateModel.create(req.body);
 
+    console.log("eventTemplate")
+    console.log(eventTemplate)
+
     // find out the event dates
     const eventDates = calculateDatesFromEventFrequencyData({
         "eventFrequency": eventTemplate.eventFrequency,
@@ -533,6 +536,9 @@ const createEventUsingEventTemplate = async(req, res) => {
         "endDate": parseWZeroTime(eventTemplate.endDate),
         "days": eventTemplate.days
     });
+
+    console.log("eventDates")
+    console.log(eventDates)
 
     // create event objects
     const events = [];
@@ -556,6 +562,9 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.eventTemplate = eventTemplate._id;
         events.push(event);
     })
+
+    console.log("eventDates")
+    console.log(eventDates)
 
     const dishItems = [];
 
@@ -605,7 +614,16 @@ const createEventUsingEventTemplate = async(req, res) => {
     // insert many events, create events based on those dates
     const respEvents = await eventModel.create(events);
 
+    console.log("respEvents")
+    console.log(respEvents)
+
+
     const respDishItems = await dishItemModel.create(dishItems);
+
+
+    console.log("respDishItems")
+    console.log(respDishItems)
+
 
     return res.status(StatusCodes.CREATED).json({ msg: `${respEvents.length} event created, ${respDishItems.length} dish items created` });
 }
