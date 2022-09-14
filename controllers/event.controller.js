@@ -532,9 +532,6 @@ const createEventUsingEventTemplate = async(req, res) => {
     // save the event template in the db (saving this can be kept optional)
     const eventTemplate = await eventTemplateModel.create(req.body);
 
-    console.log("eventTemplate")
-    console.log(eventTemplate)
-
     // find out the event dates
     const eventDates = calculateDatesFromEventFrequencyData({
         "eventFrequency": eventTemplate.eventFrequency,
@@ -633,6 +630,8 @@ const createEventUsingEventTemplate = async(req, res) => {
     const respEvents = await eventModel.create(events);
 
     const respDishItems = await dishItemModel.create(dishItems);
+
+    EventCreatedNotificationForAdmin(eventTemplate._id);
 
     return res.status(StatusCodes.CREATED).json({ msg: `${respEvents.length} event created, ${respDishItems.length} dish items created` });
 }

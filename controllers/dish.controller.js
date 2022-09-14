@@ -6,6 +6,7 @@ const { default: mongoose } = require('mongoose');
 const crypto = require('crypto');
 const { IDGen } = require('../utils/viewId');
 const dishItemModel = require('../models/DishItem');
+const { DishCreatedNotificationForAdmin} = require('./notification.controller');
 
 const createDish = async(req, res) => {
 
@@ -18,6 +19,9 @@ const createDish = async(req, res) => {
     } catch (err) {
         throw new CustomError.BadRequestError(err.message);
     }
+
+    DishCreatedNotificationForAdmin(dish._id);
+
     return res.status(StatusCodes.CREATED).json({ dish });
 }
 

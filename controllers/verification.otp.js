@@ -18,10 +18,6 @@ const sendOTPOnPhone = async(req, res) => {
     sendOTP(user, reason);
 
     res.status(StatusCodes.OK).json({ msg: "OTP sent on your phone" })
-
-
-
-
 }
 const verfyOTP = async(req, res) => {
     const { email, phone, otp } = req.body;

@@ -6,9 +6,22 @@ const EventTemplateModel = require('../models/EventTemplate');
 const NotificationModel = require('../models/Notification');
 const {notificationTypes} = require('../constants');
 const { StatusCodes } = require('http-status-codes');
+const { sendEmail, sendMultipleEmails} = require('./email.controller');
 
 // notification creation function
 
+var HARDCODED_ADMIN_VALUES = false
+var _adminDetails = [{
+    "_id": "631ad4166f442471ffcb1de5",
+    "fullName":"Utkarsh Tyagi",
+    "email":"vubyto@dropjar.com",
+    "phone": "0000000000",
+    "notificationSettings": {
+        "email": true
+    }
+}]
+
+// working
 const CreateUserWelcomeNotification = async (userId) => {
     
     const userDetails = await UserModel.findById(userId, `fullName email phone notificationSettings`);
@@ -55,11 +68,11 @@ const CreateUserWelcomeNotification = async (userId) => {
         refId: userId
     }
 
-    notificationRecod = await NotificationModel.create(notificationRecod);
+    await NotificationModel.create(notificationRecod);
     
     if (notificationRecod.userNotificationSettings.email){
         // send email
-
+        sendEmail(notificationRecod)
     }
 
     if (notificationRecod.userNotificationSettings.phone){
@@ -78,19 +91,25 @@ const CreateUserWelcomeNotification = async (userId) => {
 ///////////////////////////////// Notification towards admin ////////////////////////////////
 
 // admin notification for user signup
+// working
 const UserSignUpNotificationForAdmin = async (userId) => {
     
     const userDetails = await UserModel.findById(userId, `fullName email phone notificationSettings`);
     if (!userDetails){
         // log this to analyse the scenario
         return
+    }    
+
+    let adminDetails = null;
+    if (HARDCODED_ADMIN_VALUES){
+        adminDetails = _adminDetails;
+    }else {
+        // get admin details
+        adminDetails = await UserModel.find({
+            type: "admin"
+        }, `fullName email phone notificationSettings`)    
     }
-
-    // get admin details
-    const adminDetails = await UserModel.findOne({
-        email:process.env.SUPER_ADMIN_EMAIL
-    }, `fullName email phone notificationSettings`)
-
+    
     const subject = `New User Signup on the platform`;
     const emailMessage = `Hi Admin
         A new user has just signed up on the platform.
@@ -107,32 +126,41 @@ const UserSignUpNotificationForAdmin = async (userId) => {
 
     const app_url = `${process.env.APP_URL}`
 
-    let notificationRecod = {
-        type: notificationTypes.NEW_USER_SIGNUP_FR_ADMIN,
-        toId: adminDetails._id,
-        toEmail: adminDetails.email,
-        toPhone: adminDetails.phone,
-        userNotificationSettings: adminDetails.notificationSettings,
-        message: {
-            subject,
-            emailMessage,
-            smsMessage,
-            appMessage,
-        },
-        app_url,
-        refModel: 'Users',
-        refId: userId
-    }
+    let notificationRecods = [];
 
-    notificationRecod = await NotificationModel.create(notificationRecod);
+    adminDetails.forEach(admin=>{
+        notificationRecods.push({
+            type: notificationTypes.NEW_USER_SIGNUP_FR_ADMIN,
+            toId: admin._id,
+            toEmail: admin.email,
+            toPhone: admin.phone,
+            userNotificationSettings: admin.notificationSettings,
+            message: {
+                subject,
+                emailMessage,
+                smsMessage,
+                appMessage,
+            },
+            app_url,
+            refModel: 'Users',
+            refId: userId
+        })
+    })
     
-    // send email
+    await NotificationModel.insertMany(notificationRecods);
+
+    await sendMultipleEmails(notificationRecods)
+    
+    // if (notificationRecod.userNotificationSettings.phone){
+    //     // send sms
+        
+    // }
 
     return null
 }
 
 // setTimeout(()=>{
-//     UserSignUpNotificationForAdmin("62f989526253b49a1bc0696a")
+    // UserSignUpNotificationForAdmin("6320af8ffdd037cb6c9a1ab7")
 // }, 4000)
 
 // admin notification for supplier signup
@@ -144,10 +172,15 @@ const SupplierSignUpNotificationForAdmin = async (supplierId) => {
         return
     }
 
-    // get admin details
-    const adminDetails = await UserModel.findOne({
-        email:process.env.SUPER_ADMIN_EMAIL
-    }, `fullName email phone notificationSettings`)
+    let adminDetails = null;
+    if (HARDCODED_ADMIN_VALUES){
+        adminDetails = _adminDetails;
+    }else {
+        // get admin details
+        adminDetails = await UserModel.find({
+            type: "admin"
+        }, `fullName email phone notificationSettings`)    
+    }
 
     const subject = `New Supplier Signup on the platform`;
     const emailMessage = `Hi Admin
@@ -166,34 +199,40 @@ const SupplierSignUpNotificationForAdmin = async (supplierId) => {
 
     const app_url = `${process.env.APP_URL}`
 
-    let notificationRecod = {
-        type: notificationTypes.NEW_SUPPLIER_SIGNUP_FR_ADMIN,
-        toId: adminDetails._id,
-        toEmail: adminDetails.email,
-        toPhone: adminDetails.phone,
-        userNotificationSettings: adminDetails.notificationSettings,
-        message: {
-            subject,
-            emailMessage,
-            smsMessage,
-            appMessage,
-        },
-        app_url,
-        refModel: 'Supplier',
-        refId: supplierId
-    }
+    let notificationRecods = [];
+
+    adminDetails.forEach(admin=>{
+            notificationRecods.push({
+            type: notificationTypes.NEW_SUPPLIER_SIGNUP_FR_ADMIN,
+            toId: admin._id,
+            toEmail: admin.email,
+            toPhone: admin.phone,
+            userNotificationSettings: admin.notificationSettings,
+            message: {
+                subject,
+                emailMessage,
+                smsMessage,
+                appMessage,
+            },
+            app_url,
+            refModel: 'Supplier',
+            refId: supplierId
+        })
+    })
 
     // console.log(notificationRecod)
 
-    notificationRecod = await NotificationModel.create(notificationRecod);
+    await NotificationModel.insertMany(notificationRecods);
     
     // send email
+    await sendMultipleEmails(notificationRecods)
+
 
     return null
 }
 
 // setTimeout(()=>{
-//     SupplierSignUpNotificationForAdmin("62eaa9e7d3c2785553d57b97")
+    // SupplierSignUpNotificationForAdmin("631ae2456f442471ffcb23f4")
 // }, 4000)
 
 // admin notification for new dish created
@@ -208,9 +247,15 @@ const DishCreatedNotificationForAdmin = async (dishId) => {
     }
 
     // get admin details
-    const adminDetails = await UserModel.findOne({
-        email:process.env.SUPER_ADMIN_EMAIL
-    }, `fullName email phone notificationSettings`)
+    let adminDetails = null;
+    if (HARDCODED_ADMIN_VALUES){
+        adminDetails = _adminDetails;
+    }else {
+        // get admin details
+        adminDetails = await UserModel.find({
+            type: "admin"
+        }, `fullName email phone notificationSettings`)    
+    }
 
     const subject = `New Dish is created by ${dishDetails.supplier.businessName}`;
     const emailMessage = `Hi Admin
@@ -234,32 +279,37 @@ const DishCreatedNotificationForAdmin = async (dishId) => {
 
     const app_url = `${process.env.APP_URL}`
 
-    let notificationRecod = {
-        type: notificationTypes.NEW_DISH_CREATED_FR_ADMIN,
-        toId: adminDetails._id,
-        toEmail: adminDetails.email,
-        toPhone: adminDetails.phone,
-        userNotificationSettings: adminDetails.notificationSettings,
-        message: {
-            subject,
-            emailMessage,
-            smsMessage,
-            appMessage,
-        },
-        app_url,
-        refModel: 'Dish',
-        refId: dishId
-    }
+    let notificationRecords = [];
 
-    notificationRecod = await NotificationModel.create(notificationRecod);
+    adminDetails.forEach(admin=>{
+        notificationRecords.push({
+            type: notificationTypes.NEW_DISH_CREATED_FR_ADMIN,
+            toId: admin._id,
+            toEmail: admin.email,
+            toPhone: admin.phone,
+            userNotificationSettings: admin.notificationSettings,
+            message: {
+                subject,
+                emailMessage,
+                smsMessage,
+                appMessage,
+            },
+            app_url,
+            refModel: 'Dish',
+            refId: dishId
+        })
+    })
+
+    await NotificationModel.insertMany(notificationRecords);
     
     // send email
+    await sendMultipleEmails(notificationRecords)
 
     return null
 }
 
 // setTimeout(()=>{
-//     DishCreatedNotificationForAdmin("62f29fc044882771c2c16aaf")
+    // DishCreatedNotificationForAdmin("631b7f1f55d9a34b8b39771e")
 // }, 6000)
 
 
@@ -268,18 +318,25 @@ const DishCreatedNotificationForAdmin = async (dishId) => {
 const EventCreatedNotificationForAdmin = async (eventTemplateId) => {
 
     const eventTemplateDetails = await EventTemplateModel
-    .findById(eventTemplateId, `name viewId description category minOrders maxOrders pricePerOrder quantity size eventFrequency recurringType`)
+    .findById(eventTemplateId, `name dishes viewId description category minOrders maxOrders pricePerOrder quantity size eventFrequency recurringType eventDate`)
     .populate('supplier', `businessName viewId`)
     .populate('dishes', `name viewId description`)
     if (!eventTemplateDetails){
+        console.log("na paya")
         // log this to analyse the scenario
         return
     }
 
     // get admin details
-    const adminDetails = await UserModel.findOne({
-        email:process.env.SUPER_ADMIN_EMAIL
-    }, `fullName email phone notificationSettings`)
+    let adminDetails = null;
+    if (HARDCODED_ADMIN_VALUES){
+        adminDetails = _adminDetails;
+    }else {
+        // get admin details
+        adminDetails = await UserModel.find({
+            type: "admin"
+        }, `fullName email phone notificationSettings`)    
+    }
 
     const subject = `New event setup by ${eventTemplateDetails.supplier.businessName}`;
     const emailMessage = `Hi Admin
@@ -291,6 +348,7 @@ const EventCreatedNotificationForAdmin = async (eventTemplateId) => {
         Recurring Type: ${eventTemplateDetails.recurringType}
         Start Date: ${eventTemplateDetails.startDate}
         End Date: ${eventTemplateDetails.endDate} 
+        Event Date: ${eventTemplateDetails.eventDate}
 
         Thanks,
         Noudada Teams
@@ -300,38 +358,42 @@ const EventCreatedNotificationForAdmin = async (eventTemplateId) => {
 
     const app_url = `${process.env.APP_URL}`
 
-    let notificationRecod = {
-        type: notificationTypes.NEW_DISH_CREATED_FR_ADMIN,
-        toId: adminDetails._id,
-        toEmail: adminDetails.email,
-        toPhone: adminDetails.phone,
-        userNotificationSettings: adminDetails.notificationSettings,
-        message: {
-            subject,
-            emailMessage,
-            smsMessage,
-            appMessage,
-        },
-        app_url,
-        refModel: 'EventTemplate',
-        refId: eventTemplateId
-    }
+    let notificationRecods = [];
 
-    // console.log(notificationRecod)
-
-    notificationRecod = await NotificationModel.create(notificationRecod);
+    adminDetails.forEach(admin=>{
+        notificationRecods.push({
+            type: notificationTypes.NEW_DISH_CREATED_FR_ADMIN,
+            toId: admin._id,
+            toEmail: admin.email,
+            toPhone: admin.phone,
+            userNotificationSettings: admin.notificationSettings,
+            message: {
+                subject,
+                emailMessage,
+                smsMessage,
+                appMessage,
+            },
+            app_url,
+            refModel: 'EventTemplate',
+            refId: eventTemplateId
+        })    
+    })
+  
+    await NotificationModel.insertMany(notificationRecods);
     
     // send email
+    sendMultipleEmails(notificationRecods);
 
     return null
 }
 
 // setTimeout(()=>{
-//     EventCreatedNotificationForAdmin("62f29e7a44882771c2c16a61")
+    // EventCreatedNotificationForAdmin("63206a814e8072e951b9302d")
 //     }, 6000)
     
     
 
+// working
 // admin notification for order created
 const OrderCreatedNotificationForAdmin = async (paymentId) => {
 
@@ -345,9 +407,15 @@ const OrderCreatedNotificationForAdmin = async (paymentId) => {
     }
 
     // get admin details
-    const adminDetails = await UserModel.findOne({
-        email:process.env.SUPER_ADMIN_EMAIL
-    }, `fullName email phone notificationSettings`)
+    let adminDetails = null;
+    if (HARDCODED_ADMIN_VALUES){
+        adminDetails = _adminDetails;
+    }else {
+        // get admin details
+        adminDetails = await UserModel.find({
+            type: "admin"
+        }, `fullName email phone notificationSettings`)    
+    }
 
     const subject = `New order created`;
 
@@ -371,26 +439,32 @@ const OrderCreatedNotificationForAdmin = async (paymentId) => {
 
     const app_url = `${process.env.APP_URL}`
 
-    let notificationRecod = {
-        type: notificationTypes.NEW_ORDER_CREATED_FR_ADMIN,
-        toId: adminDetails._id,
-        toEmail: adminDetails.email,
-        toPhone: adminDetails.phone,
-        userNotificationSettings: adminDetails.notificationSettings,
-        message: {
-            subject,
-            emailMessage,
-            smsMessage,
-            appMessage,
-        },
-        app_url,
-        refModel: 'Payment',
-        refId: paymentId
-    }
+    let notificationRecords = [];
 
-    notificationRecod = await NotificationModel.create(notificationRecod);
+    adminDetails.forEach(admin=>{
+        notificationRecords.push({
+            type: notificationTypes.NEW_ORDER_CREATED_FR_ADMIN,
+            toId: adminDetails._id,
+            toEmail: adminDetails.email,
+            toPhone: adminDetails.phone,
+            userNotificationSettings: adminDetails.notificationSettings,
+            message: {
+                subject,
+                emailMessage,
+                smsMessage,
+                appMessage,
+            },
+            app_url,
+            refModel: 'Payment',
+            refId: paymentId
+        })
+    })
+
+    
+    await NotificationModel.insertMany(notificationRecords);
     
     // send email
+    await sendMultipleEmails(notificationRecords)
 
     return null
 }
@@ -400,9 +474,6 @@ const OrderCreatedNotificationForAdmin = async (paymentId) => {
 //     OrderCreatedNotificationForAdmin("62ebd5cc3a0c0e4439b86bf5")
 //     }, 6000)
     
-
-
-
 
 
 // notification http apis

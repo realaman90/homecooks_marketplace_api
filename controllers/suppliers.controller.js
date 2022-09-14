@@ -5,6 +5,7 @@ const CustomError = require('../errors');
 const crypto = require('crypto');
 const BikerPickupPoint = require('../models/BikerPickupPoint');
 const { IDGen } = require('../utils/viewId');
+const {SupplierSignUpNotificationForAdmin } = require('./notification.controller');
 
 const createDefaultSupplierUser = async(supplier) => {
 
@@ -62,6 +63,8 @@ const createSupplier = async(req, res) => {
     ]);
     const user = defaultSetupResp[0]
     const bickerPickupPoint = defaultSetupResp[1]
+
+    SupplierSignUpNotificationForAdmin(supplier._id)
 
     res.status(StatusCodes.CREATED).json({ supplier, user, bickerPickupPoint });
 };
