@@ -526,7 +526,7 @@ const paymentCalcOnKartItems = (kartItems) => {
 
   let subTotal = totalCost;
 
-  let cost =  round(multiply(subTotal,100) / 105);
+  let cost =  round(multiply(subTotal,100) / 120);
 
   let serviceFee = subTotal - cost;
 
