@@ -458,7 +458,7 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
             }
         }
     } else {
-        
+
         dates.push(new Date(eventDateISO));
 
         // for (let i = 0; i < calendarDays; i++) {
@@ -610,17 +610,18 @@ const createEventUsingEventTemplate = async(req, res) => {
     })
 
     // filter out invalid events, event for which closing date 24 hours away
-    events = events.filter(e=>{        
+    events = events.filter(e => {
         const closingDateTime = addHours(new Date(e.closingDate), e.closingTime)
         e.closingDateTime = closingDateTime;
         console.log(new Date(), e.closingDate)
         const hoursFarFrmNow = differenceInHours(e.closingDate, new Date());
         console.log(hoursFarFrmNow)
-        if (hoursFarFrmNow < 24){
+        if (hoursFarFrmNow < 24) {
             return false
         }
         return true
     })
+
 
     if (events.length == 0) {
         throw new CustomError.BadRequestError(`Cannot create event for closing date less thn 24 hours from now!`);
@@ -631,7 +632,7 @@ const createEventUsingEventTemplate = async(req, res) => {
 
     const respDishItems = await dishItemModel.create(dishItems);
 
-    EventCreatedNotificationForAdmin(eventTemplate._id);
+    // EventCreatedNotificationForAdmin(eventTemplate._id);
 
     return res.status(StatusCodes.CREATED).json({ msg: `${respEvents.length} event created, ${respDishItems.length} dish items created` });
 }
