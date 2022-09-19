@@ -6,7 +6,7 @@ const supplierController = require('../controllers/suppliers.controller');
 
 
 // api for user dashboard
-router.get('/list', itemController.ListProducts);
+router.get('/list', itemController.ListProductsV2);
 router.get('/date_filters', itemController.ListProductDateFilters);
 router.get('/search', itemController.SearchItem);
 router.get('/:itemId/details', itemController.GetProductDetails);

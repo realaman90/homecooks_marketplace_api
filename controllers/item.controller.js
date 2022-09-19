@@ -949,6 +949,237 @@ const ListProducts = async(req, res) => {
 
 }
 
+const ListProductsV2 = async(req, res) => {
+
+    const skip = req.query.skip ? Number(req.query.skip) : 0;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+
+    let andQuery = [];
+
+    // manage filters    
+    if (req.query.cuisine) {
+        andQuery.push({
+            cuisine: { $regex: req.query.cuisine, $options: 'i' }
+        })
+    }
+
+    if (req.query.category) {
+        andQuery.push({
+            category: req.query.category
+        })
+    }
+
+    if (req.query.search) {
+        andQuery.push({
+            "$or": [
+                { name: { $regex: req.query.search, $options: 'i' }, },
+                // { description: { $regex: req.query.search, $options: 'i' }, },
+                // { viewId: { $regex: req.query.search, $options: 'i' }, },
+                // { cuisine: { $regex: req.query.search, $options: 'i' }, },
+                // { category: { $regex: req.query.search, $options: 'i' }, },
+                // { mealTags: { $elemMatch: { $regex: req.query.search } }, }
+            ]
+        })
+    }
+
+    if (req.query.dish) {
+        andQuery.push({
+            dish: mongoose.Types.ObjectId(req.query.dish)
+        })
+    }
+
+    let eventDateFilterCount = 0;
+    if (req.query.eventDate) {
+        let eventDate = req.query.eventDate;
+        eventDate = eventDate.split('|')
+        let dateOrQuery = []
+        dateOrQuery = [];
+        eventDate.forEach(e => {
+            dateOrQuery.push({
+                "eventDate": new Date(e)
+            })
+        })
+        andQuery.push({
+            "$or": dateOrQuery
+        })        
+    }
+
+    // status filter (active)
+    andQuery.push({
+        status: 'active'
+    })
+
+    andQuery.push({
+        eventVisibilityDate: { "$lte": todayDateWithZeroTime() }
+    })
+
+    andQuery.push({
+        closingDate: { "$gt": todayDateWithZeroTime() }
+    })
+
+    const aggreagatePipelineQueries = [];
+    if (andQuery.length > 0) {
+        aggreagatePipelineQueries.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }
+
+    // get order details
+    aggreagatePipelineQueries.push({
+        $lookup: {
+            from: "orders",
+            let: { "itemId": "$_id" },
+            pipeline: [
+                { "$match": { "$expr": { "$eq": ["$$itemId", "$item"] } } },
+                { "$match": { "status": { "$in": [orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.ACTIVE] } } },
+                {
+                    "$group": {
+                        "_id": {
+                            "item": "$item",
+                        },
+                        "count": { $sum: '$quantity' },
+                    }
+                }, {
+                    "$project": {
+                        "count": 1
+                    }
+                }
+            ],
+            as: "orders"
+        }
+    }),
+    aggreagatePipelineQueries.push({
+        "$unwind": {
+            path: '$orders',
+            preserveNullAndEmptyArrays: true
+        }
+    })
+    aggreagatePipelineQueries.push({
+        "$set": {
+            "order_count": "$orders.count"
+        }
+    })
+    aggreagatePipelineQueries.push({
+        "$sort": {
+            "eventDate": -1
+        }
+    })
+    aggreagatePipelineQueries.push({
+        "$sort": {
+            "order_count": -1
+        }
+    })
+    // group with dish ids and take first one
+    aggreagatePipelineQueries.push({
+        $group: {
+            _id: '$dish',
+            item: {$first: '$_id'},
+            order_count: {$first: '$order_count'},
+            supplier: {$first: '$supplier'},
+            dish: {$first: '$dish'},
+            name: {$first: '$name'},
+            images: {$first: '$images'},
+            category: {$first: '$category'},
+            cuisine: {$first: '$cuisine'},
+            mealTags: {$first: '$mealTags'},
+            minOrders: {$first: '$minOrders'},
+            maxOrders: {$first: '$maxOrders'},
+            pricePerOrder: {$first: '$pricePerOrder'},
+            eventDate: {$first: '$eventDate'},
+            eventVisibilityDate: {$first: '$eventVisibilityDate'},
+            closingDate: {$first: '$closingDate'},
+            closingTime: {$first: '$closingTime'},
+        }
+    })
+
+    aggreagatePipelineQueries.push({
+        $skip: skip,
+    })
+
+    aggreagatePipelineQueries.push({
+        $limit: limit,
+    })
+    
+    aggreagatePipelineQueries.push({
+        "$lookup": {
+            "from": "suppliers",
+            "localField": "supplier",
+            "foreignField": "_id",
+            "as": "supplier"
+        }
+    })
+    aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
+    aggreagatePipelineQueries.push({
+        $lookup: {
+            from: "wishlists",
+            let: { "item": "$_id" },
+            pipeline: [
+                { "$match": { "$expr": { "$eq": ["$$item", "$item"] } } },
+            ],
+            as: "wishlist"
+        }
+    })
+    aggreagatePipelineQueries.push({
+        "$addFields": {
+            "in_wishlist": { $gt: [{ $size: "$wishlist" }, 0] }
+        }
+    })
+    aggreagatePipelineQueries.push({
+        "$project": {
+            "_id": '$item',
+            "in_wishlist": 1,
+            // "dishes":1,
+            "supplierName": "$supplier.businessName",
+            "supplierId": "$supplier._id",
+            "dish": 1,
+            "name": 1,
+            "images": 1,
+            "category": 1,
+            "cuisine": 1,
+            "mealTags": 1,
+            "minOrders": 1,
+            "maxOrders": 1,
+            "pricePerOrder": 1,
+            "eventDate": 1,
+            "eventVisibilityDate": 1,
+            "closingDate": 1,
+            "closingTime": 1,
+            "order_count": { $ifNull: ["$order_count", 0] }
+        }
+    })    
+
+    const countQuery = [];
+    if (andQuery.length > 0) {
+        countQuery.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }
+    countQuery.push({        
+        $group: {
+            _id: '$dish',
+        }
+    })
+    countQuery.push({        
+        $count: 'count'
+    })
+
+    let itemsPromise = dishItemModel.aggregate(aggreagatePipelineQueries);
+    let itemCountPromise = dishItemModel.aggregate(countQuery);
+    const resp = await Promise.all([itemsPromise, itemCountPromise])
+    let items = resp[0];
+    let itemCount = resp[1];
+
+    itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0
+
+    return res.status(StatusCodes.OK).json({ items, itemCount });
+
+}
+
+
 const ListProductDateFilters = async(req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
@@ -1105,7 +1336,7 @@ const GetProductDetails = async(req, res) => {
         }
     })
 
-    let items = await dishItemModel.aggregate(aggreagatePipelineQueries)
+    let items = await dishItemModel.aggregate(aggreagatePipelineQueries);
 
     return res.status(StatusCodes.OK).json({ item: items[0] });
 }
@@ -1279,6 +1510,7 @@ module.exports = {
     getAllItemsForAdmin,
     getItemByItemId,
     ListProducts,
+    ListProductsV2,
     ListProductDateFilters,
     GetProductDetails,
     getAvailableCuisines,
