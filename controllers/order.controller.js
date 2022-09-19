@@ -530,11 +530,11 @@ const paymentCalcOnKartItems = (kartItems) => {
 
   let deliveryFee = 4.99;
 
-  let taxableAmpunt = sum(itemTotal, serviceFee, deliveryFee);
+  let taxableAmount = sum(itemTotal, serviceFee, deliveryFee);
 
-  let tax = round(multiply(".09375", taxableAmpunt), 2);
+  let tax = round(multiply(".09375", taxableAmount), 2);
 
-  let total = round(sum(taxableAmpunt, tax), 2);
+  let total = round(sum(taxableAmount, tax), 2);
 
   return {
     cost: totalCost,
