@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const orderModel = require("../models/Order");
 const kartModel = require("../models/Kart");
 const paymentModel = require("../models/Payment");
-const { multiply, sum, round } = require("mathjs");
+const { multiply, sum, round, evaluate } = require("mathjs");
 const { StatusCodes } = require("http-status-codes");
 const CustomError = require("../errors");
 const { default: mongoose } = require("mongoose");
@@ -524,21 +524,24 @@ const paymentCalcOnKartItems = (kartItems) => {
       totalCostToSupplier + ki.quantity * ki.item.costToSupplierPerOrder;
   });
 
-  let itemTotal = totalCost;
+  let subTotal = totalCost;
 
-  let serviceFee = multiply(itemTotal, 0.2);
+  let cost =  round(multiply(subTotal,100) / 105);
+
+  let serviceFee = subTotal - cost;
 
   let deliveryFee = 4.99;
 
-  let taxableAmount = sum(itemTotal, serviceFee, deliveryFee);
+  let taxableAmount = sum(subTotal, deliveryFee);
 
   let tax = round(multiply(".09375", taxableAmount), 2);
 
   let total = round(sum(taxableAmount, tax), 2);
 
   return {
-    cost: totalCost,
+    cost,
     serviceFee,
+    subTotal,
     deliveryFee,
     tax,
     total,
