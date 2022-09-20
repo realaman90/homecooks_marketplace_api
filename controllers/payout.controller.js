@@ -15,12 +15,14 @@ const createPayoutObjectFromOrder = async(orderId) => {
 
     const order = await orderModel.findById(orderId, `supplier customer status costToSupplier event item quantity`);
 
-    // if (order.status != orderStatus.CONFIRMED){        
-    //     return
-    // }
+    if (order.status != orderStatus.CONFIRMED){        
+        return
+    }
 
     // dnt create if already exists
+    
     const alreadyExists = await payoutModel.findOne({ order: orderId }).countDocuments();
+    
     if (alreadyExists) {
         return
     }
@@ -43,16 +45,37 @@ const createPayoutObjectFromOrder = async(orderId) => {
 }
 
 const createPayoutsForPayment = async(paymentId) => {
-    console.log("createPayoutsForPayment", paymentId)
-    const orders = await orderModel.find({
-        payment: paymentId
-    }, `"id`);
 
-    for (let i = 0; i < orders.length; i++) {
-        createPayoutObjectFromOrder(orders[i]._id);
+    let orders = await paymentModel.aggregate([
+        {
+            $match: {
+                _id: mongoose.Types.ObjectId(paymentId)
+            }
+        }, {
+            $lookup: {
+                "from": "orders",
+                "localField": "orders",
+                "foreignField": "_id",
+                "as": "orders"
+            }
+        }, {
+            $project: {
+                "orders":"$orders"
+            }
+        }
+    ])
+    
+    orders = orders[0]
+    orders = orders.orders;
+
+    for (let i = 0; i < orders.length; i++) {        
+        if (orders[i].status == "active" || orders[i].status == "confirmed"){
+            createPayoutObjectFromOrder(orders[i]._id);
+        }        
     }
-
 }
+
+// createPayoutsForPayment("6329eca2cf3ec17f468b6eec")
 
 
 const refreshSupplierPayouts = async(supplierId) => {
