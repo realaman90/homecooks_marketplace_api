@@ -812,7 +812,7 @@ const getCheckout = async (req, res) => {
   ]);
 
   orders.forEach(o=>{
-    const subTotal = priceBreakdownItem(o.item.pricePerOrder);
+    const {subTotal} = priceBreakdownItem(o.item.pricePerOrder);
     o.item.pricePerOrder = subTotal
   })
 
