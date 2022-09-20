@@ -15,9 +15,9 @@ const createPayoutObjectFromOrder = async(orderId) => {
 
     const order = await orderModel.findById(orderId, `supplier customer status costToSupplier event item quantity`);
 
-    if (order.status != orderStatus.CONFIRMED){        
-        return
-    }
+    // if (order.status != orderStatus.CONFIRMED){        
+    //     return
+    // }
 
     // dnt create if already exists
     
