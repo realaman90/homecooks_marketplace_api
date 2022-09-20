@@ -47,6 +47,8 @@ const paymentRouter = require('./route/payment.routes');
 const customerPaymentRouter = require('./route/customerPayment.routes');
 const wishlistRouter = require('./route/wishlist.routes');
 
+// require('./utils/pricing')
+
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
 const errorHandlerMiddleware = require('./middleware/error-handler');

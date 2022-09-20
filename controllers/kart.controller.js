@@ -5,6 +5,8 @@ const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const crypto = require('crypto');
 const { eventStatus } = require('../constants');
+const { multiply, sum, round, evaluate } = require("mathjs");
+const { priceBreakdownItem, priceBreakdownCheckout} = require('../utils/pricing');
 
 const getUserKart = async(req, res) => {
 
@@ -51,8 +53,10 @@ const getUserKart = async(req, res) => {
     let totalCost = 0;
     
     // calculate total kart cons
-    kartItems.forEach(ki=>{
-        totalCost = totalCost + (ki.quantity*ki.item.pricePerOrder)
+    kartItems.forEach(ki=>{        
+        const {subTotal} = priceBreakdownItem(ki.item.pricePerOrder);
+        ki.item.pricePerOrder=subTotal;        
+        totalCost = round(totalCost + multiply(ki.quantity,ki.item.pricePerOrder),2)
     })
 
     let kartCount = kartItems.length;

@@ -12,6 +12,10 @@ const PaymentSchema = mongoose.Schema({
         ref: 'Supplier',
         required: true
     },
+    subTotal: {
+        type: String,
+        required: [true]
+    },
     cost: {
         type: String,
         required: [true]

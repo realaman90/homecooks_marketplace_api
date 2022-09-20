@@ -6,6 +6,7 @@ const { default: mongoose } = require('mongoose');
 const crypto = require('crypto');
 const { eventStatus, orderStatus } = require('../constants');
 const { parseWZeroTime, todayDateWithZeroTime } = require('../utils/datetime');
+const { priceBreakdownItem, priceBreakdownCheckout} = require('../utils/pricing');
 
 const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
 
@@ -167,6 +168,12 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
     let items = resp[0];
     let itemCount = resp[1];
 
+    // correct price on the item
+    items.forEach(i=>{
+        const {subTotal} = priceBreakdownItem(i.pricePerOrder);
+        i.pricePerOrder=subTotal;
+    })
+
     itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0
 
     return {
@@ -268,7 +275,7 @@ const fetchItemsWithDateFilter = async (andQuery, skip, limit) => {
     })
     listQuery.push({
         "$project": {
-            "_id": '$item',
+            "_id": 1,
             "in_wishlist": 1,
             // "dishes":1,
             "supplierName": "$supplier.businessName",
@@ -310,6 +317,11 @@ const fetchItemsWithDateFilter = async (andQuery, skip, limit) => {
     const resp = await Promise.all([itemsPromise, itemCountPromise])
     let items = resp[0];
     let itemCount = resp[1];
+
+    items.forEach(i=>{
+        const {subTotal} = priceBreakdownItem(i.pricePerOrder);        
+        i.pricePerOrder=subTotal;
+    })
 
     itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0
 
@@ -606,7 +618,13 @@ const getItem = async(req, res) => {
         throw new CustomError.BadRequestError('Invalid Dish Id');
     }
 
-    return res.status(StatusCodes.OK).json({ dish: dishes[0] });
+    let dish = dishes[0]
+    if (dish){
+        const {subTotal} = priceBreakdownItem(dish.pricePerOrder)
+        dish.pricePerOrder=subTotal
+    }
+
+    return res.status(StatusCodes.OK).json({ dish });
 
 }
 

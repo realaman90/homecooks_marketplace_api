@@ -10,6 +10,8 @@ const { default: mongoose } = require("mongoose");
 const { orderStatus, paymentStatus } = require("../constants");
 const payoutController = require("./payout.controller");
 const notificationController = require("./notification.controller");
+const { priceBreakdownItem, priceBreakdownCheckout} = require('../utils/pricing');
+const { convertToUniqueMongoIdArray } = require('../utils/objectId');
 
 const utils = require("nodemon/lib/utils");
 
@@ -339,7 +341,13 @@ const getOrderById = async (req, res) => {
     throw new CustomError.BadRequestError("Invalid Order Id");
   }
 
-  return res.status(StatusCodes.OK).json({ order: orders[0] });
+  let order = orders[0];
+  order.item.forEach(i=>{
+    let {subTotal} = priceBreakdownItem(i.pricePerOrder);
+    i.pricePerOrder = subTotal
+  })
+
+  return res.status(StatusCodes.OK).json({ order });
 };
 
 const getCustomerOrders = async (req, res) => {
@@ -460,6 +468,13 @@ const getCustomerOrders = async (req, res) => {
     itemCount = await orderModel.find({ $and: andQuery }).countDocuments();
   }
 
+  orders.forEach(order=>{
+    order.item.forEach(i=>{
+      let {subTotal} = priceBreakdownItem(i.pricePerOrder);
+      i.pricePerOrder = subTotal
+    })
+  })
+  
   return res.status(StatusCodes.OK).json({ orders, itemCount });
 };
 
@@ -600,6 +615,11 @@ const createOrdersFromKart = async (kartItems, prevOrders) => {
   const orders = [];
 
   kartItems.forEach((ki) => {
+    
+    let {subTotal} = priceBreakdownItem(ki.item.pricePerOrder)
+    let cost = round(multiply(subTotal, ki.quantity),1)
+    let costToSupplier = round(multiply(ki.item.costToSupplierPerOrder, ki.quantity),1)
+
     orders.push({
       _id: prevOrderMeta[ki.item._id]
         ? prevOrderMeta[ki.item._id].orderId
@@ -610,8 +630,8 @@ const createOrdersFromKart = async (kartItems, prevOrders) => {
       event: ki.event,
       supplier: ki.supplier,
       quantity: ki.quantity,
-      cost: ki.quantity * ki.item.pricePerOrder,
-      costToSupplier: ki.quantity * ki.item.costToSupplierPerOrder,
+      cost: cost,
+      costToSupplier: costToSupplier,
       isPaid: false,
       status: paymentStatus.PENDING_CHECKOUT,
       pickupPoint: prevOrderMeta[ki.item._id]
@@ -685,7 +705,13 @@ const getCheckout = async (req, res) => {
 
   pendingCheckout = pendingCheckout[0];
 
-  const calcObj = paymentCalcOnKartItems(kartItems);
+  let pickUpPointsArr = kartItems.map(ki => ki.pickupPoint);
+  pickUpPointsArr = convertToUniqueMongoIdArray(pickUpPointsArr)
+  let uniquePickupPoints = pickUpPointsArr.length;
+
+  const calcObj = priceBreakdownCheckout(kartItems, uniquePickupPoints);
+
+  console.log(calcObj)
 
   let orders = await createOrdersFromKart(
     kartItems,
@@ -697,10 +723,12 @@ const getCheckout = async (req, res) => {
     customer: userId,
     supplier: kartItems[0].item.supplier,
     cost: calcObj.cost,
+    subTotal: calcObj.subTotal,
     serviceFee: calcObj.serviceFee,
     deliveryFee: calcObj.deliveryFee,
     tax: calcObj.tax,
     total: calcObj.total,
+    deliveryFee: calcObj.deliveryFee,
     costToSupplier: calcObj.costToSupplier,
     status: paymentStatus.PENDING_CHECKOUT,
     orders,
@@ -722,6 +750,7 @@ const getCheckout = async (req, res) => {
         $set: {
           supplier: payment.supplier,
           cost: payment.cost,
+          subTotal: payment.subTotal,
           deliveryFee: payment.deliveryFee,
           serviceFee: payment.serviceFee,
           tax: payment.tax,
@@ -764,6 +793,7 @@ const getCheckout = async (req, res) => {
         quantity: 1,
         pickupPoint: 1,
         instruction: 1,
+        cost:1,
         "item._id": 1,
         "item.name": 1,
         "item.description": 1,
@@ -780,6 +810,11 @@ const getCheckout = async (req, res) => {
       },
     },
   ]);
+
+  orders.forEach(o=>{
+    const subTotal = priceBreakdownItem(o.item.pricePerOrder);
+    o.item.pricePerOrder = subTotal
+  })
 
   return res.status(StatusCodes.OK).json({ checkout: payment, orders });
 };
@@ -1291,7 +1326,7 @@ const updateOrder = async (req, res) => {
       }
     });
 
-    const update = paymentCalcOnKartItems(unCancelledOrders);
+    const update = priceBreakdownCheckout(unCancelledOrders);
     update.updatedAt = new Date();
 
     let updateResp = await paymentModel.updateOne(
@@ -1302,8 +1337,6 @@ const updateOrder = async (req, res) => {
         $set: update,
       }
     );
-
-    console.log(updateResp);
   }
 
   await orderModel.updateOne(

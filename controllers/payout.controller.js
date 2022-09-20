@@ -43,7 +43,7 @@ const createPayoutObjectFromOrder = async(orderId) => {
 }
 
 const createPayoutsForPayment = async(paymentId) => {
-
+    console.log("createPayoutsForPayment", paymentId)
     const orders = await orderModel.find({
         payment: paymentId
     }, `"id`);
