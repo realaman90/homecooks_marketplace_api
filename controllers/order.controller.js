@@ -807,11 +807,8 @@ const updatePickupAddressOnOrder = async (req, res) => {
         },
       }
     );
-    console.log("resp");
-    console.log(resp);
 
-    let orderUpdated = await orderModel.findOne({ _id: o.orderId });
-    console.log(orderUpdated);
+    await orderModel.findOne({ _id: o.orderId });
   }
 
   return res

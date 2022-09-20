@@ -1,12 +1,10 @@
 const dishModel = require('../models/Dish');
-const eventModel = require('../models/Event');
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
-const crypto = require('crypto');
 const { IDGen } = require('../utils/viewId');
 const dishItemModel = require('../models/DishItem');
-const { DishCreatedNotificationForAdmin} = require('./notification.controller');
+const { DishCreatedNotificationForAdmin } = require('./notification.controller');
 
 const createDish = async(req, res) => {
 

@@ -18,6 +18,7 @@ const orderStatus = {
 const paymentStatus = {
   PENDING_CHECKOUT: "pending_checkout",
   ORDER_PLACED: "order_placed",
+  PAYMENT_PROCESSED: "payment_processed",
   COMPLETED: "completed"
 }
 

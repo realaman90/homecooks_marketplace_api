@@ -613,9 +613,7 @@ const createEventUsingEventTemplate = async(req, res) => {
     events = events.filter(e=>{        
         const closingDateTime = addHours(new Date(e.closingDate), e.closingTime)
         e.closingDateTime = closingDateTime;
-        console.log(new Date(), e.closingDate)
         const hoursFarFrmNow = differenceInHours(e.closingDate, new Date());
-        console.log(hoursFarFrmNow)
         if (hoursFarFrmNow < 24){
             return false
         }

@@ -7,6 +7,320 @@ const crypto = require('crypto');
 const { eventStatus, orderStatus } = require('../constants');
 const { parseWZeroTime, todayDateWithZeroTime } = require('../utils/datetime');
 
+const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
+
+    console.log("fetchItemsWithOutDateFilter")
+
+    const listQuery = [];
+    if (andQuery.length > 0) {
+        listQuery.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }
+
+    // get order details
+    listQuery.push({
+        $lookup: {
+            from: "orders",
+            let: { "itemId": "$_id" },
+            pipeline: [
+                { "$match": { "$expr": { "$eq": ["$$itemId", "$item"] } } },
+                { "$match": { "status": { "$in": [orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.ACTIVE] } } },
+                {
+                    "$group": {
+                        "_id": {
+                            "item": "$item",
+                        },
+                        "count": { $sum: '$quantity' },
+                    }
+                }, {
+                    "$project": {
+                        "count": 1
+                    }
+                }
+            ],
+            as: "orders"
+        }
+    }),
+    listQuery.push({
+        "$unwind": {
+            path: '$orders',
+            preserveNullAndEmptyArrays: true
+        }
+    })
+    listQuery.push({
+        "$set": {
+            "order_count": "$orders.count"
+        }
+    })
+    listQuery.push({
+        "$sort": {
+            "eventDate": -1
+        }
+    })
+    listQuery.push({
+        "$sort": {
+            "order_count": -1
+        }
+    })
+    // group with dish ids and take first one
+    listQuery.push({
+        $group: {
+            _id: '$dish',
+            item: {$first: '$_id'},
+            order_count: {$first: '$order_count'},
+            supplier: {$first: '$supplier'},
+            dish: {$first: '$dish'},
+            name: {$first: '$name'},
+            images: {$first: '$images'},
+            category: {$first: '$category'},
+            cuisine: {$first: '$cuisine'},
+            mealTags: {$first: '$mealTags'},
+            minOrders: {$first: '$minOrders'},
+            maxOrders: {$first: '$maxOrders'},
+            pricePerOrder: {$first: '$pricePerOrder'},
+            eventDate: {$first: '$eventDate'},
+            eventVisibilityDate: {$first: '$eventVisibilityDate'},
+            closingDate: {$first: '$closingDate'},
+            closingTime: {$first: '$closingTime'},
+        }
+    })
+
+    listQuery.push({
+        $skip: skip,
+    })
+
+    listQuery.push({
+        $limit: limit,
+    })
+    
+    listQuery.push({
+        "$lookup": {
+            "from": "suppliers",
+            "localField": "supplier",
+            "foreignField": "_id",
+            "as": "supplier"
+        }
+    })
+    listQuery.push({ "$unwind": '$supplier' })
+    listQuery.push({
+        $lookup: {
+            from: "wishlists",
+            let: { "item": "$_id" },
+            pipeline: [
+                { "$match": { "$expr": { "$eq": ["$$item", "$item"] } } },
+            ],
+            as: "wishlist"
+        }
+    })
+    listQuery.push({
+        "$addFields": {
+            "in_wishlist": { $gt: [{ $size: "$wishlist" }, 0] }
+        }
+    })
+    listQuery.push({
+        "$project": {
+            "_id": '$item',
+            "in_wishlist": 1,
+            // "dishes":1,
+            "supplierName": "$supplier.businessName",
+            "supplierId": "$supplier._id",
+            "dish": 1,
+            "name": 1,
+            "images": 1,
+            "category": 1,
+            "cuisine": 1,
+            "mealTags": 1,
+            "minOrders": 1,
+            "maxOrders": 1,
+            "pricePerOrder": 1,
+            "eventDate": 1,
+            "eventVisibilityDate": 1,
+            "closingDate": 1,
+            "closingTime": 1,
+            "order_count": { $ifNull: ["$order_count", 0] }
+        }
+    })   
+
+    const countQuery = [];
+    if (andQuery.length > 0) {
+        countQuery.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }
+    countQuery.push({        
+        $group: {
+            _id: '$dish',
+        }
+    })
+    countQuery.push({        
+        $count: 'count'
+    })
+
+    let itemsPromise = dishItemModel.aggregate(listQuery);
+    let itemCountPromise = dishItemModel.aggregate(countQuery);
+    const resp = await Promise.all([itemsPromise, itemCountPromise])
+    let items = resp[0];
+    let itemCount = resp[1];
+
+    itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0
+
+    return {
+        items,
+        itemCount
+    }
+
+}
+
+
+const fetchItemsWithDateFilter = async (andQuery, skip, limit) => {
+
+    console.log("fetchItemsWithDateFilter")
+
+    const listQuery = [];
+        
+    if (andQuery.length > 0) {
+        listQuery.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }
+
+    // get order details
+    listQuery.push({
+        $lookup: {
+            from: "orders",
+            let: { "itemId": "$_id" },
+            pipeline: [
+                { "$match": { "$expr": { "$eq": ["$$itemId", "$item"] } } },
+                { "$match": { "status": { "$in": [orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.ACTIVE] } } },
+                {
+                    "$group": {
+                        "_id": {
+                            "item": "$item",
+                        },
+                        "count": { $sum: '$quantity' },
+                    }
+                }, {
+                    "$project": {
+                        "count": 1
+                    }
+                }
+            ],
+            as: "orders"
+        }
+    }),
+    listQuery.push({
+        "$unwind": {
+            path: '$orders',
+            preserveNullAndEmptyArrays: true
+        }
+    })
+    listQuery.push({
+        "$set": {
+            "order_count": "$orders.count"
+        }
+    })
+    listQuery.push({
+        "$sort": {
+            "eventDate": -1
+        }
+    })
+    listQuery.push({
+        "$sort": {
+            "order_count": -1
+        }
+    })
+    listQuery.push({
+        $skip: skip,
+    })
+    listQuery.push({
+        $limit: limit,
+    })
+    listQuery.push({
+        "$lookup": {
+            "from": "suppliers",
+            "localField": "supplier",
+            "foreignField": "_id",
+            "as": "supplier"
+        }
+    })
+    listQuery.push({ "$unwind": '$supplier' })
+    listQuery.push({
+        $lookup: {
+            from: "wishlists",
+            let: { "item": "$_id" },
+            pipeline: [
+                { "$match": { "$expr": { "$eq": ["$$item", "$item"] } } },
+            ],
+            as: "wishlist"
+        }
+    })
+    listQuery.push({
+        "$addFields": {
+            "in_wishlist": { $gt: [{ $size: "$wishlist" }, 0] }
+        }
+    })
+    listQuery.push({
+        "$project": {
+            "_id": '$item',
+            "in_wishlist": 1,
+            // "dishes":1,
+            "supplierName": "$supplier.businessName",
+            "supplierId": "$supplier._id",
+            "dish": 1,
+            "name": 1,
+            "images": 1,
+            "category": 1,
+            "cuisine": 1,
+            "mealTags": 1,
+            "minOrders": 1,
+            "maxOrders": 1,
+            "pricePerOrder": 1,
+            "eventDate": 1,
+            "eventVisibilityDate": 1,
+            "closingDate": 1,
+            "closingTime": 1,
+            "order_count": { $ifNull: ["$order_count", 0] }
+        }
+    })   
+    listQuery.push({ "$skip": skip })
+    listQuery.push({ "$limit": limit })
+
+    // count
+    const countQuery = []
+    if (andQuery.length > 0) {
+        countQuery.push({
+            "$match": {
+                "$and": andQuery
+            }
+        })
+    }    
+    countQuery.push({        
+        $count: 'count'
+    })
+
+    let itemsPromise = dishItemModel.aggregate(listQuery);
+    let itemCountPromise = dishItemModel.aggregate(countQuery);
+    const resp = await Promise.all([itemsPromise, itemCountPromise])
+    let items = resp[0];
+    let itemCount = resp[1];
+
+    itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0
+
+    return {
+        items,
+        itemCount
+    }
+
+}
+
+
 const getAllItems = async(req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
@@ -155,8 +469,9 @@ const getAllItemsBySupplier = async(req, res) => {
         })
     }
 
-    let eventDateFilterCount = 0;
+    let withEventDateFilter = false;
     if (req.query.eventDate) {
+        withEventDateFilter = true;
         let eventDate = req.query.eventDate;
         eventDate = eventDate.split('|')
         let dateOrQuery = []
@@ -168,217 +483,31 @@ const getAllItemsBySupplier = async(req, res) => {
         })
         andQuery.push({
             "$or": dateOrQuery
-        })
-        eventDateFilterCount = eventDate.length - 1
+        })        
     }
 
-    const aggreagatePipelineQueries = [];
-    if (andQuery.length > 0) {
-        aggreagatePipelineQueries.push({
-            "$match": {
-                "$and": andQuery
-            }
-        })
-    }
-    // loopkup to get the dish based count
-    aggreagatePipelineQueries.push({
-        "$lookup": {
-            from: "dishitems",
-            let: { "dishId": "$dish" },
-            pipeline: [{
-                "$match": {
-                    "$and": andQuery,
-                },
-            }, {
-                "$match": { "$expr": { "$eq": ["$$dishId", "$dish"] } }
-            }, {
-                "$group": {
-                    "_id": "$dish",
-                    "count": { $sum: 1 },
-                }
-            }, {
-                "$project": {
-                    "count": 1
-                }
-            }],
-            as: "dishes"
-        }
-    })
-    aggreagatePipelineQueries.push({ "$unwind": '$dishes' })
-    aggreagatePipelineQueries.push({
-        "$match": {
-            "dishes.count": { $gt: eventDateFilterCount }
-        }
-    })
-    aggreagatePipelineQueries.push({ "$sort": { "createdAt": -1 } })
-    aggreagatePipelineQueries.push({ "$skip": skip })
-    aggreagatePipelineQueries.push({ "$limit": limit })
-    aggreagatePipelineQueries.push({
-        "$lookup": {
-            "from": "suppliers",
-            "localField": "supplier",
-            "foreignField": "_id",
-            "as": "supplier"
-        }
-    })
-    aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
-    aggreagatePipelineQueries.push({
-        "$lookup": {
-            "from": "bikerpickuppoints",
-            "localField": "bikerPickupPoint",
-            "foreignField": "_id",
-            "as": "bikerPickupPoint"
-        }
-    })
-    aggreagatePipelineQueries.push({ "$unwind": '$bikerPickupPoint' })
-    aggreagatePipelineQueries.push({
-            "$lookup": {
-                "from": "clientpickuppoints",
-                "localField": "clientPickups",
-                "foreignField": "_id",
-                "as": "clientPickups"
-            }
-        })
-        // get order details
-    aggreagatePipelineQueries.push({
-            $lookup: {
-                from: "orders",
-                let: { "itemId": "$_id" },
-                pipeline: [
-                    { "$match": { "$expr": { "$eq": ["$$itemId", "$item"] } } },
-                    { "$match": { "status": { "$in": [orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.ACTIVE] } } },
-                    {
-                        "$group": {
-                            "_id": {
-                                "item": "$item",
-                            },
-                            "count": { $sum: '$quantity' },
-                        }
-                    }, {
-                        "$project": {
-                            "count": 1
-                        }
-                    }
-                ],
-                as: "orders"
-            }
-        }),
-        aggreagatePipelineQueries.push({
-            "$unwind": {
-                path: '$orders',
-                preserveNullAndEmptyArrays: true
-            }
-        })
-    aggreagatePipelineQueries.push({
-        "$set": {
-            "order_count": "$orders.count"
-        }
-    })
-    aggreagatePipelineQueries.push({
-        $lookup: {
-            from: "wishlists",
-            let: { "item": "$_id" },
-            pipeline: [
-                { "$match": { "$expr": { "$eq": ["$$item", "$item"] } } },
-            ],
-            as: "wishlist"
-        }
-    })
-    aggreagatePipelineQueries.push({
-        "$addFields": {
-            "in_wishlist": { $gt: [{ $size: "$wishlist" }, 0] }
-        }
-    })
-    aggreagatePipelineQueries.push({
-        "$project": {
-            "_id": 1,
-            "bikerPickupPoint.name": 1,
-            "bikerPickupPoint.text": 1,
-            "bikerPickupPoint.viewId": 1,
-            "bikerPickupPoint.address": 1,
-            "bikerPickupPoint.suitableTimes": 1,
-            "clientPickups.name": 1,
-            "clientPickups.text": 1,
-            "clientPickups.viewId": 1,
-            "clientPickups.address": 1,
-            "clientPickups.suitableTimes": 1,
-            "supplier.businessName": 1,
-            "supplier.businessImages": 1,
-            "supplier.address": 1,
-            "supplier.contactInfo": 1,
-            "name": 1,
-            "images": 1,
-            "category": 1,
-            "cuisine": 1,
-            "mealTags": 1,
-            "minOrders": 1,
-            "maxOrders": 1,
-            "pricePerOrder": 1,
-            "costToSupplierPerOrder": 1,
-            "description": 1,
-            "eventDate": 1,
-            "eventVisibilityDate": 1,
-            "closingDate": 1,
-            "closingTime": 1,
-            "supplierPickupTime": 1,
-            "in_wishlist": 1,
-            "order_count": { $ifNull: ["$order_count", 0] }
-        }
+    // status filter (active)
+    andQuery.push({
+        status: 'active'
     })
 
-    let items = await dishItemModel.aggregate(aggreagatePipelineQueries);
-    // count
-    const aggreagatePipelineQueriesCount = []
-    if (andQuery.length > 0) {
-        aggreagatePipelineQueriesCount.push({
-            "$match": {
-                "$and": andQuery
-            }
-        })
+    andQuery.push({
+        eventVisibilityDate: { "$lte": todayDateWithZeroTime() }
+    })
+
+    andQuery.push({
+        closingDate: { "$gt": todayDateWithZeroTime() }
+    })
+
+    let itemResp = null;
+
+    if (withEventDateFilter) {        
+        itemResp = await fetchItemsWithDateFilter(andQuery, skip, limit);
+    }else {
+        itemResp = await fetchItemsWithOutDateFilter(andQuery, skip, limit);
     }
 
-    // loopkup to get the dish based count
-    aggreagatePipelineQueriesCount.push({
-        "$lookup": {
-            from: "dishitems",
-            let: { "dishId": "$dish" },
-            pipeline: [{
-                "$match": {
-                    "$and": andQuery,
-                },
-            }, {
-                "$match": { "$expr": { "$eq": ["$$dishId", "$dish"] } }
-            }, {
-                "$group": {
-                    "_id": "$dish",
-                    "count": { $sum: 1 },
-                }
-            }, {
-                "$project": {
-                    "count": 1
-                }
-            }],
-            as: "dishes"
-        }
-    })
-
-    aggreagatePipelineQueriesCount.push({ "$unwind": '$dishes' })
-
-    aggreagatePipelineQueriesCount.push({
-        "$match": {
-            "dishes.count": { $gt: eventDateFilterCount }
-        }
-    })
-
-    aggreagatePipelineQueriesCount.push({
-        "$count": "count"
-    })
-
-    let itemCount = await dishItemModel.aggregate(aggreagatePipelineQueriesCount)
-
-    itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0
-
-    return res.status(StatusCodes.OK).json({ items, itemCount });
+    return res.status(StatusCodes.OK).json(itemResp);
 
 }
 
@@ -692,7 +821,6 @@ const getItemByItemId = async(req, res) => {
 
 }
 
-
 const ListProducts = async(req, res) => {
 
     const skip = req.query.skip ? Number(req.query.skip) : 0;
@@ -987,9 +1115,10 @@ const ListProductsV2 = async(req, res) => {
             dish: mongoose.Types.ObjectId(req.query.dish)
         })
     }
-
-    let eventDateFilterCount = 0;
+        
+    let withEventDateFilter = false;
     if (req.query.eventDate) {
+        withEventDateFilter = true;
         let eventDate = req.query.eventDate;
         eventDate = eventDate.split('|')
         let dateOrQuery = []
@@ -1017,165 +1146,15 @@ const ListProductsV2 = async(req, res) => {
         closingDate: { "$gt": todayDateWithZeroTime() }
     })
 
-    const aggreagatePipelineQueries = [];
-    if (andQuery.length > 0) {
-        aggreagatePipelineQueries.push({
-            "$match": {
-                "$and": andQuery
-            }
-        })
+    let itemResp = null;
+
+    if (withEventDateFilter) {        
+        itemResp = await fetchItemsWithDateFilter(andQuery, skip, limit);
+    }else {
+        itemResp = await fetchItemsWithOutDateFilter(andQuery, skip, limit);
     }
 
-    // get order details
-    aggreagatePipelineQueries.push({
-        $lookup: {
-            from: "orders",
-            let: { "itemId": "$_id" },
-            pipeline: [
-                { "$match": { "$expr": { "$eq": ["$$itemId", "$item"] } } },
-                { "$match": { "status": { "$in": [orderStatus.PENDING, orderStatus.CONFIRMED, orderStatus.ACTIVE] } } },
-                {
-                    "$group": {
-                        "_id": {
-                            "item": "$item",
-                        },
-                        "count": { $sum: '$quantity' },
-                    }
-                }, {
-                    "$project": {
-                        "count": 1
-                    }
-                }
-            ],
-            as: "orders"
-        }
-    }),
-    aggreagatePipelineQueries.push({
-        "$unwind": {
-            path: '$orders',
-            preserveNullAndEmptyArrays: true
-        }
-    })
-    aggreagatePipelineQueries.push({
-        "$set": {
-            "order_count": "$orders.count"
-        }
-    })
-    aggreagatePipelineQueries.push({
-        "$sort": {
-            "eventDate": -1
-        }
-    })
-    aggreagatePipelineQueries.push({
-        "$sort": {
-            "order_count": -1
-        }
-    })
-    // group with dish ids and take first one
-    aggreagatePipelineQueries.push({
-        $group: {
-            _id: '$dish',
-            item: {$first: '$_id'},
-            order_count: {$first: '$order_count'},
-            supplier: {$first: '$supplier'},
-            dish: {$first: '$dish'},
-            name: {$first: '$name'},
-            images: {$first: '$images'},
-            category: {$first: '$category'},
-            cuisine: {$first: '$cuisine'},
-            mealTags: {$first: '$mealTags'},
-            minOrders: {$first: '$minOrders'},
-            maxOrders: {$first: '$maxOrders'},
-            pricePerOrder: {$first: '$pricePerOrder'},
-            eventDate: {$first: '$eventDate'},
-            eventVisibilityDate: {$first: '$eventVisibilityDate'},
-            closingDate: {$first: '$closingDate'},
-            closingTime: {$first: '$closingTime'},
-        }
-    })
-
-    aggreagatePipelineQueries.push({
-        $skip: skip,
-    })
-
-    aggreagatePipelineQueries.push({
-        $limit: limit,
-    })
-    
-    aggreagatePipelineQueries.push({
-        "$lookup": {
-            "from": "suppliers",
-            "localField": "supplier",
-            "foreignField": "_id",
-            "as": "supplier"
-        }
-    })
-    aggreagatePipelineQueries.push({ "$unwind": '$supplier' })
-    aggreagatePipelineQueries.push({
-        $lookup: {
-            from: "wishlists",
-            let: { "item": "$_id" },
-            pipeline: [
-                { "$match": { "$expr": { "$eq": ["$$item", "$item"] } } },
-            ],
-            as: "wishlist"
-        }
-    })
-    aggreagatePipelineQueries.push({
-        "$addFields": {
-            "in_wishlist": { $gt: [{ $size: "$wishlist" }, 0] }
-        }
-    })
-    aggreagatePipelineQueries.push({
-        "$project": {
-            "_id": '$item',
-            "in_wishlist": 1,
-            // "dishes":1,
-            "supplierName": "$supplier.businessName",
-            "supplierId": "$supplier._id",
-            "dish": 1,
-            "name": 1,
-            "images": 1,
-            "category": 1,
-            "cuisine": 1,
-            "mealTags": 1,
-            "minOrders": 1,
-            "maxOrders": 1,
-            "pricePerOrder": 1,
-            "eventDate": 1,
-            "eventVisibilityDate": 1,
-            "closingDate": 1,
-            "closingTime": 1,
-            "order_count": { $ifNull: ["$order_count", 0] }
-        }
-    })    
-
-    const countQuery = [];
-    if (andQuery.length > 0) {
-        countQuery.push({
-            "$match": {
-                "$and": andQuery
-            }
-        })
-    }
-    countQuery.push({        
-        $group: {
-            _id: '$dish',
-        }
-    })
-    countQuery.push({        
-        $count: 'count'
-    })
-
-    let itemsPromise = dishItemModel.aggregate(aggreagatePipelineQueries);
-    let itemCountPromise = dishItemModel.aggregate(countQuery);
-    const resp = await Promise.all([itemsPromise, itemCountPromise])
-    let items = resp[0];
-    let itemCount = resp[1];
-
-    itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0
-
-    return res.status(StatusCodes.OK).json({ items, itemCount });
+    return res.status(StatusCodes.OK).json(itemResp);
 
 }
 
