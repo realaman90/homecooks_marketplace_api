@@ -3,6 +3,8 @@ const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const { todayDateWithZeroTime} = require('../utils/datetime');
+const {priceBreakdownItem} = require('../utils/pricing');
+
 
 // Create a supplier or a customer
 const ToggleAddToWishlist = async(req, res) => {
@@ -110,6 +112,12 @@ const GetWishList = async (req, res) => {
             }
         }
     ])
+
+
+    items.forEach(i=>{
+        let {subTotal} = priceBreakdownItem(i.pricePerOrder);
+        i.pricePerOrder = subTotal
+      })
 
     const wishlistCount = await Wishlist.aggregate([
         {
