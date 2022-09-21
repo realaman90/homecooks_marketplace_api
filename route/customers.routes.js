@@ -23,7 +23,7 @@ router.post('/login', login);
 router.post('/resetPasswordOTP', resetPasswordOTP)
 router.post('/resetPassword', resetPassword)
 router.post('/verify', verfyOTP);
-router.put('/update/:customerId', updateUser);
+router.put('/update', authenticateUser, updateUser);
 
 
 module.exports = router;
