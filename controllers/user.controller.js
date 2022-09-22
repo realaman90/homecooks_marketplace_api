@@ -42,7 +42,8 @@ const registerUser = async(req, res) => {
 
 };
 const updateUser = async(req, res) => {
-    const { id: userId } = req.params;
+    const userId = req.user.userId;
+    console.log(userId);
 
     const userData = req.body;
     const user = await User.findOne({ _id: userId }).select('-password');

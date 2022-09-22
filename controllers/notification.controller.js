@@ -4,17 +4,17 @@ const DishModel = require('../models/Dish');
 const PaymentModel = require('../models/Payment');
 const EventTemplateModel = require('../models/EventTemplate');
 const NotificationModel = require('../models/Notification');
-const {notificationTypes} = require('../constants');
+const { notificationTypes } = require('../constants');
 const { StatusCodes } = require('http-status-codes');
-const { sendEmail, sendMultipleEmails} = require('./email.controller');
+const { sendEmail, sendMultipleEmails } = require('./email.controller');
 
 // notification creation function
 
 var HARDCODED_ADMIN_VALUES = false
 var _adminDetails = [{
     "_id": "631ad4166f442471ffcb1de5",
-    "fullName":"Utkarsh Tyagi",
-    "email":"vubyto@dropjar.com",
+    "fullName": "Utkarsh Tyagi",
+    "email": "vubyto@dropjar.com",
     "phone": "0000000000",
     "notificationSettings": {
         "email": true
@@ -22,10 +22,10 @@ var _adminDetails = [{
 }]
 
 // working
-const CreateUserWelcomeNotification = async (userId) => {
-    
+const CreateUserWelcomeNotification = async(userId) => {
+
     const userDetails = await UserModel.findById(userId, `fullName email phone notificationSettings`);
-    if (!userDetails){
+    if (!userDetails) {
         // log this to analyse the scenario
         return
     }
@@ -36,19 +36,19 @@ const CreateUserWelcomeNotification = async (userId) => {
 
         Thanks,
         Noudada Teams
-    ` 
+    `
     const smsMessage = `Hi ${userDetails.fullName}
         Welcome to the noudada platform
 
         Thanks,
         Noudada Teams
-    ` 
+    `
     const appMessage = `Hi ${userDetails.fullName}
         Welcome to the noudada platform
 
         Thanks,
         Noudada Teams
-` 
+`
     const app_url = `${process.env.APP_URL}`
 
     let notificationRecod = {
@@ -69,15 +69,15 @@ const CreateUserWelcomeNotification = async (userId) => {
     }
 
     await NotificationModel.create(notificationRecod);
-    
-    if (notificationRecod.userNotificationSettings.email){
+
+    if (notificationRecod.userNotificationSettings.email) {
         // send email
         sendEmail(notificationRecod)
     }
 
-    if (notificationRecod.userNotificationSettings.phone){
+    if (notificationRecod.userNotificationSettings.phone) {
         // send sms
-        
+
     }
 
     return null
@@ -92,24 +92,24 @@ const CreateUserWelcomeNotification = async (userId) => {
 
 // admin notification for user signup
 // working
-const UserSignUpNotificationForAdmin = async (userId) => {
-    
+const UserSignUpNotificationForAdmin = async(userId) => {
+
     const userDetails = await UserModel.findById(userId, `fullName email phone notificationSettings`);
-    if (!userDetails){
+    if (!userDetails) {
         // log this to analyse the scenario
         return
-    }    
+    }
 
     let adminDetails = null;
-    if (HARDCODED_ADMIN_VALUES){
+    if (HARDCODED_ADMIN_VALUES) {
         adminDetails = _adminDetails;
-    }else {
+    } else {
         // get admin details
         adminDetails = await UserModel.find({
             type: "admin"
-        }, `fullName email phone notificationSettings`)    
+        }, `fullName email phone notificationSettings`)
     }
-    
+
     const subject = `New User Signup on the platform`;
     const emailMessage = `Hi Admin
         A new user has just signed up on the platform.
@@ -120,7 +120,7 @@ const UserSignUpNotificationForAdmin = async (userId) => {
         
         Thanks,
         Noudada Teams
-    ` 
+    `
     const smsMessage = emailMessage
     const appMessage = emailMessage
 
@@ -128,7 +128,7 @@ const UserSignUpNotificationForAdmin = async (userId) => {
 
     let notificationRecods = [];
 
-    adminDetails.forEach(admin=>{
+    adminDetails.forEach(admin => {
         notificationRecods.push({
             type: notificationTypes.NEW_USER_SIGNUP_FR_ADMIN,
             toId: admin._id,
@@ -146,40 +146,40 @@ const UserSignUpNotificationForAdmin = async (userId) => {
             refId: userId
         })
     })
-    
+
     await NotificationModel.insertMany(notificationRecods);
 
     await sendMultipleEmails(notificationRecods)
-    
+
     // if (notificationRecod.userNotificationSettings.phone){
     //     // send sms
-        
+
     // }
 
     return null
 }
 
 // setTimeout(()=>{
-    // UserSignUpNotificationForAdmin("6320af8ffdd037cb6c9a1ab7")
+// UserSignUpNotificationForAdmin("6320af8ffdd037cb6c9a1ab7")
 // }, 4000)
 
 // admin notification for supplier signup
-const SupplierSignUpNotificationForAdmin = async (supplierId) => {
-    
+const SupplierSignUpNotificationForAdmin = async(supplierId) => {
+
     const supplierDetails = await SupplierModel.findById(supplierId, `businessName speciality description address pickupAddress contactInfo`);
-    if (!supplierDetails){
+    if (!supplierDetails) {
         // log this to analyse the scenario
         return
     }
 
     let adminDetails = null;
-    if (HARDCODED_ADMIN_VALUES){
+    if (HARDCODED_ADMIN_VALUES) {
         adminDetails = _adminDetails;
-    }else {
+    } else {
         // get admin details
         adminDetails = await UserModel.find({
             type: "admin"
-        }, `fullName email phone notificationSettings`)    
+        }, `fullName email phone notificationSettings`)
     }
 
     const subject = `New Supplier Signup on the platform`;
@@ -193,7 +193,7 @@ const SupplierSignUpNotificationForAdmin = async (supplierId) => {
 
         Thanks,
         Noudada Teams
-    ` 
+    `
     const smsMessage = emailMessage
     const appMessage = emailMessage
 
@@ -201,8 +201,8 @@ const SupplierSignUpNotificationForAdmin = async (supplierId) => {
 
     let notificationRecods = [];
 
-    adminDetails.forEach(admin=>{
-            notificationRecods.push({
+    adminDetails.forEach(admin => {
+        notificationRecods.push({
             type: notificationTypes.NEW_SUPPLIER_SIGNUP_FR_ADMIN,
             toId: admin._id,
             toEmail: admin.email,
@@ -223,7 +223,7 @@ const SupplierSignUpNotificationForAdmin = async (supplierId) => {
     // console.log(notificationRecod)
 
     await NotificationModel.insertMany(notificationRecods);
-    
+
     // send email
     await sendMultipleEmails(notificationRecods)
 
@@ -232,29 +232,29 @@ const SupplierSignUpNotificationForAdmin = async (supplierId) => {
 }
 
 // setTimeout(()=>{
-    // SupplierSignUpNotificationForAdmin("631ae2456f442471ffcb23f4")
+// SupplierSignUpNotificationForAdmin("631ae2456f442471ffcb23f4")
 // }, 4000)
 
 // admin notification for new dish created
-const DishCreatedNotificationForAdmin = async (dishId) => {
-    
+const DishCreatedNotificationForAdmin = async(dishId) => {
+
     const dishDetails = await DishModel
-    .findById(dishId, `name viewId description category minOrders maxOrders pricePerOrder quantity size`)
-    .populate('supplier', `businessName`)
-    if (!dishDetails){
+        .findById(dishId, `name viewId description category minOrders maxOrders pricePerOrder quantity size`)
+        .populate('supplier', `businessName`)
+    if (!dishDetails) {
         // log this to analyse the scenario
         return
     }
 
     // get admin details
     let adminDetails = null;
-    if (HARDCODED_ADMIN_VALUES){
+    if (HARDCODED_ADMIN_VALUES) {
         adminDetails = _adminDetails;
-    }else {
+    } else {
         // get admin details
         adminDetails = await UserModel.find({
             type: "admin"
-        }, `fullName email phone notificationSettings`)    
+        }, `fullName email phone notificationSettings`)
     }
 
     const subject = `New Dish is created by ${dishDetails.supplier.businessName}`;
@@ -273,7 +273,7 @@ const DishCreatedNotificationForAdmin = async (dishId) => {
 
         Thanks,
         Noudada Teams
-    ` 
+    `
     const smsMessage = emailMessage
     const appMessage = emailMessage
 
@@ -281,7 +281,7 @@ const DishCreatedNotificationForAdmin = async (dishId) => {
 
     let notificationRecords = [];
 
-    adminDetails.forEach(admin=>{
+    adminDetails.forEach(admin => {
         notificationRecords.push({
             type: notificationTypes.NEW_DISH_CREATED_FR_ADMIN,
             toId: admin._id,
@@ -301,7 +301,7 @@ const DishCreatedNotificationForAdmin = async (dishId) => {
     })
 
     await NotificationModel.insertMany(notificationRecords);
-    
+
     // send email
     await sendMultipleEmails(notificationRecords)
 
@@ -309,33 +309,33 @@ const DishCreatedNotificationForAdmin = async (dishId) => {
 }
 
 // setTimeout(()=>{
-    // DishCreatedNotificationForAdmin("631b7f1f55d9a34b8b39771e")
+// DishCreatedNotificationForAdmin("631b7f1f55d9a34b8b39771e")
 // }, 6000)
 
 
 
 // admin notification for event created
-const EventCreatedNotificationForAdmin = async (eventTemplateId) => {
+const EventCreatedNotificationForAdmin = async(eventTemplateId) => {
 
     const eventTemplateDetails = await EventTemplateModel
-    .findById(eventTemplateId, `name dishes viewId description category minOrders maxOrders pricePerOrder quantity size eventFrequency recurringType eventDate`)
-    .populate('supplier', `businessName viewId`)
-    .populate('dishes', `name viewId description`)
-    if (!eventTemplateDetails){
+        .findById(eventTemplateId, `name dishes viewId description category minOrders maxOrders pricePerOrder quantity size eventFrequency recurringType eventDate`)
+        .populate('supplier', `businessName viewId`)
+        .populate('dishes', `name viewId description`)
+    if (!eventTemplateDetails) {
         console.log("na paya")
-        // log this to analyse the scenario
+            // log this to analyse the scenario
         return
     }
 
     // get admin details
     let adminDetails = null;
-    if (HARDCODED_ADMIN_VALUES){
+    if (HARDCODED_ADMIN_VALUES) {
         adminDetails = _adminDetails;
-    }else {
+    } else {
         // get admin details
         adminDetails = await UserModel.find({
             type: "admin"
-        }, `fullName email phone notificationSettings`)    
+        }, `fullName email phone notificationSettings`)
     }
 
     const subject = `New event setup by ${eventTemplateDetails.supplier.businessName}`;
@@ -352,7 +352,7 @@ const EventCreatedNotificationForAdmin = async (eventTemplateId) => {
 
         Thanks,
         Noudada Teams
-    ` 
+    `
     const smsMessage = emailMessage
     const appMessage = emailMessage
 
@@ -360,7 +360,7 @@ const EventCreatedNotificationForAdmin = async (eventTemplateId) => {
 
     let notificationRecods = [];
 
-    adminDetails.forEach(admin=>{
+    adminDetails.forEach(admin => {
         notificationRecods.push({
             type: notificationTypes.NEW_DISH_CREATED_FR_ADMIN,
             toId: admin._id,
@@ -376,11 +376,11 @@ const EventCreatedNotificationForAdmin = async (eventTemplateId) => {
             app_url,
             refModel: 'EventTemplate',
             refId: eventTemplateId
-        })    
+        })
     })
-  
+
     await NotificationModel.insertMany(notificationRecods);
-    
+
     // send email
     sendMultipleEmails(notificationRecods);
 
@@ -388,33 +388,33 @@ const EventCreatedNotificationForAdmin = async (eventTemplateId) => {
 }
 
 // setTimeout(()=>{
-    // EventCreatedNotificationForAdmin("63206a814e8072e951b9302d")
+// EventCreatedNotificationForAdmin("63206a814e8072e951b9302d")
 //     }, 6000)
-    
-    
+
+
 
 // working
 // admin notification for order created
-const OrderCreatedNotificationForAdmin = async (paymentId) => {
+const OrderCreatedNotificationForAdmin = async(paymentId) => {
 
     const paymentDetails = await PaymentModel
-    .findById(paymentId, `customer supplier cost costToSupplier orders`)
-    .populate('customer', `fullName email phone`)
+        .findById(paymentId, `customer supplier cost costToSupplier orders`)
+        .populate('customer', `fullName email phone`)
 
-    if (!paymentDetails){
+    if (!paymentDetails) {
         // log this to analyse the scenario
         return
     }
 
     // get admin details
     let adminDetails = null;
-    if (HARDCODED_ADMIN_VALUES){
+    if (HARDCODED_ADMIN_VALUES) {
         adminDetails = _adminDetails;
-    }else {
+    } else {
         // get admin details
         adminDetails = await UserModel.find({
             type: "admin"
-        }, `fullName email phone notificationSettings`)    
+        }, `fullName email phone notificationSettings`)
     }
 
     const subject = `New order created`;
@@ -433,7 +433,7 @@ const OrderCreatedNotificationForAdmin = async (paymentId) => {
 
         Thanks,
         Noudada Teams
-    ` 
+    `
     const smsMessage = emailMessage
     const appMessage = emailMessage
 
@@ -441,7 +441,7 @@ const OrderCreatedNotificationForAdmin = async (paymentId) => {
 
     let notificationRecords = [];
 
-    adminDetails.forEach(admin=>{
+    adminDetails.forEach(admin => {
         notificationRecords.push({
             type: notificationTypes.NEW_ORDER_CREATED_FR_ADMIN,
             toId: adminDetails._id,
@@ -460,9 +460,9 @@ const OrderCreatedNotificationForAdmin = async (paymentId) => {
         })
     })
 
-    
+
     await NotificationModel.insertMany(notificationRecords);
-    
+
     // send email
     await sendMultipleEmails(notificationRecords)
 
@@ -473,7 +473,7 @@ const OrderCreatedNotificationForAdmin = async (paymentId) => {
 // setTimeout(()=>{
 //     OrderCreatedNotificationForAdmin("62ebd5cc3a0c0e4439b86bf5")
 //     }, 6000)
-    
+
 
 
 // notification http apis
@@ -485,20 +485,20 @@ const getUserNotifications = async(req, res) => {
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 
     const notificationsPromise = NotificationModel.find({
-        $and: [
-            {toId: userId},
-            {isDeleted: false}
-        ]
-    }).skip(skip)
-    .limit(limit)
-    .sort({ createdAt: -1 })
+            $and: [
+                { toId: userId },
+                { isDeleted: false }
+            ]
+        }).skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
 
     // total unread notifications
     const unreadCountPromise = NotificationModel.find({
         $and: [
-            {toId: userId},
-            {isDeleted: false},
-            {isRead: false}
+            { toId: userId },
+            { isDeleted: false },
+            { isRead: false }
         ]
     }).countDocuments()
 
@@ -509,28 +509,43 @@ const getUserNotifications = async(req, res) => {
 
 const markRead = async(req, res) => {
     const notificationId = req.params.notificationId;
-    
+
     await NotificationModel.updateOne({
         _id: notificationId
     }, {
         $set: {
             isRead: true,
-            updatedAt: new Date()            
+            updatedAt: new Date()
         }
     })
 
     return res.status(StatusCodes.OK).json({ message: "notification marked read" });
 }
+const readAll = async(req, res) => {
+    const user = req.user.userId;
+    await NotificationModel.updateMany({
+        $and: [
+            { toId: user },
+            { isRead: false }
+        ]
+    }, {
+        $set: {
+            isRead: true,
+            updatedAt: new Date()
+        }
+    })
+    return res.status(StatusCodes.OK).json({ message: "notifications marked read" });
 
+}
 const deleteNotification = async(req, res) => {
     const notificationId = req.params.notificationId;
-    
+
     await NotificationModel.updateOne({
         _id: notificationId
     }, {
         $set: {
             isDeleted: true,
-            updatedAt: new Date()            
+            updatedAt: new Date()
         }
     })
 
@@ -541,6 +556,7 @@ const deleteNotification = async(req, res) => {
 module.exports = {
     getUserNotifications,
     markRead,
+    readAll,
     deleteNotification,
 
     // internal functions
