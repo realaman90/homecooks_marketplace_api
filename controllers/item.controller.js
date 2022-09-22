@@ -1335,7 +1335,13 @@ const GetProductDetails = async(req, res) => {
 
     let items = await dishItemModel.aggregate(aggreagatePipelineQueries);
 
-    return res.status(StatusCodes.OK).json({ item: items[0] });
+    let item = items[0]
+    if (item){
+        const {subTotal} = priceBreakdownItem(item.pricePerOrder)
+        item.pricePerOrder=subTotal
+    }
+
+    return res.status(StatusCodes.OK).json({ item });
 }
 
 // GetProductDetails({
