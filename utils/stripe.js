@@ -64,15 +64,13 @@ const capturePayment = async (paymentIntentId) => {
 
 // capturePayment("pi_3LlDbJHuM2wzausD00Dss0V9")
 
-// const DetachCard = async (paymentMethodId) => {
+const DetachPaymentMethod = async (paymentMethodId) => {
+    const paymentMethod = await stripe.paymentMethods.detach(
+        paymentMethodId
+    );
+    return paymentMethod.data;
+}
 
-//     const paymentMethod = await stripe.paymentMethods.detach(
-//         paymentMethodId
-//     );
-
-//     return paymentMethod.data;
-
-// }
 
 
 
@@ -95,7 +93,8 @@ module.exports = {
     SetupIntentFrCard,
     FetchPaymentMethods,
     PaymentIntentCreate,
-    capturePayment
+    capturePayment,
+    DetachPaymentMethod
 }
 
 
