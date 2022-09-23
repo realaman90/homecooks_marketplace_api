@@ -35,18 +35,28 @@ const FetchPaymentMethods = async (stripeCustId) => {
 }
 
 // payment intent to hold payment and capture later
-const PaymentIntentCreate = async (amount) => {
+const PaymentIntentCreate = async (customer, amount) => {
     const paymentIntent = await stripe.paymentIntents.create({        
         amount: multiply(amount, 100),
         currency: 'usd',
         payment_method_types: ['card'],
         capture_method: 'manual',
+        customer
     });
     return {
         paymentIntentId: paymentIntent.id,
         client_secret: paymentIntent.client_secret
     }
+} 
+
+// PaymentIntentCreate("cus_MSY8Dh8PPmZkJb", 1000);
+
+const capturePayment = async (paymentIntentId) => {
+    const intent = await stripe.paymentIntents.capture(paymentIntentId)    
+    return intent
 }
+
+// capturePayment("pi_3LlDLSHuM2wzausD0staybxI")
 
 // const DetachCard = async (paymentMethodId) => {
 
@@ -78,7 +88,8 @@ module.exports = {
     CreateStripeCustomer,
     SetupIntentFrCard,
     FetchPaymentMethods,
-    PaymentIntentCreate
+    PaymentIntentCreate,
+    capturePayment
 }
 
 

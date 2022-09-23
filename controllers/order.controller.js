@@ -1359,12 +1359,11 @@ const updateOrder = async (req, res) => {
 };
 
 const CreatePaymentIntent =  async (req, res) => {
-
+  const {stripeCustId} = await User.findById(req.user.userId, `stripeCustId`);
   const paymentId = req.params.paymentId;
   const payment = await paymentModel.findById(paymentId, `total`);
-  const paymentIntent = await PaymentIntentCreate(payment.total);
+  const paymentIntent = await PaymentIntentCreate(stripeCustId, payment.total);
   return res.status(StatusCodes.OK).json({ paymentIntent });
-  
 }
 
 
