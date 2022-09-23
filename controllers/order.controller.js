@@ -1359,10 +1359,26 @@ const updateOrder = async (req, res) => {
 };
 
 const CreatePaymentIntent =  async (req, res) => {
+  const {save_card} = req.query;
   const {stripeCustId} = await User.findById(req.user.userId, `stripeCustId`);
   const paymentId = req.params.paymentId;
   const payment = await paymentModel.findById(paymentId, `total`);
-  const paymentIntent = await PaymentIntentCreate(stripeCustId, payment.total);
+
+  let paymentIntent = null;
+  if (save_card && save_card.toLowerCase() == 'y'){
+    paymentIntent = await PaymentIntentCreate(stripeCustId, payment.total);
+  } else {
+    paymentIntent = await PaymentIntentCreate(null, payment.total);
+  }
+  
+  const resp = await paymentModel.updateOne({
+    _id: paymentId
+  }, {
+    $set: {
+      paymentIntent: paymentIntent.paymentIntentId
+    }
+  });
+
   return res.status(StatusCodes.OK).json({ paymentIntent });
 }
 
