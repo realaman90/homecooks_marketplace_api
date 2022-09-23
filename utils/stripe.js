@@ -35,17 +35,20 @@ const FetchPaymentMethods = async (stripeCustId) => {
 }
 
 // payment intent to hold payment and capture later
-const PaymentIntentCreate = async (customer, amount) => {
+const PaymentIntentCreate = async (save_card, customer, amount) => {
 
     const paymentIntentObject = {        
         amount: round(multiply(amount, 100),0),
         currency: 'usd',
         payment_method_types: ['card'],
         capture_method: 'manual',
+        customer
     };
 
-    if (customer){
-        paymentIntentObject.customer = customer;
+    if (save_card){
+        paymentIntentObject.setup_future_usage = "off_session"
+    } else {
+        paymentIntentObject.setup_future_usage = "on_session"
     }
 
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentObject);
@@ -56,9 +59,9 @@ const PaymentIntentCreate = async (customer, amount) => {
     }
 } 
 
+
 const capturePayment = async (paymentIntentId) => {
-    const intent = await stripe.paymentIntents.capture(paymentIntentId) 
-    console.log(intent)   
+    const intent = await stripe.paymentIntents.capture(paymentIntentId);
     return intent
 }
 

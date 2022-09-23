@@ -1366,9 +1366,9 @@ const CreatePaymentIntent =  async (req, res) => {
 
   let paymentIntent = null;
   if (save_card && save_card.toLowerCase() == 'y'){
-    paymentIntent = await PaymentIntentCreate(stripeCustId, payment.total);
+    paymentIntent = await PaymentIntentCreate(true, stripeCustId, payment.total);
   } else {
-    paymentIntent = await PaymentIntentCreate(null, payment.total);
+    paymentIntent = await PaymentIntentCreate(false, stripeCustId, payment.total);
   }
   
   const resp = await paymentModel.updateOne({
