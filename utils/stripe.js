@@ -37,7 +37,7 @@ const FetchPaymentMethods = async (stripeCustId) => {
 // payment intent to hold payment and capture later
 const PaymentIntentCreate = async (customer, amount) => {
     const paymentIntent = await stripe.paymentIntents.create({        
-        amount: multiply(amount, 100),
+        amount: round(multiply(amount, 100),0),
         currency: 'usd',
         payment_method_types: ['card'],
         capture_method: 'manual',
