@@ -728,7 +728,7 @@ const getUserNotifications = async(req, res) => {
     const notificationsPromise = NotificationModel.find({
             $and: [
                 { toId: userId },
-                { isDeleted: false }
+                { isRead: false }
             ]
         }).skip(skip)
         .limit(limit)
