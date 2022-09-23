@@ -6,7 +6,9 @@ const EventTemplateModel = require('../models/EventTemplate');
 const NotificationModel = require('../models/Notification');
 const { notificationTypes } = require('../constants');
 const { StatusCodes } = require('http-status-codes');
-const { sendEmail, sendMultipleEmails } = require('./email.controller');
+const { sendEmail, sendMultipleEmails, sendEmailWithTemplate } = require('./email.controller');
+const { default: mongoose } = require('mongoose');
+const { parseISO, format } = require('date-fns');
 
 // notification creation function
 
@@ -391,8 +393,6 @@ const EventCreatedNotificationForAdmin = async(eventTemplateId) => {
 // EventCreatedNotificationForAdmin("63206a814e8072e951b9302d")
 //     }, 6000)
 
-
-
 // working
 // admin notification for order created
 const OrderCreatedNotificationForAdmin = async(paymentId) => {
@@ -468,6 +468,247 @@ const OrderCreatedNotificationForAdmin = async(paymentId) => {
 
     return null
 }
+
+
+//     "date":"Tue,09/22",
+//     "startime": "12;00 pm",
+//     "endtime":"2:00 pm",
+//     "pickup-name":"Stanford University Entry Gate",
+//     "pickup-address":"235 hii st",
+//     "orderId":"67eryy",
+    
+//    "order": {
+//     "items": [
+//       {
+//         "name": "Jollof",
+//         "image": "https://s3.amazonaws.com/appforest_uf/f1663431404316x211097862709117340/Meat-trends-market-prospers-in-face-of-pandemic.jpg",
+//         "subTotal":"22",
+//         "price":"20",
+//         "quantity":"1"
+//       },
+//       {
+//         "name": "Beef mat kaho",
+//         "image": "https://s3.amazonaws.com/appforest_uf/f1663431404316x211097862709117340/Meat-trends-market-prospers-in-face-of-pandemic.jpg",
+//         "subTotal":"22",
+//         "price":"20",
+//         "quantity":"1"
+//       }
+//     ]
+//   },
+//   "subTotal":"44",
+//   "delivery":"4.99",
+//   "total":"92.99"
+// }
+
+
+// {
+//     "date": "2022-09-20T16:38:58.492Z",
+//     "orderId": "a77eb6",
+//     "delivery": "4.99",
+//     "total": "21.4",
+//     "order": {
+//       "items": [
+//         {
+//           "name": "Waakye",
+//           "image": "//s3.amazonaws.com/appforest_uf/f1663517865354x956243887444698400/bowl%2Bwaakye6.jpg",
+//           "price": "13",
+//           "quantity": 1
+//         }
+//       ]
+//     }
+//   }
+  
+const OrderCreatedNotificationForUser = async (paymentId) => {
+
+    let payments = await PaymentModel.aggregate([
+        {
+          $match: {
+            _id: mongoose.Types.ObjectId(paymentId),
+          },
+        },        
+        {
+          $lookup: {
+            from: "users",
+            localField: "customer",
+            foreignField: "_id",
+            as: "customer",
+          },
+        },
+        {
+          $unwind: "$customer",
+        },
+        {
+          $lookup: {
+            from: "suppliers",
+            localField: "supplier",
+            foreignField: "_id",
+            as: "supplier",
+          },
+        },
+        {
+          $unwind: "$supplier",
+        },
+        {
+          $lookup: {
+            from: "orders",
+            let: { orders: "$orders" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $in: ["$_id", "$$orders"] },
+                },
+              },
+              {
+                $lookup: {
+                  from: "dishitems",
+                  localField: "item",
+                  foreignField: "_id",
+                  as: "item",
+                },
+              },
+              {
+                $unwind: "$item",
+              },
+              {
+                $lookup: {
+                  from: "clientpickuppoints",
+                  localField: "pickupPoint",
+                  foreignField: "_id",
+                  as: "pickupPoint",
+                },
+              },
+              {
+                $unwind: "$pickupPoint",
+              },
+            ],
+            as: "orders",
+          },
+        },
+        {
+          $project: {
+            _id:1,
+            viewId: 1,
+            subTotal: 1,
+            serviceFee: 1,
+            deliveryFee: 1,
+            tax: 1,
+            total: 1,
+            costToSupplier: 1,
+
+            createdAt: 1,
+            
+            // eventPickupAddressMapping: 1,
+
+            "orders.cost":1,
+            "orders.quantity":1,
+            "orders.pickupTime":1,
+            "orders.item.name":1,
+            "orders.item.images":1,
+            "orders.item.pricePerOrder":1,
+            "orders.pickupPoint.name":1,
+            "orders.pickupPoint.address.fullAddress":1,
+            "orders.pickupPoint.suitableTimes":1,
+            
+            "customer._id": 1,
+            "customer.fullName": 1,
+            "customer.profileImg": 1,
+            "customer.email": 1,
+            "customer.phone": 1,
+            "customer.notificationSettings":1,
+            "supplier.businessName": 1,
+            "supplier.businessImages": 1,
+            "supplier.address": 1,
+            "supplier.contactInfo": 1,
+            // orders: 1,
+          },
+        },
+      ]);
+
+    // console.log(JSON.stringify(payments));
+
+    payments = payments[0];
+
+    console.log(payments)
+
+    let emailTempData = {};
+
+    emailTempData.date = payments.createdAt;
+    emailTempData.orderId = payments.viewId;
+    emailTempData.subtotal = payments.subTotal;
+    emailTempData.delivery = payments.deliveryFee;
+    emailTempData.total = payments.total;
+    emailTempData.date = format(new Date(payments.createdAt), 'ccc,LL/dd')
+    
+    let items = [];
+
+    payments.orders.forEach(o=>{
+        let item = {
+            "name": o.item.name,            
+            "subtotal":o.cost,
+            "price":o.item.pricePerOrder,
+            "quantity":o.quantity,
+            "pickup-name":o.pickupPoint.name,
+            "pickup-address":o.pickupPoint.address.fullAddress,
+            "startime": o.pickupPoint.suitableTimes[0],
+            "endtime": o.pickupPoint.suitableTimes[1],
+        }
+        if (o.item.images.length > 0 && o.item.images[0]){
+            item.image = `https:${o.item.images[0]}`
+        }
+        items.push(item)
+    })
+
+    emailTempData.order = {
+        items
+    };
+
+    let subject = "order created";
+    let emailMessage = "order created";
+    let smsMessage = "order created";
+    let appMessage = "order created";
+
+    let notificationRecod = {
+        type: notificationTypes.ORDER_CREATED_FR_USER,
+        toId: payments.customer._id,
+        toEmail: payments.customer.email,
+        // toEmail: "dev@noudada.com",
+        // toEmail: "utkarsh17ife@fastlanedevs.com",
+        toPhone: payments.customer.phone,
+        userNotificationSettings: payments.customer.notificationSettings,
+        message: {
+            subject,
+            emailMessage,
+            smsMessage,
+            appMessage,
+        },
+        templateId: 'd-2ccf281d33474cbe873312aa2d1ff8d3',
+        templateData: emailTempData,
+        app_url: "some.com",
+        refModel: 'Payments',
+        refId: payments._id
+    }
+
+    await NotificationModel.create(notificationRecod);
+
+    if (notificationRecod.userNotificationSettings.email) {
+        // send email
+        sendEmailWithTemplate(notificationRecod)
+    }
+
+    // if (notificationRecod.userNotificationSettings.phone) {
+    //     // send sms
+
+    // }
+
+    return null
+}
+
+// OrderCreatedNotificationForUser("632d2abbda7864177120e450")
+
+
+
+
+
 
 
 // setTimeout(()=>{

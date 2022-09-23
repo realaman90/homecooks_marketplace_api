@@ -909,6 +909,7 @@ const placeOrder = async (req, res) => {
 
   process.nextTick(() => {
     notificationController.OrderCreatedNotificationForAdmin(paymentId);
+    notificationController.OrderCreatedNotificationForUser(paymentId);    
   });
 
   return res

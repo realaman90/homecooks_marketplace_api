@@ -27,7 +27,7 @@ const priceBreakdownItem = (price) => {
     return {
         cost: price,
         serviceFee: round((pricePostSF - price), 2),
-        tax:   round((fPrice - pricePostSF),2),
+        tax: round((fPrice - pricePostSF),2),
         subTotal: fPrice
     }
 }

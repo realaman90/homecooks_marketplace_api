@@ -52,6 +52,8 @@ const NotificationSchema = mongoose.Schema({
     refId: {
         type: mongoose.Types.ObjectId,
     },
+    templateId: String,
+    templateData: Object,
     isDeleted: {
         type: Boolean,
         default: false

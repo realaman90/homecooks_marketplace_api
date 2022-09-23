@@ -43,12 +43,8 @@ const sendEmailWithTemplate = async (nr) => {
         to: `${nr.toEmail}`, // recipient
         from: `${process.env.SGSENDER}`, //  sender
 
-        templateId: process.env.OTPTEMPLATEID, // nr.templateId
-        dynamicTemplateData: {
-            subject: `${userFromDB.fullName} your verification code`,
-            name: `${userFromDB.fullName}`,
-            otp: `${fourDigitOTP}`,
-        }, // nr.templateValues
+        templateId: nr.templateId, // nr.templateId
+        dynamicTemplateData: nr.templateData, // nr.templateValues
     }
     await sgMail.send(msg)        
     return
