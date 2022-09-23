@@ -803,11 +803,14 @@ module.exports = {
     // internal functions
     CreateUserWelcomeNotification,
 
-
     // admin notifications
     UserSignUpNotificationForAdmin,
     SupplierSignUpNotificationForAdmin,
     DishCreatedNotificationForAdmin,
     EventCreatedNotificationForAdmin,
-    OrderCreatedNotificationForAdmin
+    OrderCreatedNotificationForAdmin,
+
+
+    // user notifications
+    OrderCreatedNotificationForUser,
 }
