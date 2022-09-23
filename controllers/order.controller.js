@@ -12,6 +12,7 @@ const payoutController = require("./payout.controller");
 const notificationController = require("./notification.controller");
 const { priceBreakdownItem, priceBreakdownCheckout} = require('../utils/pricing');
 const { convertToUniqueMongoIdArray } = require('../utils/objectId');
+const { PaymentIntentCreate } = require('../utils/stripe');
 
 const utils = require("nodemon/lib/utils");
 
@@ -1357,6 +1358,16 @@ const updateOrder = async (req, res) => {
   return res.status(StatusCodes.OK).json({ message: `order ${status}!` });
 };
 
+const CreatePaymentIntent =  async (req, res) => {
+
+  const paymentId = req.params.paymentId;
+  const payment = await paymentModel.findById(paymentId, `total`);
+  const paymentIntent = await PaymentIntentCreate(payment.total);
+  return res.status(StatusCodes.OK).json({ paymentIntent });
+  
+}
+
+
 module.exports = {
   updateOrder,
   getPaymentsFrCustomer,
@@ -1372,4 +1383,5 @@ module.exports = {
   updatePickupAddressOnOrder,
   updatePaymentMethod,
   getPayments,
+  CreatePaymentIntent
 };

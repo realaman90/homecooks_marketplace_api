@@ -8,4 +8,7 @@ router.put('/:paymentId/pick_up_address', orderController.updatePickupAddressOnO
 router.put('/:paymentId/payment_method', orderController.updatePaymentMethod);
 router.get('/:paymentId/place_order', orderController.placeOrder);
 
+// create payment intent
+router.get('/:paymentId/payment_intent', orderController.CreatePaymentIntent);
+
 module.exports = router;

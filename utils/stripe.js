@@ -1,4 +1,5 @@
 const stripe = require('stripe')(process.env.SECRET_KEY);
+const { multiply, sum, round, evaluate } = require("mathjs");
 
 // create customer
 const CreateStripeCustomer = async (name, email) => {
@@ -33,6 +34,32 @@ const FetchPaymentMethods = async (stripeCustId) => {
     return paymentMethods.data;
 }
 
+// payment intent to hold payment and capture later
+const PaymentIntentCreate = async (amount) => {
+    const paymentIntent = await stripe.paymentIntents.create({        
+        amount: multiply(amount, 100),
+        currency: 'usd',
+        payment_method_types: ['card'],
+        capture_method: 'manual',
+    });
+    return {
+        paymentIntentId: paymentIntent.id,
+        client_secret: paymentIntent.client_secret
+    }
+}
+
+// const DetachCard = async (paymentMethodId) => {
+
+//     const paymentMethod = await stripe.paymentMethods.detach(
+//         paymentMethodId
+//     );
+
+//     return paymentMethod.data;
+
+// }
+
+
+
 // FetchPaymentMethods("cus_MPJQi5K86sVVrV")
 
 // (async () => {
@@ -50,7 +77,8 @@ const FetchPaymentMethods = async (stripeCustId) => {
 module.exports = {
     CreateStripeCustomer,
     SetupIntentFrCard,
-    FetchPaymentMethods
+    FetchPaymentMethods,
+    PaymentIntentCreate
 }
 
 
