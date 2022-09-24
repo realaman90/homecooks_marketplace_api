@@ -11,6 +11,7 @@ const { parseISO, differenceInCalendarDays, add, getDay, sub, setHours, getHours
 const eventTemplateModel = require('../models/EventTemplate');
 const crypto = require('crypto');
 const { date } = require('joi');
+const { IDGen } = require('../utils/viewId');
 const differenceInHours = require('date-fns/differenceInHours')
 
 const createEvent = async(req, res) => {
@@ -584,7 +585,7 @@ const createEventUsingEventTemplate = async(req, res) => {
                 supplier: d.supplier,
                 dish: d._id,
                 name: d.name,
-                viewId: d.viewId,
+                viewId: IDGen('P', d.name),
                 images: d.images,
                 description: d.description,
                 mealTags: d.mealTags,
