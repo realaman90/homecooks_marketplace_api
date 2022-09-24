@@ -74,6 +74,15 @@ const DetachPaymentMethod = async (paymentMethodId) => {
     return paymentMethod.data;
 }
 
+const AttachPaymentMethod = async (customer, paymentMethodId) => {
+    const paymentMethod = await stripe.paymentMethods.attach(
+        paymentMethodId,
+        {customer}
+    );
+    return paymentMethod.data;
+}
+
+// AttachPaymentMethod("cus_MSmoAiBQtHqsXv", "pm_1LlVgCHuM2wzausDgu0KE6uy")
 
 
 
@@ -97,7 +106,8 @@ module.exports = {
     FetchPaymentMethods,
     PaymentIntentCreate,
     capturePayment,
-    DetachPaymentMethod
+    DetachPaymentMethod,
+    AttachPaymentMethod
 }
 
 

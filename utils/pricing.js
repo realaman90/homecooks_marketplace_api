@@ -56,30 +56,3 @@ module.exports = {
     priceBreakdownItem
 }
 
-
-// console.log(priceBreakdownCheckout([
-//     {
-//         quantity: 2,
-//            item: {
-//             pricePerOrder: 100,
-//             costToSupplierPerOrder: 80
-//            }
-//     },{
-//         quantity: 4,
-//            item: {
-//             pricePerOrder: 200,
-//             costToSupplierPerOrder: 70
-//            }
-//     }    
-// ], 1))
-
-// deliveryPoints
-// console.log(priceBreakdownCheckout([
-//     {
-//         quantity: 10,
-//            item: {
-//             pricePerOrder: 100,
-//             costToSupplierPerOrder: 80
-//            }
-//     }   
-// ], 1))

@@ -1,7 +1,7 @@
 
 const { StatusCodes } = require('http-status-codes');
 const User = require('../models/User');
-const { SetupIntentFrCard, FetchPaymentMethods, DetachPaymentMethod } = require('../utils/stripe');
+const { SetupIntentFrCard, FetchPaymentMethods, DetachPaymentMethod, AttachPaymentMethod } = require('../utils/stripe');
 
 const setupIntent = async (req, res) => {
     const { stripeCustId } = await User.findById(req.user.userId, `stripeCustId`);
@@ -20,9 +20,15 @@ const detachPaymentMethod = async (req, res) => {
     return res.status(StatusCodes.OK).json({ msg: "payment method detached!" });
 }
 
+const attachPaymentMethod = async (req, res) => {
+    const { stripeCustId } = await User.findById(req.user.userId, `stripeCustId`);
+    await AttachPaymentMethod(stripeCustId, req.params.payment_method)
+    return res.status(StatusCodes.OK).json({ msg: "payment method attached!" });
+}
 
 module.exports = {
     setupIntent,
     paymentMethodList,
-    detachPaymentMethod
+    detachPaymentMethod,
+    attachPaymentMethod
 }

@@ -10,8 +10,6 @@ const { priceBreakdownItem, priceBreakdownCheckout} = require('../utils/pricing'
 
 const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
 
-    console.log("fetchItemsWithOutDateFilter")
-
     const listQuery = [];
     if (andQuery.length > 0) {
         listQuery.push({
@@ -185,8 +183,6 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
 
 
 const fetchItemsWithDateFilter = async (andQuery, skip, limit) => {
-
-    console.log("fetchItemsWithDateFilter")
 
     const listQuery = [];
         
@@ -495,7 +491,7 @@ const getAllItemsBySupplier = async(req, res) => {
         })
         andQuery.push({
             "$or": dateOrQuery
-        })        
+        })
     }
 
     // status filter (active)
@@ -1358,7 +1354,6 @@ const getAvailableCuisines = async(req, res) => {
         ]
     }
 
-    let eventDateFilterCount = 0;
     if (req.query.eventDate) {
         let eventDate = req.query.eventDate;
         eventDate = eventDate.split('|')
@@ -1371,8 +1366,7 @@ const getAvailableCuisines = async(req, res) => {
         })
         matchQuery["$and"].push({
             "$or": dateOrQuery
-        })
-        eventDateFilterCount = eventDate.length - 1
+        })        
     }
 
     if (req.query.supplierId) {
@@ -1381,10 +1375,21 @@ const getAvailableCuisines = async(req, res) => {
         })
     }
 
-    const availableCuisines = await dishItemModel.aggregate([{
+    matchQuery["$and"].push({
+        eventVisibilityDate: { "$lte": todayDateWithZeroTime() }
+    })
+
+    matchQuery["$and"].push({
+        closingDate: { "$gt": todayDateWithZeroTime() }
+    })
+    
+    const availableCuisines = await dishItemModel.aggregate([
+    {
         "$match": matchQuery
     }, {
         "$project": {
+            "_id":1,
+            "name":1,
             "cuisine": 1,
             "eventDate": 1
         }
@@ -1392,10 +1397,6 @@ const getAvailableCuisines = async(req, res) => {
         "$group": {
             _id: "$cuisine",
             count: { $sum: 1 }
-        }
-    }, {
-        "$match": {
-            count: { $gt: eventDateFilterCount }
         }
     }, {
         "$lookup": {
@@ -1416,6 +1417,7 @@ const getAvailableCuisines = async(req, res) => {
 
     return res.status(StatusCodes.OK).json(availableCuisines);
 }
+
 
 const getAvailableEventDates = async(req, res) => {
 

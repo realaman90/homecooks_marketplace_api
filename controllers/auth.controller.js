@@ -136,7 +136,7 @@ const registerUser = async(req, res) => {
 
     process.nextTick(() => {
         // send welcome notification
-        notificationController.CreateUserWelcomeNotification(user._id);
+        // notificationController.CreateUserWelcomeNotification(user._id);
         notificationController.UserSignUpNotificationForAdmin(user._id)
     })
 
