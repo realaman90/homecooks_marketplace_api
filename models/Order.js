@@ -9,8 +9,7 @@ const OrderSchema = mongoose.Schema({
     },
     payment: {
         type: mongoose.Types.ObjectId,
-        ref: 'Payment',
-        required: true
+        ref: 'Payment',        
     },
     viewId: {
         type: String,
