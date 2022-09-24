@@ -186,6 +186,15 @@ const getAllOrders = async (req, res) => {
   aggreagatePipelineQueries.push({ $unwind: "$item" });
   aggreagatePipelineQueries.push({
     $lookup: {
+      from: "payments",
+      localField: "payment",
+      foreignField: "_id",
+      as: "payment",
+    },
+  });
+  aggreagatePipelineQueries.push({ $unwind: "$payment" });
+  aggreagatePipelineQueries.push({
+    $lookup: {
       from: "suppliers",
       localField: "item.supplier",
       foreignField: "_id",
@@ -205,6 +214,7 @@ const getAllOrders = async (req, res) => {
   aggreagatePipelineQueries.push({
     $project: {
       _id: 1,
+      paymentViewId: "$payment.viewId",
       viewId: 1,
       quantity: 1,
       cost: 1,
@@ -343,11 +353,8 @@ const getOrderById = async (req, res) => {
   }
 
   let order = orders[0];
-  order.item.forEach(i=>{
-    let {subTotal} = priceBreakdownItem(i.pricePerOrder);
-    i.pricePerOrder = subTotal
-  })
-
+  order.item.pricePerOrder = priceBreakdownItem(order.item.pricePerOrder).subTotal;
+  
   return res.status(StatusCodes.OK).json({ order });
 };
 
@@ -650,12 +657,11 @@ const createOrdersFromKart = async (kartItems, prevOrders) => {
   return orderIds;
 };
 
-
 const attachPaymentIdToOrders = async (payment) => {
   const {orders} = await paymentModel.findById(payment, `orders`);
   for (let i=0; i<orders.length; i++){
     let orderId = orders[i];
-    let resp = await orderModel.updateOne({
+    await orderModel.updateOne({
       _id: orderId
     }, {
       $set: {
@@ -666,7 +672,6 @@ const attachPaymentIdToOrders = async (payment) => {
   return
 }
 // attachPaymentIdToOrders("632ee6fb929b5bb8a841ae68")
-
 
 const getCheckout = async (req, res) => {
   const userId = req.user.userId;
