@@ -650,6 +650,22 @@ const createOrdersFromKart = async (kartItems, prevOrders) => {
   return orderIds;
 };
 
+
+const attachPaymentIdToOrders = async (payment) => {
+  const {orders} = await paymentModel.findById(payment, `orders`);
+  for (let i=0; i<orders.length; i++){
+    let orderId = orders[0];
+    await orders.updateOne({
+      _id: orderId
+    }, {
+      $set: {
+        payment
+      }
+    })
+  }
+  return
+}
+
 const getCheckout = async (req, res) => {
   const userId = req.user.userId;
 
@@ -711,8 +727,6 @@ const getCheckout = async (req, res) => {
   let uniquePickupPoints = pickUpPointsArr.length;
 
   const calcObj = priceBreakdownCheckout(kartItems, uniquePickupPoints);
-
-  console.log(calcObj)
 
   let orders = await createOrdersFromKart(
     kartItems,
@@ -817,20 +831,17 @@ const getCheckout = async (req, res) => {
     o.item.pricePerOrder = subTotal
   })
 
+  // attach payment id with order
+  await attachPaymentIdToOrders(payment._id);
+
   return res.status(StatusCodes.OK).json({ checkout: payment, orders });
 };
 
 const updatePickupAddressOnOrder = async (req, res) => {
   const orders = req.body.orders;
 
-  console.log("request body");
-  console.log(orders);
-
   for (let i = 0; i < orders.length; i++) {
     let o = orders[i];
-
-    console.log(`order: ${i}`);
-    console.log(o);
 
     let resp = await orderModel.updateOne(
       {

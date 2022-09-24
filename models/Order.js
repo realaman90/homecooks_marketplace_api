@@ -7,6 +7,11 @@ const OrderSchema = mongoose.Schema({
         ref: 'User',
         required: true
     },
+    payment: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Payment',
+        required: true
+    },
     viewId: {
         type: String,
     },
