@@ -654,8 +654,8 @@ const createOrdersFromKart = async (kartItems, prevOrders) => {
 const attachPaymentIdToOrders = async (payment) => {
   const {orders} = await paymentModel.findById(payment, `orders`);
   for (let i=0; i<orders.length; i++){
-    let orderId = orders[0];
-    await orders.updateOne({
+    let orderId = orders[i];
+    let resp = await orderModel.updateOne({
       _id: orderId
     }, {
       $set: {
@@ -665,6 +665,8 @@ const attachPaymentIdToOrders = async (payment) => {
   }
   return
 }
+// attachPaymentIdToOrders("632ee6fb929b5bb8a841ae68")
+
 
 const getCheckout = async (req, res) => {
   const userId = req.user.userId;
