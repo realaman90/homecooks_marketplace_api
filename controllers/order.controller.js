@@ -288,6 +288,15 @@ const getOrderById = async (req, res) => {
     },
     {
       $lookup: {
+        from: "payments",
+        localField: "payment",
+        foreignField: "_id",
+        as: "payment",
+      },
+    },
+    { $unwind: "$payment" },
+    {
+      $lookup: {
         from: "suppliers",
         localField: "item.supplier",
         foreignField: "_id",
@@ -344,6 +353,7 @@ const getOrderById = async (req, res) => {
         "pickupPoint.name": 1,
         "pickupPoint.text": 1,
         "pickupPoint.address": 1,
+        paymentViewId: "$payment.viewId",
       },
     },
   ]);
