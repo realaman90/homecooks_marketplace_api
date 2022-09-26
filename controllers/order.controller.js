@@ -121,6 +121,7 @@ const getAllOrders = async (req, res) => {
    * 2. status
    * 3. skip
    * 4. limit
+   * 5. search: customer name, payment view id, dish name
    */
 
   const skip = req.query.skip ? Number(req.query.skip) : 0;
@@ -163,6 +164,7 @@ const getAllOrders = async (req, res) => {
       },
     });
   }
+
   aggreagatePipelineQueries.push({ $sort: { createdAt: -1 } });
   aggreagatePipelineQueries.push({ $skip: skip });
   aggreagatePipelineQueries.push({ $limit: limit });
@@ -211,6 +213,19 @@ const getAllOrders = async (req, res) => {
     },
   });
   aggreagatePipelineQueries.push({ $unwind: "$pickupPoint" });
+
+  if (req.query.search) {
+    aggreagatePipelineQueries.push({
+      "$match":{
+        "$or": [
+          { 'item.name': { $regex: req.query.search, $options: 'i' }, },
+          { 'customer.fullName': { $regex: req.query.search, $options: 'i' }, },
+          { 'payment.viewId': { $regex: req.query.search, $options: 'i' }, },          
+        ]
+      }      
+    })  
+  }
+
   aggreagatePipelineQueries.push({
     $project: {
       _id: 1,
@@ -546,41 +561,7 @@ const deleteOrder = async (req, res) => {
 };
 
 // perform checkout calculations on kart data
-const paymentCalcOnKartItems = (kartItems) => {
-  let totalCost = 0;
-  let totalCostToSupplier = 0;
 
-  // calculate total kart cons
-  kartItems.forEach((ki) => {
-    totalCost = totalCost + ki.quantity * ki.item.pricePerOrder;
-    totalCostToSupplier =
-      totalCostToSupplier + ki.quantity * ki.item.costToSupplierPerOrder;
-  });
-
-  let subTotal = totalCost;
-
-  let cost =  round(multiply(subTotal,100) / 120);
-
-  let serviceFee = subTotal - cost;
-
-  let deliveryFee = 4.99;
-
-  let taxableAmount = sum(subTotal, deliveryFee);
-
-  let tax = round(multiply(".09375", taxableAmount), 2);
-
-  let total = round(sum(taxableAmount, tax), 2);
-
-  return {
-    cost,
-    serviceFee,
-    subTotal,
-    deliveryFee,
-    tax,
-    total,
-    costToSupplier: totalCostToSupplier,
-  };
-};
 
 // paymentCalcOnKartItems(
 //     [
@@ -633,9 +614,8 @@ const createOrdersFromKart = async (kartItems, prevOrders) => {
   const orders = [];
 
   kartItems.forEach((ki) => {
-    
-    let {subTotal} = priceBreakdownItem(ki.item.pricePerOrder)
-    let cost = round(multiply(subTotal, ki.quantity),1)
+    let pricing = priceBreakdownItem(ki.item.pricePerOrder)
+    let cost = round(multiply(pricing.subTotal, ki.quantity),1)
     let costToSupplier = round(multiply(ki.item.costToSupplierPerOrder, ki.quantity),1)
 
     orders.push({
@@ -648,6 +628,7 @@ const createOrdersFromKart = async (kartItems, prevOrders) => {
       event: ki.event,
       supplier: ki.supplier,
       quantity: ki.quantity,
+      pricing: pricing,
       cost: cost,
       costToSupplier: costToSupplier,
       isPaid: false,
@@ -684,7 +665,9 @@ const attachPaymentIdToOrders = async (payment) => {
 // attachPaymentIdToOrders("632ee6fb929b5bb8a841ae68")
 
 const getCheckout = async (req, res) => {
-  const userId = req.user.userId;
+  const userId = req.user.userId;  
+
+// const getCheckout = async (userId) => {
 
   // initial
   // get orders data from kart
@@ -854,6 +837,82 @@ const getCheckout = async (req, res) => {
   return res.status(StatusCodes.OK).json({ checkout: payment, orders });
 };
 
+// getCheckout("63289a1a3bb5ba24e2efc4a4")
+
+
+/**
+-----checkout version 2----
+
+check for pending checkout
+
+  if pending checkout doesn't exists
+  - fetch kart items
+  - convert kart items to orders with pricing info
+  - construct payment object with total pricing
+  - save orders and payment
+  - return
+
+  if pending checkout exists
+  - fetch orders
+  - fetch kart items
+  - compare if same, just return
+  - if not same, update the orders based on the kart items
+  - update the pricing in payment model
+  - return
+
+** handle delivery fee (dnt forgettiii)
+
+*/
+
+
+
+
+const getCheckoutV2 = async (userId) => {
+
+  // check if user has a pending checkout
+  let pendingCheckout = await paymentModel.aggregate([
+    {
+      $match: {
+        $and: [
+          { customer: mongoose.Types.ObjectId(userId) },
+          { status: paymentStatus.PENDING_CHECKOUT },
+        ],
+      },
+    }, {
+      $lookup: {
+        from: 'orders',
+        let: { paymentId: '$_id' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$$paymentId', '$payment'] } } },          
+        ],
+        as: 'orders',
+      },
+    }
+  ]);
+
+  if (pendingCheckout && pendingCheckout.length > 0){
+    pendingCheckout = pendingCheckout[0];
+  }else {
+    pendingCheckout = null;
+  }
+
+  // if pending checkout exists
+  if (pendingCheckout){
+    
+
+
+
+  }
+
+
+
+
+
+
+}
+
+// getCheckoutV2("63289a1a3bb5ba24e2efc4a4")
+// 
 const updatePickupAddressOnOrder = async (req, res) => {
   const orders = req.body.orders;
 
