@@ -783,7 +783,10 @@ const getItemByItemId = async(req, res) => {
 
     const orders = await orderModel.aggregate([{
         "$match": {
-            item: mongoose.Types.ObjectId(itemId)
+            $and: [
+                {item: mongoose.Types.ObjectId(itemId)},
+                {status: {$ne: 'pending_checkout'}}
+            ]
         }
     }, {
         "$sort": { "createdAt": -1 }

@@ -226,6 +226,16 @@ const getAllOrders = async (req, res) => {
     })  
   }
 
+  aggreagatePipelineQueries.push({        
+      $count: 'count'
+  })
+
+  let ordersCount = await orderModel.aggregate(aggreagatePipelineQueries);
+  ordersCount = ordersCount && ordersCount.length > 0 ? ordersCount[0].count : 0
+
+  // remove count stage and add project
+  aggreagatePipelineQueries.pop()
+
   aggreagatePipelineQueries.push({
     $project: {
       _id: 1,
@@ -265,9 +275,8 @@ const getAllOrders = async (req, res) => {
   });
 
   let orders = await orderModel.aggregate(aggreagatePipelineQueries);
-  itemCount = await orderModel.find({ $and: andQuery }).countDocuments();
-
-  return res.status(StatusCodes.OK).json({ orders, itemCount });
+  
+  return res.status(StatusCodes.OK).json({ orders, itemCount: ordersCount });
 };
 
 const getOrderById = async (req, res) => {
