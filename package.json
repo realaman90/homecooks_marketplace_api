@@ -26,6 +26,7 @@
         "mongoose": "^6.4.0",
         "morgan": "^1.10.0",
         "nodemon": "^2.0.18",
+        "qrcode": "^1.5.1",
         "random-number": "^0.0.9",
         "stripe": "^10.7.0",
         "twilio": "^3.78.0",

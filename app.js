@@ -46,6 +46,7 @@ const stripeRouter = require('./route/stripe.routes');
 const paymentRouter = require('./route/payment.routes');
 const customerPaymentRouter = require('./route/customerPayment.routes');
 const wishlistRouter = require('./route/wishlist.routes');
+const quorumRouter = require('./route/quorum.routes');
 
 // require('./utils/pricing')
 
@@ -85,6 +86,9 @@ app.use('/api/v1/admin/payments', authenticateUser, authorizePermissions('admin'
 
 //apis for suppliers
 app.use('/api/v1/admin/bikerPickupPoint', authenticateUser, authorizePermissions('admin'), bikerPickupPoint);
+
+//quorum processing
+app.use('/api/v1/admin/quorum', authenticateUser, authorizePermissions('admin'), quorumRouter);
 
 //apis for clients
 app.use('/api/v1/admin/clientPickupPoint', authenticateUser, authorizePermissions('admin'), clientPickupPointRouter);

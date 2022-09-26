@@ -1,3 +1,4 @@
+const dishItemModel = require('../models/DishItem');
 const User = require("../models/User");
 const crypto = require("crypto");
 const orderModel = require("../models/Order");
@@ -13,8 +14,7 @@ const notificationController = require("./notification.controller");
 const { priceBreakdownItem, priceBreakdownCheckout} = require('../utils/pricing');
 const { convertToUniqueMongoIdArray } = require('../utils/objectId');
 const { PaymentIntentCreate } = require('../utils/stripe');
-
-const utils = require("nodemon/lib/utils");
+const QRCode = require('qrcode')
 
 const tryToCompleteTransaction = async (paymentId) => {
   let payment = await paymentModel.aggregate([
@@ -65,8 +65,6 @@ const tryToCompleteTransaction = async (paymentId) => {
     });
   }
 
-  console.log(isTransactionCompleted);
-
   if (isTransactionCompleted) {
     await paymentModel.updateOne(
       {
@@ -92,7 +90,7 @@ const tryToCompleteTransaction = async (paymentId) => {
 // this is will be udpate to have a checkout process one platform payments are enabled
 const createOrder = async (req, res) => {
   const orderData = req.body;
-  orderData.viewId = crypto.randomBytes(3).toString("hex");
+  orderData.viewId = crypto.randomBytes(5).toString("hex");
 
   // check if the event has not reached max orders ??
 
@@ -1427,7 +1425,7 @@ const updateOrder = async (req, res) => {
     const update = priceBreakdownCheckout(unCancelledOrders);
     update.updatedAt = new Date();
 
-    let updateResp = await paymentModel.updateOne(
+    await paymentModel.updateOne(
       {
         _id: payment._id,
       },
@@ -1467,7 +1465,7 @@ const CreatePaymentIntent =  async (req, res) => {
     paymentIntent = await PaymentIntentCreate(false, stripeCustId, payment.total);
   }
   
-  const resp = await paymentModel.updateOne({
+  await paymentModel.updateOne({
     _id: paymentId
   }, {
     $set: {
@@ -1476,6 +1474,39 @@ const CreatePaymentIntent =  async (req, res) => {
   });
 
   return res.status(StatusCodes.OK).json({ paymentIntent });
+}
+
+const markOrderDelivedThruQR = async (req, res) => {
+
+  const {qrValue} = req.params;
+  let {userId} = req.user;
+
+  await orderModel.updateOne({
+    $and: [
+      {customer: userId},
+      {qrValue}
+    ]
+  }, {
+    $set: {
+      status: orderStatus.DELIVERED,
+      updatedAt: new Date()
+    }
+  })
+
+  return res.status(StatusCodes.OK).json({ message: 'order delivered!' }); 
+
+}
+
+const getProductDeliveryQR = async (req, res) => {
+
+  const { product } = req.params;
+  const { qrValue } = await dishItemModel.findById(product, `qrValue`);
+
+  QRCode.toDataURL(qrValue, function (err, url) {
+    res.status(StatusCodes.OK).json({ url }); 
+  })
+
+  return
 }
 
 
@@ -1494,5 +1525,7 @@ module.exports = {
   updatePickupAddressOnOrder,
   updatePaymentMethod,
   getPayments,
-  CreatePaymentIntent
+  CreatePaymentIntent,
+  markOrderDelivedThruQR,
+  getProductDeliveryQR
 };
