@@ -1,4 +1,5 @@
-const { format, parseISO, differenceInCalendarDays, add, getDay, sub, setHours, setMinutes, setSeconds, setMilliseconds } = require('date-fns');
+const { parseISO, setHours, setMinutes, setSeconds, setMilliseconds } = require('date-fns');
+var moment = require('moment-timezone');
 
 function parseWZeroTime(dateStr) {
     let date = parseISO(dateStr);
@@ -14,7 +15,32 @@ function todayDateWithZeroTime() {
     return parseWZeroTime(currDate.toISOString());
 }
 
+// calDate = "2022-10-22"
+// function calDateToPSTDate(calDate){    
+//     let date = new Date(calDate);
+//     date = date.toLocaleString('en-US', {timeZone: 'America/Los_Angeles'});  
+//     date = new Date(date)
+//     var timeOffsetInMS = date.getTimezoneOffset() * 60000;
+//     date = date.setTime(date.getTime() - timeOffsetInMS);
+//     return new Date(date)
+// }
+
+// calDate = "2022-10-22"
+function calDateToPSTDate(calDate){   
+    let dateValArr = calDate.split('-');
+    let date = moment().tz("America/Los_Angeles")
+    date.set('year', dateValArr[0]);
+    date.set('month', dateValArr[1]-1);  // April
+    date.set('date', dateValArr[2]);
+    date.set('hour', 0);
+    date.set('minute', 0);
+    date.set('second', 0);
+    date.set('millisecond', 0);
+    return date.toDate()
+}
+
 module.exports = {
+    calDateToPSTDate,
     parseWZeroTime,
     todayDateWithZeroTime
 }

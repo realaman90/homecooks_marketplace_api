@@ -62,9 +62,6 @@ const PaymentIntentCreate = async (save_card, customer, amount) => {
 // make payment intent with confirm = true
 const MakePayment = async (payment_method, customer, amount) => {
 
-    console.log("creatting payment")
-    console.log(payment_method, customer, amount)
-
     let paymentSuccess = false;
 
     try {
@@ -112,22 +109,6 @@ const AttachPaymentMethod = async (customer, paymentMethodId) => {
     return paymentMethod.data;
 }
 
-// AttachPaymentMethod("cus_MSmoAiBQtHqsXv", "pm_1LlVgCHuM2wzausDgu0KE6uy")
-
-
-
-// FetchPaymentMethods("cus_MPJQi5K86sVVrV")
-
-// (async () => {
-//     console.log("asdflajsdkfjlasjdkf")
-//     const cust = await CreateStripeCustomer()
-
-//     console.log(cust)
-    
-//     const setupIntent = await SetupIntentFrCard(cust)
-
-//     console.log(setupIntent)
-// })()
 
 
 module.exports = {

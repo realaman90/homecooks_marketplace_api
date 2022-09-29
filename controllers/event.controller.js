@@ -6,13 +6,14 @@ const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const { eventStatus, orderStatus } = require('../constants');
-const { parseWZeroTime } = require('../utils/datetime');;
+const { parseWZeroTime, calDateToPSTDate } = require('../utils/datetime');;
 const { parseISO, differenceInCalendarDays, add, getDay, sub, setHours, getHours, addHours, subHours, format } = require('date-fns');
 const eventTemplateModel = require('../models/EventTemplate');
 const crypto = require('crypto');
 const { date } = require('joi');
 const { IDGen } = require('../utils/viewId');
-const differenceInHours = require('date-fns/differenceInHours')
+const differenceInHours = require('date-fns/differenceInHours');
+const { contentSecurityPolicy } = require('helmet');
 
 const createEvent = async(req, res) => {
 
@@ -462,35 +463,8 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
 
         dates.push(new Date(eventDateISO));
 
-        // for (let i = 0; i < calendarDays; i++) {
-        //     const nextISODate = add(startDateISO, {
-        //         days: i
-        //     });
-
-        //     // 0 | 1 | 2 | 3 | 4 | 5 | 6 the day of week, 0 represents Sunday
-        //     const dayOfWeek = getDay(nextISODate);
-
-        //     if (eventFrequncyData.days.indexOf('Mon') > -1 && dayOfWeek == 1 ||
-        //         eventFrequncyData.days.indexOf('Tue') > -1 && dayOfWeek == 2 ||
-        //         eventFrequncyData.days.indexOf('Wed') > -1 && dayOfWeek == 3 ||
-        //         eventFrequncyData.days.indexOf('Thur') > -1 && dayOfWeek == 4 ||
-        //         eventFrequncyData.days.indexOf('Fri') > -1 && dayOfWeek == 5 ||
-        //         eventFrequncyData.days.indexOf('Sat') > -1 && dayOfWeek == 6 ||
-        //         eventFrequncyData.days.indexOf('Sun') > -1 && dayOfWeek == 0
-        //     ) {
-
-        //         if (dates.length < eventFrequncyData.days.length) {
-        //             dates.push(nextISODate)
-        //         } else {
-        //             break;
-        //         }
-
-        //     }
-        // }
-
     }
 
-    console.log(dates)
     return dates;
 }
 
@@ -507,16 +481,12 @@ const calculateDatesFromEventFrequencyData = (eventFrequncyData) => {
 //     "days": ["Mon", "Thur"]
 // })
 
-const CalcClosingDateTime = (eventDate, supplierPickupTime, finalOrderCloseHours) => {
-        const supplierPickupDateTime = addHours(eventDate, supplierPickupTime);
-        const closingDateTime = subHours(supplierPickupDateTime, finalOrderCloseHours)
-        const closingDate = setHours(closingDateTime, 0);
-        const closingTime = getHours(closingDateTime);
-        return {
-            closingDate,
-            closingTime
-        }
-    }
+const CalcClosingDate = (eventDate, supplierPickupTime, finalOrderCloseHours) => {    
+    const supplierPickupDateTime = addHours(eventDate, supplierPickupTime);
+    const closingDate = subHours(supplierPickupDateTime, finalOrderCloseHours)    
+    return closingDate                
+}
+
     //function for visualisating event Time in front end
 const timeString = (timeinH) => {
     const decimalTimeString = timeinH.toString();
@@ -536,17 +506,17 @@ const createEventUsingEventTemplate = async(req, res) => {
     // find out the event dates
     const eventDates = calculateDatesFromEventFrequencyData({
         "eventFrequency": eventTemplate.eventFrequency,
-        "startDate": parseWZeroTime(eventTemplate.startDate),
-        "endDate": parseWZeroTime(eventTemplate.endDate),
+        "startDate": calDateToPSTDate(eventTemplate.startDate),
+        "endDate": calDateToPSTDate(eventTemplate.endDate),
+        "eventDate": calDateToPSTDate(eventTemplate.eventDate),
         "days": eventTemplate.days,
-        "eventDate": eventTemplate.eventDate
     });
 
     // create event objects
     let events = [];
     eventDates.forEach(ed => {
         const event = {};
-        const { closingDate, closingTime } = CalcClosingDateTime(ed, eventTemplate.supplierPickupTime, eventTemplate.finalOrderCloseHours)
+        const closingDate = CalcClosingDate(ed, eventTemplate.supplierPickupTime, eventTemplate.finalOrderCloseHours)
         event._id = new mongoose.Types.ObjectId();
         event.viewId = 'event_' + crypto.randomBytes(6).toString('hex');
         event.supplier = eventTemplate.supplier;
@@ -555,11 +525,9 @@ const createEventUsingEventTemplate = async(req, res) => {
         event.images = eventTemplate.images;
         event.eventDate = ed;
         event.closingDate = closingDate;
-        event.closingTime = closingTime;
         event.supplierPickupTime = eventTemplate.supplierPickupTime;
         event.eventVisibilityDate = sub(ed, { 'days': 15 });
         event.clientPickups = eventTemplate.clientPickups;
-        event.closingTimeString = timeString(closingTime);
         event.supplierPickupTimeString = timeString(eventTemplate.supplierPickupTime);
         event.eventTemplate = eventTemplate._id;
         events.push(event);
@@ -602,7 +570,6 @@ const createEventUsingEventTemplate = async(req, res) => {
                 // event date related data
                 eventDate: e.eventDate,
                 closingDate: e.closingDate,
-                closingTime: e.closingTime,
                 supplierPickupTime: e.supplierPickupTime,
                 eventVisibilityDate: e.eventVisibilityDate,
             })
@@ -612,8 +579,6 @@ const createEventUsingEventTemplate = async(req, res) => {
 
     // filter out invalid events, event for which closing date 24 hours away
     events = events.filter(e => {
-        const closingDateTime = addHours(new Date(e.closingDate), e.closingTime)
-        e.closingDateTime = closingDateTime;
         const hoursFarFrmNow = differenceInHours(e.closingDate, new Date());
         if (hoursFarFrmNow < 24){
             return false
@@ -626,7 +591,7 @@ const createEventUsingEventTemplate = async(req, res) => {
         throw new CustomError.BadRequestError(`Cannot create event for closing date less thn 24 hours from now!`);
     }
 
-    // insert many events, create events based on those dates
+    // // insert many events, create events based on those dates
     const respEvents = await eventModel.create(events);
 
     const respDishItems = await dishItemModel.create(dishItems);

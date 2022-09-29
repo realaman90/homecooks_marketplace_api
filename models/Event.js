@@ -26,8 +26,6 @@ const EventSchema = mongoose.Schema({
     eventDate: Date, // in case of one time event
     eventVisibilityDate: Date,
     closingDate: Date,
-    closingTime: Number,
-    closingDateTime: Date,
     supplierPickupTime: Number,
     closingTimeString: String,
     supplierPickupTimeString: String,
