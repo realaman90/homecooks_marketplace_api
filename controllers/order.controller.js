@@ -1,4 +1,4 @@
-const dishItemModel = require('../models/DishItem');
+const dishItemModel = require("../models/DishItem");
 const User = require("../models/User");
 const crypto = require("crypto");
 const orderModel = require("../models/Order");
@@ -11,10 +11,19 @@ const { default: mongoose } = require("mongoose");
 const { orderStatus, paymentStatus } = require("../constants");
 const payoutController = require("./payout.controller");
 const notificationController = require("./notification.controller");
-const { priceBreakdownItem, priceBreakdownCheckout} = require('../utils/pricing');
-const { convertToUniqueMongoIdArray } = require('../utils/objectId');
-const { PaymentIntentCreate } = require('../utils/stripe');
-const QRCode = require('qrcode')
+const kartController = require("../controllers/kart.controller");
+const {
+  priceBreakdownItem,
+  priceBreakdownCheckout,
+  paymentCalcualtion,
+  DELIVERY_FEE,
+} = require("../utils/pricing");
+const {
+  convertToUniqueMongoIdArray,
+  checkIfMongoIdInArray,
+} = require("../utils/objectId");
+const { PaymentIntentCreate } = require("../utils/stripe");
+const QRCode = require("qrcode");
 
 const tryToCompleteTransaction = async (paymentId) => {
   let payment = await paymentModel.aggregate([
@@ -214,25 +223,26 @@ const getAllOrders = async (req, res) => {
 
   if (req.query.search) {
     aggreagatePipelineQueries.push({
-      "$match":{
-        "$or": [
-          { 'item.name': { $regex: req.query.search, $options: 'i' }, },
-          { 'customer.fullName': { $regex: req.query.search, $options: 'i' }, },
-          { 'payment.viewId': { $regex: req.query.search, $options: 'i' }, },          
-        ]
-      }      
-    })  
+      $match: {
+        $or: [
+          { "item.name": { $regex: req.query.search, $options: "i" } },
+          { "customer.fullName": { $regex: req.query.search, $options: "i" } },
+          { "payment.viewId": { $regex: req.query.search, $options: "i" } },
+        ],
+      },
+    });
   }
 
-  aggreagatePipelineQueries.push({        
-      $count: 'count'
-  })
+  aggreagatePipelineQueries.push({
+    $count: "count",
+  });
 
   let ordersCount = await orderModel.aggregate(aggreagatePipelineQueries);
-  ordersCount = ordersCount && ordersCount.length > 0 ? ordersCount[0].count : 0
+  ordersCount =
+    ordersCount && ordersCount.length > 0 ? ordersCount[0].count : 0;
 
   // remove count stage and add project
-  aggreagatePipelineQueries.pop()
+  aggreagatePipelineQueries.pop();
 
   aggreagatePipelineQueries.push({
     $project: {
@@ -273,7 +283,7 @@ const getAllOrders = async (req, res) => {
   });
 
   let orders = await orderModel.aggregate(aggreagatePipelineQueries);
-  
+
   return res.status(StatusCodes.OK).json({ orders, itemCount: ordersCount });
 };
 
@@ -385,8 +395,10 @@ const getOrderById = async (req, res) => {
   }
 
   let order = orders[0];
-  order.item.pricePerOrder = priceBreakdownItem(order.item.pricePerOrder).subTotal;
-  
+  order.item.pricePerOrder = priceBreakdownItem(
+    order.item.pricePerOrder
+  ).subTotal;
+
   return res.status(StatusCodes.OK).json({ order });
 };
 
@@ -508,13 +520,13 @@ const getCustomerOrders = async (req, res) => {
     itemCount = await orderModel.find({ $and: andQuery }).countDocuments();
   }
 
-  orders.forEach(order=>{
-    order.item.forEach(i=>{
-      let {subTotal} = priceBreakdownItem(i.pricePerOrder);
-      i.pricePerOrder = subTotal
-    })
-  })
-  
+  orders.forEach((order) => {
+    order.item.forEach((i) => {
+      let { subTotal } = priceBreakdownItem(i.pricePerOrder);
+      i.pricePerOrder = subTotal;
+    });
+  });
+
   return res.status(StatusCodes.OK).json({ orders, itemCount });
 };
 
@@ -569,7 +581,6 @@ const deleteOrder = async (req, res) => {
 
 // perform checkout calculations on kart data
 
-
 // paymentCalcOnKartItems(
 //     [
 //         {
@@ -621,9 +632,12 @@ const createOrdersFromKart = async (kartItems, prevOrders) => {
   const orders = [];
 
   kartItems.forEach((ki) => {
-    let pricing = priceBreakdownItem(ki.item.pricePerOrder)
-    let cost = round(multiply(pricing.subTotal, ki.quantity),1)
-    let costToSupplier = round(multiply(ki.item.costToSupplierPerOrder, ki.quantity),1)
+    let pricing = priceBreakdownItem(ki.item.pricePerOrder);
+    let cost = round(multiply(pricing.subTotal, ki.quantity), 1);
+    let costToSupplier = round(
+      multiply(ki.item.costToSupplierPerOrder, ki.quantity),
+      1
+    );
 
     orders.push({
       _id: prevOrderMeta[ki.item._id]
@@ -656,25 +670,28 @@ const createOrdersFromKart = async (kartItems, prevOrders) => {
 };
 
 const attachPaymentIdToOrders = async (payment) => {
-  const {orders} = await paymentModel.findById(payment, `orders`);
-  for (let i=0; i<orders.length; i++){
+  const { orders } = await paymentModel.findById(payment, `orders`);
+  for (let i = 0; i < orders.length; i++) {
     let orderId = orders[i];
-    await orderModel.updateOne({
-      _id: orderId
-    }, {
-      $set: {
-        payment
+    await orderModel.updateOne(
+      {
+        _id: orderId,
+      },
+      {
+        $set: {
+          payment,
+        },
       }
-    })
+    );
   }
-  return
-}
+  return;
+};
 // attachPaymentIdToOrders("632ee6fb929b5bb8a841ae68")
 
 const getCheckout = async (req, res) => {
-  const userId = req.user.userId;  
+  const userId = req.user.userId;
 
-// const getCheckout = async (userId) => {
+  // const getCheckout = async (userId) => {
 
   // initial
   // get orders data from kart
@@ -729,8 +746,8 @@ const getCheckout = async (req, res) => {
 
   pendingCheckout = pendingCheckout[0];
 
-  let pickUpPointsArr = kartItems.map(ki => ki.pickupPoint);
-  pickUpPointsArr = convertToUniqueMongoIdArray(pickUpPointsArr)
+  let pickUpPointsArr = kartItems.map((ki) => ki.pickupPoint);
+  pickUpPointsArr = convertToUniqueMongoIdArray(pickUpPointsArr);
   let uniquePickupPoints = pickUpPointsArr.length;
 
   const calcObj = priceBreakdownCheckout(kartItems, uniquePickupPoints);
@@ -815,7 +832,7 @@ const getCheckout = async (req, res) => {
         quantity: 1,
         pickupPoint: 1,
         instruction: 1,
-        cost:1,
+        cost: 1,
         "item._id": 1,
         "item.name": 1,
         "item.description": 1,
@@ -833,10 +850,10 @@ const getCheckout = async (req, res) => {
     },
   ]);
 
-  orders.forEach(o=>{
-    const {subTotal} = priceBreakdownItem(o.item.pricePerOrder);
-    o.item.pricePerOrder = subTotal
-  })
+  orders.forEach((o) => {
+    const { subTotal } = priceBreakdownItem(o.item.pricePerOrder);
+    o.item.pricePerOrder = subTotal;
+  });
 
   // attach payment id with order
   await attachPaymentIdToOrders(payment._id);
@@ -845,7 +862,6 @@ const getCheckout = async (req, res) => {
 };
 
 // getCheckout("63289a1a3bb5ba24e2efc4a4")
-
 
 /**
 -----checkout version 2----
@@ -871,55 +887,229 @@ check for pending checkout
 
 */
 
+const getCheckoutV2 = async (req, res) => {
 
+  const { userId } = req.user;
+  const kartResp = await kartController.userKart(userId);
+  const { kart } = kartResp;
+  const { kartItems, kartCount } = kart;
 
+  if (!kartCount) {
+    return;
+  }
 
-const getCheckoutV2 = async (userId) => {
+  const prevOrders = await orderModel.find({
+    $and: [{ customer: userId }, { status: "pending_checkout" }],
+  });
 
-  // check if user has a pending checkout
-  let pendingCheckout = await paymentModel.aggregate([
+  const prevOrderMeta = {};
+  if (prevOrders && prevOrders.length > 0) {
+    prevOrders.forEach((po) => {
+      prevOrderMeta[po.item] = {
+        pickupPoint: po.pickupPoint,
+        instruction: po.instruction,
+        orderId: po._id,
+      };
+    });
+  }
+
+  const prevOrderIds = prevOrders.map((o) => o._id);
+
+  // remove prev orders from db
+  await orderModel.deleteMany({
+    _id: { $in: prevOrderIds },
+  });
+
+  // delivery fee calc
+
+  // number of unique pickup points
+  let unqPickupPointsCount = 0;
+  const pickUpPointMeta = {};
+  for (const key in prevOrderMeta) {
+    if (prevOrderMeta[key].pickupPoint) {
+      const pickUpPointId = prevOrderMeta[key].pickupPoint;
+      if (pickUpPointMeta[pickUpPointId]) {
+        pickUpPointMeta[pickUpPointId] += 1;
+      } else {
+        pickUpPointMeta[pickUpPointId] = 1;
+        unqPickupPointsCount++;
+      }
+    }
+  }
+
+  let orders = [];
+  kartItems.forEach((ki) => {
+    const itemPrice = ki.item.pricePerOrder;
+    const itemSubTotal = ki.item.subTotal;
+    const subTotal = round(multiply(ki.item.subTotal, ki.quantity), 2);
+
+    let deliveryFee = 0;
+
+    if (prevOrderMeta[ki.item._id] && prevOrderMeta[ki.item._id].pickupPoint) {
+      const pickupPointId = prevOrderMeta[ki.item._id].pickupPoint;
+      const count = pickUpPointMeta[pickupPointId];
+
+      deliveryFee = round(DELIVERY_FEE / count, 2);
+    }
+
+    const total = round(sum(subTotal, deliveryFee), 2);
+    const itemCostToSupplier = ki.item.costToSupplierPerOrder;
+    const costToSupplier = round(
+      multiply(ki.item.costToSupplierPerOrder, ki.quantity),
+      2
+    );
+
+    // console.log("itemPrice",itemPrice)
+    // console.log("itemSubTotal",itemSubTotal)
+    // console.log("subTotal",subTotal)
+    // console.log("deliveryFee", deliveryFee)
+    // console.log("itemCostToSupplier",itemCostToSupplier)
+    // console.log("costToSupplier",costToSupplier)
+
+    orders.push({
+      _id: prevOrderMeta[ki.item._id]
+        ? prevOrderMeta[ki.item._id].orderId
+        : mongoose.Types.ObjectId(),
+      customer: userId,
+      viewId: "order_" + crypto.randomBytes(6).toString("hex"),
+      item: ki.item._id,
+      event: ki.item.event,
+      supplier: ki.item.supplier,
+      quantity: ki.quantity,
+      itemPrice,
+      itemSubTotal,
+      subTotal,
+      deliveryFee,
+      total,
+      itemCostToSupplier,
+      costToSupplier,
+      isPaid: false,
+      status: paymentStatus.PENDING_CHECKOUT,
+      pickupPoint: prevOrderMeta[ki.item._id]
+        ? prevOrderMeta[ki.item._id].pickupPoint
+        : null,
+      instruction: prevOrderMeta[ki.item._id]
+        ? prevOrderMeta[ki.item._id].instruction
+        : null,
+    });
+  });
+
+  const calcObj = paymentCalcualtion(orders);
+
+  // create payment object
+  let payment = {
+    viewId: crypto.randomBytes(3).toString("hex"),
+    customer: userId,
+    totalItemPrice: calcObj.totalItemPrice,
+    serviceFee: calcObj.serviceFee,
+    tax: calcObj.tax,
+    subTotal: calcObj.subTotal,
+    deliveryFee: calcObj.deliveryFee,
+    total: calcObj.total,
+    costToSupplier: calcObj.costToSupplier,
+    status: paymentStatus.PENDING_CHECKOUT,
+    orderCount: orders.length,
+  };
+
+  // check if payment exists
+  const existingPayment = await paymentModel.findOne({
+    $and: [{ customer: userId }, { status: paymentStatus.PENDING_CHECKOUT }],
+  });
+
+  // create if not exists
+  if (existingPayment) {
+    console.log("existingPayment true");
+    // update payment object
+    payment = await paymentModel.updateOne(
+      {
+        _id: existingPayment._id,
+      },
+      {
+        $set: {
+          totalItemPrice: payment.totalItemPrice,
+          serviceFee: payment.serviceFee,
+          tax: payment.tax,
+          subTotal: payment.subTotal,
+          deliveryFee: payment.deliveryFee,
+          total: payment.total,
+          costToSupplier: payment.costToSupplier,
+          orderCount: orders.length,
+        },
+      }
+    );
+
+    payment = await paymentModel.findById(existingPayment._id);
+  } else {
+    payment = await paymentModel.create(payment);
+  }
+
+  // save orders
+  await orderModel.create(orders);
+
+  orders = await orderModel.aggregate([
     {
       $match: {
-        $and: [
-          { customer: mongoose.Types.ObjectId(userId) },
-          { status: paymentStatus.PENDING_CHECKOUT },
-        ],
+        customer: mongoose.Types.ObjectId(userId),
+        status: paymentStatus.PENDING_CHECKOUT,
       },
-    }, {
+    },
+    {
       $lookup: {
-        from: 'orders',
-        let: { paymentId: '$_id' },
-        pipeline: [
-          { $match: { $expr: { $eq: ['$$paymentId', '$payment'] } } },          
-        ],
-        as: 'orders',
+        from: "dishitems",
+        localField: "item",
+        foreignField: "_id",
+        as: "item",
       },
-    }
+    },
+    {
+      $unwind: "$item",
+    },
+    {
+      $lookup: {
+        from: "clientpickuppoints",
+        localField: "item.clientPickups",
+        foreignField: "_id",
+        as: "item.clientPickups",
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        quantity: 1,
+        totalItemPrice:1,
+        serviceFee:1,
+        tax:1,
+        subTotal:1,
+        deliveryFee:1,
+        total:1,
+        costToSupplier:1,
+        orderCount:1,
+        pickupPoint: 1,
+        instruction: 1,
+        cost: 1,
+        "item._id": 1,
+        "item.name": 1,
+        "item.description": 1,
+        "item.eventDate": 1,
+        "item.images": 1,
+        "item.pricePerOrder": 1,
+        "item.costToSupplierPerOrder": 1,
+        "item.clientPickups._id": 1,
+        "item.clientPickups.name": 1,
+        "item.clientPickups.text": 1,
+        "item.clientPickups.viewId": 1,
+        "item.clientPickups.address": 1,
+        "item.clientPickups.suitableTimes": 1,
+      },
+    },
   ]);
 
-  if (pendingCheckout && pendingCheckout.length > 0){
-    pendingCheckout = pendingCheckout[0];
-  }else {
-    pendingCheckout = null;
-  }
+  return res.status(StatusCodes.OK).json({ checkout: payment, orders });
+};
 
-  // if pending checkout exists
-  if (pendingCheckout){
-    
-
-
-
-  }
-
-
-
-
-
-
-}
 
 // getCheckoutV2("63289a1a3bb5ba24e2efc4a4")
-// 
+//
 const updatePickupAddressOnOrder = async (req, res) => {
   const orders = req.body.orders;
 
@@ -1004,7 +1194,7 @@ const placeOrder = async (req, res) => {
 
   process.nextTick(() => {
     notificationController.OrderCreatedNotificationForAdmin(paymentId);
-    notificationController.OrderCreatedNotificationForUser(paymentId);    
+    notificationController.OrderCreatedNotificationForUser(paymentId);
   });
 
   return res
@@ -1452,63 +1642,70 @@ const updateOrder = async (req, res) => {
   return res.status(StatusCodes.OK).json({ message: `order ${status}!` });
 };
 
-const CreatePaymentIntent =  async (req, res) => {
-  const {save_card} = req.query;
-  const {stripeCustId} = await User.findById(req.user.userId, `stripeCustId`);
+const CreatePaymentIntent = async (req, res) => {
+  const { save_card } = req.query;
+  const { stripeCustId } = await User.findById(req.user.userId, `stripeCustId`);
   const paymentId = req.params.paymentId;
   const payment = await paymentModel.findById(paymentId, `total`);
 
   let paymentIntent = null;
-  if (save_card && save_card.toLowerCase() == 'y'){
-    paymentIntent = await PaymentIntentCreate(true, stripeCustId, payment.total);
+  if (save_card && save_card.toLowerCase() == "y") {
+    paymentIntent = await PaymentIntentCreate(
+      true,
+      stripeCustId,
+      payment.total
+    );
   } else {
-    paymentIntent = await PaymentIntentCreate(false, stripeCustId, payment.total);
+    paymentIntent = await PaymentIntentCreate(
+      false,
+      stripeCustId,
+      payment.total
+    );
   }
-  
-  await paymentModel.updateOne({
-    _id: paymentId
-  }, {
-    $set: {
-      paymentIntent: paymentIntent.paymentIntentId
+
+  await paymentModel.updateOne(
+    {
+      _id: paymentId,
+    },
+    {
+      $set: {
+        paymentIntent: paymentIntent.paymentIntentId,
+      },
     }
-  });
+  );
 
   return res.status(StatusCodes.OK).json({ paymentIntent });
-}
+};
 
 const markOrderDelivedThruQR = async (req, res) => {
+  const { qrValue } = req.params;
+  let { userId } = req.user;
 
-  const {qrValue} = req.params;
-  let {userId} = req.user;
-
-  await orderModel.updateOne({
-    $and: [
-      {customer: userId},
-      {qrValue}
-    ]
-  }, {
-    $set: {
-      status: orderStatus.DELIVERED,
-      updatedAt: new Date()
+  await orderModel.updateOne(
+    {
+      $and: [{ customer: userId }, { qrValue }],
+    },
+    {
+      $set: {
+        status: orderStatus.DELIVERED,
+        updatedAt: new Date(),
+      },
     }
-  })
+  );
 
-  return res.status(StatusCodes.OK).json({ message: 'order delivered!' }); 
-
-}
+  return res.status(StatusCodes.OK).json({ message: "order delivered!" });
+};
 
 const getProductDeliveryQR = async (req, res) => {
-
   const { product } = req.params;
   const { qrValue } = await dishItemModel.findById(product, `qrValue`);
 
   QRCode.toDataURL(qrValue, function (err, url) {
-    res.status(StatusCodes.OK).json({ url }); 
-  })
+    res.status(StatusCodes.OK).json({ url });
+  });
 
-  return
-}
-
+  return;
+};
 
 module.exports = {
   updateOrder,
@@ -1521,11 +1718,12 @@ module.exports = {
   editOrder,
   deleteOrder,
   getCheckout,
+  getCheckoutV2,
   placeOrder,
   updatePickupAddressOnOrder,
   updatePaymentMethod,
   getPayments,
   CreatePaymentIntent,
   markOrderDelivedThruQR,
-  getProductDeliveryQR
+  getProductDeliveryQR,
 };

@@ -6,20 +6,15 @@ const PaymentSchema = mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true
-    },
-    supplier: {
-        type: mongoose.Types.ObjectId,
-        ref: 'Supplier',
-        required: true
+    },    
+    totalItemPrice: {
+        type: String,
+        required: [true]
     },
     subTotal: {
         type: String,
         required: [true]
-    },
-    cost: {
-        type: String,
-        required: [true]
-    },
+    },    
     serviceFee: {
         type: String,
         required: [true]
@@ -46,6 +41,7 @@ const PaymentSchema = mongoose.Schema({
     paymentMethod: String,
     paymentIntent: String,
     viewId: String,
+    orderCount: Number,
     isPaid: {
         type: Boolean,
         default: false

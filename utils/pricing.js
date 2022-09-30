@@ -2,7 +2,7 @@ const { multiply, sum, round } = require("mathjs");
 
 const SERVICE_FEE_MULTIPLIER = 1.15;
 const TAX_RATE_MULTIPLIER = 1.0975;
-const DELIVERY_FEE = 4.99;
+const DELIVERY_FEE = 5;
 
 // Caterer Price	11
 // Caterer markup/plate	2
@@ -51,8 +51,50 @@ const priceBreakdownCheckout = (items, deliveryPoints) => {
     return resp;
 }
 
+const priceBreakdownItemV2 = (price) => {
+    const pricePostSF = multiply(price, SERVICE_FEE_MULTIPLIER);    
+    const fPrice = round(multiply(pricePostSF, TAX_RATE_MULTIPLIER),2)
+    return {
+        cost: price,
+        serviceFee: round((pricePostSF - price), 2),
+        tax: round((fPrice - pricePostSF),2),
+        subTotal: fPrice
+    }
+}
+
+const paymentCalcualtion = (orders) => {
+
+    let totalItemPrice = 0;    
+    let deliveryFee = 0;
+    let total = 0;
+    let costToSupplier = 0;
+
+    orders.forEach((o) => {
+        totalItemPrice = totalItemPrice + multiply(o.quantity, o.itemPrice)        
+        costToSupplier = costToSupplier+ o.costToSupplier;
+        deliveryFee = deliveryFee+ o.deliveryFee;
+    });
+
+    totalItemPrice = round(totalItemPrice,2)
+    const {subTotal, serviceFee, tax} = priceBreakdownItem(totalItemPrice)
+
+    total = round(sum(subTotal, deliveryFee),2);
+
+    return {
+        totalItemPrice,
+        serviceFee,
+        tax,
+        subTotal,        
+        deliveryFee,        
+        total,
+        costToSupplier
+    }
+}
+
 module.exports = {
     priceBreakdownCheckout,
-    priceBreakdownItem
+    priceBreakdownItem,
+    paymentCalcualtion,
+    DELIVERY_FEE
 }
 
