@@ -1475,26 +1475,15 @@ const getSinglePaymentFrCustomer = async (req, res) => {
     },
     {
       $unwind: "$customer",
-    },
-    {
-      $lookup: {
-        from: "suppliers",
-        localField: "supplier",
-        foreignField: "_id",
-        as: "supplier",
-      },
-    },
-    {
-      $unwind: "$supplier",
-    },
+    },    
     {
       $lookup: {
         from: "orders",
-        let: { orders: "$orders" },
+        let: { paymentId: "$_id" },
         pipeline: [
           {
             $match: {
-              $expr: { $in: ["$_id", "$$orders"] },
+              $expr: { $eq: ["$payment", "$$paymentId"] },
             },
           },
           {
@@ -1517,7 +1506,18 @@ const getSinglePaymentFrCustomer = async (req, res) => {
             },
           },
           {
-            $unwind: "$pickupPoint",
+            $unwind: "$pickupPoint",          
+          },
+          {
+            $lookup: {
+              from: "suppliers",
+              localField: "supplier",
+              foreignField: "_id",
+              as: "supplier",
+            },
+          },
+          {
+            $unwind: "$supplier",
           },
         ],
         as: "orders",
@@ -1543,11 +1543,7 @@ const getSinglePaymentFrCustomer = async (req, res) => {
         "customer.fullName": 1,
         "customer.profileImg": 1,
         "customer.email": 1,
-        "customer.phone": 1,
-        "supplier.businessName": 1,
-        "supplier.businessImages": 1,
-        "supplier.address": 1,
-        "supplier.contactInfo": 1,
+        "customer.phone": 1,        
         orders: 1,
       },
     },
