@@ -179,8 +179,7 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
 
   // correct price on the item
   items.forEach((i) => {
-    const { subTotal } = priceBreakdownItem(i.pricePerOrder);
-    i.pricePerOrder = subTotal;    
+    const { subTotal } = priceBreakdownItem(i.pricePerOrder);    
     i.subTotal = subTotal;
   });
 
@@ -334,7 +333,6 @@ const fetchItemsWithDateFilter = async (andQuery, skip, limit) => {
 
   items.forEach((i) => {
     const { subTotal } = priceBreakdownItem(i.pricePerOrder);
-    i.pricePerOrder = subTotal;
     i.subTotal = subTotal;
   });
 
@@ -636,7 +634,6 @@ const getItem = async (req, res) => {
   let dish = dishes[0];
   if (dish) {
     const { subTotal } = priceBreakdownItem(dish.pricePerOrder);
-    dish.pricePerOrder = subTotal;
     dish.subTotal = subTotal;
   }
 
@@ -1382,7 +1379,6 @@ const GetProductDetails = async (req, res) => {
   let item = items[0];
   if (item) {
     const { subTotal } = priceBreakdownItem(item.pricePerOrder);
-    item.pricePerOrder = subTotal;
     item.subTotal = subTotal;
   }
 
