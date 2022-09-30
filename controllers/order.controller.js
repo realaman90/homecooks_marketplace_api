@@ -7,7 +7,7 @@ const paymentModel = require("../models/Payment");
 const { multiply, sum, round, evaluate } = require("mathjs");
 const { StatusCodes } = require("http-status-codes");
 const CustomError = require("../errors");
-const { default: mongoose } = require("mongoose");
+const { default: mongoose, mongo } = require("mongoose");
 const { orderStatus, paymentStatus } = require("../constants");
 const payoutController = require("./payout.controller");
 const notificationController = require("./notification.controller");
@@ -914,6 +914,24 @@ const getCheckoutV2 = async (req, res) => {
 
   const prevOrderIds = prevOrders.map((o) => o._id);
 
+  kartItems.forEach(ki=>{
+    if (prevOrderMeta[ki.item._id]){
+      if (!prevOrderMeta[ki.item._id].pickupPoint){
+        if (ki.item.clientPickups.length == 1){
+          prevOrderMeta[ki.item._id].pickupPoint = ki.item.clientPickups[0]
+        }
+      }
+    }else {
+      if (ki.item.clientPickups.length == 1){
+        prevOrderMeta[ki.item._id]={
+          pickupPoint: ki.item.clientPickups[0],
+          instruction: "",
+          orderId: new mongoose.Types.ObjectId(),
+        };        
+      }
+    }
+  })
+  
   // remove prev orders from db
   await orderModel.deleteMany({
     _id: { $in: prevOrderIds },
@@ -976,7 +994,7 @@ const getCheckoutV2 = async (req, res) => {
     //
 
     // check if payment exists
-
+    
     orders.push({
       _id: prevOrderMeta[ki.item._id]
         ? prevOrderMeta[ki.item._id].orderId

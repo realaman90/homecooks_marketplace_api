@@ -39,6 +39,7 @@ const userKart = async (userId) => {
         "item.mealTags": 1,
         "item.minOrders": 1,
         "item.maxOrders": 1,
+        "item.clientPickups":1,
         "item.pricePerOrder": 1,
         "item.costToSupplierPerOrder": 1,
         "item.description": 1,
