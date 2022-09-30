@@ -914,23 +914,23 @@ const getCheckoutV2 = async (req, res) => {
 
   const prevOrderIds = prevOrders.map((o) => o._id);
 
-  kartItems.forEach(ki=>{
-    if (prevOrderMeta[ki.item._id]){
-      if (!prevOrderMeta[ki.item._id].pickupPoint){
-        if (ki.item.clientPickups.length == 1){
-          prevOrderMeta[ki.item._id].pickupPoint = ki.item.clientPickups[0]
+  kartItems.forEach((ki) => {
+    if (prevOrderMeta[ki.item._id]) {
+      if (!prevOrderMeta[ki.item._id].pickupPoint) {
+        if (ki.item.clientPickups.length == 1) {
+          prevOrderMeta[ki.item._id].pickupPoint = ki.item.clientPickups[0];
         }
       }
-    }else {
-      if (ki.item.clientPickups.length == 1){
-        prevOrderMeta[ki.item._id]={
+    } else {
+      if (ki.item.clientPickups.length == 1) {
+        prevOrderMeta[ki.item._id] = {
           pickupPoint: ki.item.clientPickups[0],
           instruction: "",
           orderId: new mongoose.Types.ObjectId(),
-        };        
+        };
       }
     }
-  })
+  });
 
   // remove prev orders from db
   await orderModel.deleteMany({
@@ -994,7 +994,7 @@ const getCheckoutV2 = async (req, res) => {
     //
 
     // check if payment exists
-    
+
     orders.push({
       _id: prevOrderMeta[ki.item._id]
         ? prevOrderMeta[ki.item._id].orderId
@@ -1181,45 +1181,45 @@ const updatePaymentMethod = async (req, res) => {
 };
 
 const placeOrder = async (req, res) => {
-    const paymentId = req.params.paymentId;
+  const paymentId = req.params.paymentId;
 
-    // update payment status to order_placed
-    await paymentModel.updateOne(
-      {
-        _id: paymentId,
+  // update payment status to order_placed
+  await paymentModel.updateOne(
+    {
+      _id: paymentId,
+    },
+    {
+      $set: {
+        status: paymentStatus.ORDER_PLACED,
       },
-      {
-        $set: {
-          status: paymentStatus.ORDER_PLACED,
-        },
-      }
-    );
+    }
+  );
 
-    // update order status to pending
-    await orderModel.updateMany(
-      {
-        payment: mongoose.Types.ObjectId(paymentId),
+  // update order status to pending
+  await orderModel.updateMany(
+    {
+      payment: mongoose.Types.ObjectId(paymentId),
+    },
+    {
+      $set: {
+        status: orderStatus.ACTIVE,
       },
-      {
-        $set: {
-          status: orderStatus.ACTIVE,
-        },
-      }
-    );
+    }
+  );
 
-    await payoutController.createPayoutsForPaymentV2(paymentId);
+  await payoutController.createPayoutsForPaymentV2(paymentId);
 
-    //clear user kart
-    await kartModel.deleteMany({ customer: req.user.userId });
+  //clear user kart
+  await kartModel.deleteMany({ customer: req.user.userId });
 
-    // process.nextTick(() => {
-    // notificationController.OrderCreatedNotificationForAdmin(paymentId);
-    //   notificationController.OrderCreatedNotificationForUser(paymentId);
-    // });
+  // process.nextTick(() => {
+  // notificationController.OrderCreatedNotificationForAdmin(paymentId);
+  //   notificationController.OrderCreatedNotificationForUser(paymentId);
+  // });
 
-    return res
-      .status(StatusCodes.OK)
-      .json({ message: "order placed successfully" });
+  return res
+    .status(StatusCodes.OK)
+    .json({ message: "order placed successfully" });
 };
 
 const getPayments = async (req, res) => {
@@ -1371,25 +1371,15 @@ const getPaymentsFrCustomer = async (req, res) => {
     {
       $unwind: "$customer",
     },
-    {
-      $lookup: {
-        from: "suppliers",
-        localField: "supplier",
-        foreignField: "_id",
-        as: "supplier",
-      },
-    },
-    {
-      $unwind: "$supplier",
-    },
+
     {
       $lookup: {
         from: "orders",
-        let: { orders: "$orders" },
+        let: { paymentId: "$_id" },
         pipeline: [
           {
             $match: {
-              $expr: { $in: ["$_id", "$$orders"] },
+              $expr: { $eq: ["$payment", "$$paymentId"] },
             },
           },
           {
@@ -1414,22 +1404,33 @@ const getPaymentsFrCustomer = async (req, res) => {
           {
             $unwind: "$pickupPoint",
           },
+          {
+            $lookup: {
+              from: "suppliers",
+              localField: "supplier",
+              foreignField: "_id",
+              as: "supplier",
+            },
+          },
+          {
+            $unwind: "$supplier",
+          },
         ],
         as: "orders",
       },
     },
     {
       $project: {
-        totalItemPrice:1,
-        subTotal:1,
-        serviceFee:1,
-        deliveryFee:1,
-        tax:1,
-        total:1,
-        costToSupplier:1,
+        totalItemPrice: 1,
+        subTotal: 1,
+        serviceFee: 1,
+        deliveryFee: 1,
+        tax: 1,
+        total: 1,
+        costToSupplier: 1,
         viewId: 1,
         createdAt: 1,
-        updatedAt: 1,        
+        updatedAt: 1,
         eventPickupAddressMapping: 1,
         isPaid: 1,
         false: 1,
@@ -1438,10 +1439,6 @@ const getPaymentsFrCustomer = async (req, res) => {
         "customer.profileImg": 1,
         "customer.email": 1,
         "customer.phone": 1,
-        "supplier.businessName": 1,
-        "supplier.businessImages": 1,
-        "supplier.address": 1,
-        "supplier.contactInfo": 1,
         orders: 1,
       },
     },
@@ -1528,13 +1525,13 @@ const getSinglePaymentFrCustomer = async (req, res) => {
     },
     {
       $project: {
-        totalItemPrice:1,
-        subTotal:1,
-        serviceFee:1,
-        deliveryFee:1,
-        tax:1,
-        total:1,
-        costToSupplier:1,
+        totalItemPrice: 1,
+        subTotal: 1,
+        serviceFee: 1,
+        deliveryFee: 1,
+        tax: 1,
+        total: 1,
+        costToSupplier: 1,
         viewId: 1,
         createdAt: 1,
         updatedAt: 1,
