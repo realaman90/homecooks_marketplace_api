@@ -75,6 +75,19 @@ const createPayoutsForPayment = async(paymentId) => {
     }
 }
 
+const createPayoutsForPaymentV2 = async(paymentId) => {
+
+    let orders = await orderModel.find({
+        payment: paymentId
+    })
+
+    for (let i = 0; i < orders.length; i++) {        
+        if (orders[i].status == "active" || orders[i].status == "confirmed"){
+            createPayoutObjectFromOrder(orders[i]._id);
+        }        
+    }
+}
+
 // createPayoutsForPayment("6329eca2cf3ec17f468b6eec")
 
 
@@ -404,6 +417,7 @@ module.exports = {
     getListOfPayouts,
     getSupplierPayouts,
     createPayoutsForPayment,
+    createPayoutsForPaymentV2,
     updatePayoutStatus,
     getPayoutByItem,
     updatePayoutStatusForItem,

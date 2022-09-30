@@ -888,14 +888,13 @@ check for pending checkout
 */
 
 const getCheckoutV2 = async (req, res) => {
-
   const { userId } = req.user;
   const kartResp = await kartController.userKart(userId);
   const { kart } = kartResp;
   const { kartItems, kartCount } = kart;
 
   if (!kartCount) {
-    return;
+    throw new Error(`No item in kart to checkout`);
   }
 
   const prevOrders = await orderModel.find({
@@ -937,6 +936,16 @@ const getCheckoutV2 = async (req, res) => {
     }
   }
 
+  const existingPayment = await paymentModel.findOne({
+    $and: [{ customer: userId }, { status: paymentStatus.PENDING_CHECKOUT }],
+  });
+  let paymentId = null;
+  if (existingPayment) {
+    paymentId = existingPayment._id;
+  } else {
+    paymentId = new mongoose.Types.ObjectId();
+  }
+
   let orders = [];
   kartItems.forEach((ki) => {
     const itemPrice = ki.item.pricePerOrder;
@@ -959,17 +968,20 @@ const getCheckoutV2 = async (req, res) => {
       2
     );
 
-    // console.log("itemPrice",itemPrice)
-    // console.log("itemSubTotal",itemSubTotal)
-    // console.log("subTotal",subTotal)
-    // console.log("deliveryFee", deliveryFee)
-    // console.log("itemCostToSupplier",itemCostToSupplier)
-    // console.log("costToSupplier",costToSupplier)
+    //
+    //
+    //
+    //
+    //
+    //
+
+    // check if payment exists
 
     orders.push({
       _id: prevOrderMeta[ki.item._id]
         ? prevOrderMeta[ki.item._id].orderId
         : mongoose.Types.ObjectId(),
+      payment: paymentId,
       customer: userId,
       viewId: "order_" + crypto.randomBytes(6).toString("hex"),
       item: ki.item._id,
@@ -1011,14 +1023,8 @@ const getCheckoutV2 = async (req, res) => {
     orderCount: orders.length,
   };
 
-  // check if payment exists
-  const existingPayment = await paymentModel.findOne({
-    $and: [{ customer: userId }, { status: paymentStatus.PENDING_CHECKOUT }],
-  });
-
   // create if not exists
   if (existingPayment) {
-    console.log("existingPayment true");
     // update payment object
     payment = await paymentModel.updateOne(
       {
@@ -1040,6 +1046,7 @@ const getCheckoutV2 = async (req, res) => {
 
     payment = await paymentModel.findById(existingPayment._id);
   } else {
+    payment._id = paymentId;
     payment = await paymentModel.create(payment);
   }
 
@@ -1076,14 +1083,14 @@ const getCheckoutV2 = async (req, res) => {
       $project: {
         _id: 1,
         quantity: 1,
-        totalItemPrice:1,
-        serviceFee:1,
-        tax:1,
-        subTotal:1,
-        deliveryFee:1,
-        total:1,
-        costToSupplier:1,
-        orderCount:1,
+        totalItemPrice: 1,
+        serviceFee: 1,
+        tax: 1,
+        subTotal: 1,
+        deliveryFee: 1,
+        total: 1,
+        costToSupplier: 1,
+        orderCount: 1,
         pickupPoint: 1,
         instruction: 1,
         cost: 1,
@@ -1106,7 +1113,6 @@ const getCheckoutV2 = async (req, res) => {
 
   return res.status(StatusCodes.OK).json({ checkout: payment, orders });
 };
-
 
 // getCheckoutV2("63289a1a3bb5ba24e2efc4a4")
 //
@@ -1157,49 +1163,45 @@ const updatePaymentMethod = async (req, res) => {
 };
 
 const placeOrder = async (req, res) => {
-  const paymentId = req.params.paymentId;
+    const paymentId = req.params.paymentId;
 
-  const payment = await paymentModel.findById(paymentId);
-
-  // update payment status to order_placed
-  await paymentModel.updateOne(
-    {
-      _id: paymentId,
-    },
-    {
-      $set: {
-        status: paymentStatus.ORDER_PLACED,
+    // update payment status to order_placed
+    await paymentModel.updateOne(
+      {
+        _id: paymentId,
       },
-    }
-  );
+      {
+        $set: {
+          status: paymentStatus.ORDER_PLACED,
+        },
+      }
+    );
 
-  // update order status to pending
-  await orderModel.updateMany(
-    {
-      _id: {
-        $in: payment.orders,
+    // update order status to pending
+    await orderModel.updateMany(
+      {
+        payment: mongoose.Types.ObjectId(paymentId),
       },
-    },
-    {
-      $set: {
-        status: orderStatus.ACTIVE,
-      },
-    }
-  );
+      {
+        $set: {
+          status: orderStatus.ACTIVE,
+        },
+      }
+    );
 
-  await payoutController.createPayoutsForPayment(paymentId);
+    await payoutController.createPayoutsForPaymentV2(paymentId);
 
-  //clear user kart
-  await kartModel.deleteMany({ customer: req.user.userId });
+    //clear user kart
+    await kartModel.deleteMany({ customer: req.user.userId });
 
-  process.nextTick(() => {
-    notificationController.OrderCreatedNotificationForAdmin(paymentId);
-    notificationController.OrderCreatedNotificationForUser(paymentId);
-  });
+    // process.nextTick(() => {
+    // notificationController.OrderCreatedNotificationForAdmin(paymentId);
+    //   notificationController.OrderCreatedNotificationForUser(paymentId);
+    // });
 
-  return res
-    .status(StatusCodes.OK)
-    .json({ message: "order placed successfully" });
+    return res
+      .status(StatusCodes.OK)
+      .json({ message: "order placed successfully" });
 };
 
 const getPayments = async (req, res) => {

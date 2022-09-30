@@ -424,7 +424,7 @@ const OrderCreatedNotificationForAdmin = async(paymentId) => {
 
         Total Cost: ${paymentDetails.cost}
         Total Cost To Supplier: ${paymentDetails.costToSupplier}
-        Items Count: ${paymentDetails.orders.length} 
+        Items Count: ${paymentDetails.orderCount} 
 
         Customer Details:
         Name: ${paymentDetails.customer.fullName}
@@ -551,11 +551,11 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
         {
           $lookup: {
             from: "orders",
-            let: { orders: "$orders" },
+            let: { paymentId: "$_id" },
             pipeline: [
               {
                 $match: {
-                  $expr: { $in: ["$_id", "$$orders"] },
+                  $expr: { $eq: ["$payment", "$$paymentId"] },
                 },
               },
               {
