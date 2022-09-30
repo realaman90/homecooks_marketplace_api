@@ -5,7 +5,7 @@ const CustomError = require("../errors");
 const { default: mongoose } = require("mongoose");
 const crypto = require("crypto");
 const { eventStatus, orderStatus } = require("../constants");
-const { parseWZeroTime } = require("../utils/datetime");
+const { parseWZeroTime, calDateToPSTDate } = require("../utils/datetime");
 const {
   priceBreakdownItem,
   priceBreakdownCheckout,
@@ -498,7 +498,7 @@ const getAllItemsBySupplier = async (req, res) => {
     dateOrQuery = [];
     eventDate.forEach((e) => {
       dateOrQuery.push({
-        eventDate: new Date(e),
+        eventDate: calDateToPSTDate(e),
       });
     });
     andQuery.push({
@@ -512,11 +512,11 @@ const getAllItemsBySupplier = async (req, res) => {
   });
 
   andQuery.push({
-    eventVisibilityDate: { $lte: todayDateWithZeroTime() },
+    eventVisibilityDate: { $lte: new Date() },
   });
 
   andQuery.push({
-    closingDate: { $gt: todayDateWithZeroTime() },
+    closingDate: { $gt: new Date() },
   });
 
   let itemResp = null;
@@ -922,11 +922,11 @@ const ListProducts = async (req, res) => {
   });
 
   andQuery.push({
-    eventVisibilityDate: { $lte: todayDateWithZeroTime() },
+    eventVisibilityDate: { $lte: new Date() },
   });
 
   andQuery.push({
-    closingDate: { $gt: todayDateWithZeroTime() },
+    closingDate: { $gt: new Date() },
   });
 
   const aggreagatePipelineQueries = [];
@@ -1181,7 +1181,7 @@ const ListProductsV2 = async (req, res) => {
     dateOrQuery = [];
     eventDate.forEach((e) => {
       dateOrQuery.push({
-        eventDate: new Date(e),
+        eventDate: calDateToPSTDate(e),
       });
     });
     andQuery.push({
@@ -1217,6 +1217,9 @@ const ListProductDateFilters = async (req, res) => {
   const skip = req.query.skip ? Number(req.query.skip) : 0;
   const limit = req.query.limit ? Number(req.query.limit) : 10;
 
+  // const skip = 0;
+  // const limit =  1000;
+
   const dates = await dishItemModel.aggregate([
     {
       $match: {
@@ -1239,8 +1242,13 @@ const ListProductDateFilters = async (req, res) => {
     },
   ]);
 
+  // console.log(dates)
+
   return res.status(StatusCodes.OK).json({ dates });
 };
+
+// console.log(ListProductDateFilters())
+
 
 const GetProductDetails = async (req, res) => {
   const productId = req.params.itemId;
