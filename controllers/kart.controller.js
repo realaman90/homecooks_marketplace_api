@@ -5,12 +5,10 @@ const CustomError = require('../errors');
 const { default: mongoose } = require('mongoose');
 const crypto = require('crypto');
 const { eventStatus } = require('../constants');
-const { multiply, sum, round, evaluate } = require("mathjs");
-const { priceBreakdownItem, priceBreakdownCheckout} = require('../utils/pricing');
+const { multiply, round } = require("mathjs");
+const { priceBreakdownItem} = require('../utils/pricing');
 
-const getUserKart = async(req, res) => {
-
-    const userId = req.user.userId;
+const userKart = async (userId) => {
 
     let kartItems = await kartModel.aggregate([{
         "$match": {
@@ -47,7 +45,9 @@ const getUserKart = async(req, res) => {
     }])
 
     if (kartItems.length < 1) {
-        return res.status(StatusCodes.OK).json({ kart: null });
+        return { kart: {
+            kartItems: [], kartCount: 0
+        }, totalCost: 0 }
     }
 
     let totalCost = 0;
@@ -55,13 +55,24 @@ const getUserKart = async(req, res) => {
     // calculate total kart cons
     kartItems.forEach(ki=>{        
         const {subTotal} = priceBreakdownItem(ki.item.pricePerOrder);
-        ki.item.pricePerOrder=subTotal;        
-        totalCost = round(totalCost + multiply(ki.quantity,ki.item.pricePerOrder),2)
+        ki.item.pricePerOrder=subTotal;       
+        ki.item.subTotal=subTotal;        
+        totalCost = round(totalCost + multiply(ki.quantity,ki.item.subTotal),2)
     })
 
     let kartCount = kartItems.length;
+    let result = { kart: {kartItems, kartCount}, totalCost };    
+    return result;
 
-    return res.status(StatusCodes.OK).json({ kart: {kartItems, kartCount}, totalCost });
+}
+
+const getUserKart = async(req, res) => {
+
+    const userId = req.user.userId;
+
+    const result = await userKart(userId);
+    
+    return res.status(StatusCodes.OK).json(result);
 
 }
 
@@ -200,6 +211,7 @@ const clearUserKart = async (req, res)=>{
 }
 
 module.exports = {
+    userKart,
     getUserKart,
     addItemToKart,
     removeItemFrmKart,
