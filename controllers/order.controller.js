@@ -931,7 +931,7 @@ const getCheckoutV2 = async (req, res) => {
       }
     }
   })
-  
+
   // remove prev orders from db
   await orderModel.deleteMany({
     _id: { $in: prevOrderIds },
@@ -1420,15 +1420,16 @@ const getPaymentsFrCustomer = async (req, res) => {
     },
     {
       $project: {
-        cost: 1,
-        serviceFee: 1,
-        deliveryFee: 1,
-        tax: 1,
-        total: 1,
+        totalItemPrice:1,
+        subTotal:1,
+        serviceFee:1,
+        deliveryFee:1,
+        tax:1,
+        total:1,
+        costToSupplier:1,
         viewId: 1,
         createdAt: 1,
-        updatedAt: 1,
-        costToSupplier: 1,
+        updatedAt: 1,        
         eventPickupAddressMapping: 1,
         isPaid: 1,
         false: 1,
@@ -1527,11 +1528,13 @@ const getSinglePaymentFrCustomer = async (req, res) => {
     },
     {
       $project: {
-        cost: 1,
-        serviceFee: 1,
-        deliveryFee: 1,
-        tax: 1,
-        total: 1,
+        totalItemPrice:1,
+        subTotal:1,
+        serviceFee:1,
+        deliveryFee:1,
+        tax:1,
+        total:1,
+        costToSupplier:1,
         viewId: 1,
         createdAt: 1,
         updatedAt: 1,
