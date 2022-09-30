@@ -1378,6 +1378,7 @@ const GetProductDetails = async (req, res) => {
       eventVisibilityDate: 1,
       closingDate: 1,
       closingTime: 1,
+      subTotal:1,
       order_count: { $ifNull: ["$order_count", 0] },
     },
   });
