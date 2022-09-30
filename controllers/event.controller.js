@@ -498,7 +498,8 @@ const timeString = (timeinH) => {
 
 const createEventUsingEventTemplate = async(req, res) => {
 
-    // create event template
+    try {
+        // create event template
 
     // save the event template in the db (saving this can be kept optional)
     const eventTemplate = await eventTemplateModel.create(req.body);
@@ -596,6 +597,9 @@ const createEventUsingEventTemplate = async(req, res) => {
 
     const respDishItems = await dishItemModel.create(dishItems);
 
+    } catch (error) {
+        console.log(error)
+    }
     // EventCreatedNotificationForAdmin(eventTemplate._id);
 
     return res.status(StatusCodes.CREATED).json({ msg: `${respEvents.length} event created, ${respDishItems.length} dish items created` });
