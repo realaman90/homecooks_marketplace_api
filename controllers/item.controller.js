@@ -68,13 +68,28 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
     },
   });
   listQuery.push({
+    $set: {
+      order_count: { $ifNull: ["$order_count", 0] },
+    }
+  })
+  listQuery.push({
     $sort: {
       eventDate: -1,
     },
   });
   listQuery.push({
+    $addFields: {
+      order_left: { $subtract: [ '$minOrders' , '$order_count' ] }
+    }
+  })
+  // listQuery.push({
+  //   $sort: {
+  //     order_count: -1,
+  //   },
+  // });
+  listQuery.push({
     $sort: {
-      order_count: -1,
+      order_left: 1,
     },
   });
   // group with dish ids and take first one
@@ -83,6 +98,7 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
       _id: "$dish",
       item: { $first: "$_id" },
       order_count: { $first: "$order_count" },
+      order_left: { $first: "$order_left" },
       supplier: { $first: "$supplier" },
       dish: { $first: "$dish" },
       name: { $first: "$name" },
@@ -99,15 +115,12 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
       closingTime: { $first: "$closingTime" },
     },
   });
-
   listQuery.push({
     $skip: skip,
   });
-
   listQuery.push({
     $limit: limit,
   });
-
   listQuery.push({
     $lookup: {
       from: "suppliers",
@@ -150,7 +163,8 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
       eventVisibilityDate: 1,
       closingDate: 1,
       closingTime: 1,
-      order_count: { $ifNull: ["$order_count", 0] },
+      order_count: 1,
+      order_left: 1,
     },
   });
 
@@ -179,7 +193,7 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
 
   // correct price on the item
   items.forEach((i) => {
-    const { subTotal } = priceBreakdownItem(i.pricePerOrder);    
+    const { subTotal } = priceBreakdownItem(i.pricePerOrder);
     i.subTotal = subTotal;
   });
 
@@ -1249,7 +1263,6 @@ const ListProductDateFilters = async (req, res) => {
 
 // console.log(ListProductDateFilters())
 
-
 const GetProductDetails = async (req, res) => {
   const productId = req.params.itemId;
 
@@ -1378,7 +1391,7 @@ const GetProductDetails = async (req, res) => {
       eventVisibilityDate: 1,
       closingDate: 1,
       closingTime: 1,
-      subTotal:1,
+      subTotal: 1,
       order_count: { $ifNull: ["$order_count", 0] },
     },
   });
