@@ -12,6 +12,7 @@ const { orderStatus, paymentStatus } = require("../constants");
 const payoutController = require("./payout.controller");
 const notificationController = require("./notification.controller");
 const kartController = require("../controllers/kart.controller");
+const { format } = require('date-fns');
 const {
   priceBreakdownItem,
   priceBreakdownCheckout,
@@ -888,6 +889,7 @@ check for pending checkout
 */
 
 const getCheckoutV2 = async (req, res) => {
+
   const { userId } = req.user;
   const kartResp = await kartController.userKart(userId);
   const { kart } = kartResp;
@@ -897,15 +899,41 @@ const getCheckoutV2 = async (req, res) => {
     throw new Error(`No item in kart to checkout`);
   }
 
-  const prevOrders = await orderModel.find({
-    $and: [{ customer: userId }, { status: "pending_checkout" }],
-  });
+  const prevOrders = await orderModel.aggregate([
+    {
+      $match: {
+        $and: [
+          { customer: mongoose.Types.ObjectId(userId) }, 
+          { status: "pending_checkout" }
+        ]
+      }
+    }, {
+        $lookup: {
+          from: "dishitems",
+          localField: "item",
+          foreignField: "_id",
+          as: "item"
+        }
+    }, {
+      $unwind: "$item",
+    }, {
+      $project: {
+        _id: 1,
+        item: `$item._id`,
+        pickupPoint: 1,
+        instruction: 1,
+        eventDate: `$item.eventDate`
+      }
+    }    
+  ])
 
   const prevOrderMeta = {};
   if (prevOrders && prevOrders.length > 0) {
     prevOrders.forEach((po) => {
+      let dateVal = format(new Date(po.eventDate), 'dd/MM/yyyy')
       prevOrderMeta[po.item] = {
         pickupPoint: po.pickupPoint,
+        pickupPointWDate: `${po.pickupPoint}|${dateVal}`,
         instruction: po.instruction,
         orderId: po._id,
       };
@@ -915,16 +943,20 @@ const getCheckoutV2 = async (req, res) => {
   const prevOrderIds = prevOrders.map((o) => o._id);
 
   kartItems.forEach((ki) => {
+    let dateVal = format(new Date(ki.item.eventDate), 'dd/MM/yyyy')    
+
     if (prevOrderMeta[ki.item._id]) {
       if (!prevOrderMeta[ki.item._id].pickupPoint) {
         if (ki.item.clientPickups.length == 1) {
           prevOrderMeta[ki.item._id].pickupPoint = ki.item.clientPickups[0];
+          prevOrderMeta[ki.item._id].pickupPointWDate = `${ki.item.clientPickups[0]}|${dateVal}`;
         }
       }
     } else {
       if (ki.item.clientPickups.length == 1) {
         prevOrderMeta[ki.item._id] = {
-          pickupPoint: ki.item.clientPickups[0],
+          pickupPointWDate: `${ki.item.clientPickups[0]}|${dateVal}`,
+          pickupPoint: ki.item.clientPickups[0],          
           instruction: "",
           orderId: new mongoose.Types.ObjectId(),
         };
@@ -943,12 +975,12 @@ const getCheckoutV2 = async (req, res) => {
   let unqPickupPointsCount = 0;
   const pickUpPointMeta = {};
   for (const key in prevOrderMeta) {
-    if (prevOrderMeta[key].pickupPoint) {
-      const pickUpPointId = prevOrderMeta[key].pickupPoint;
-      if (pickUpPointMeta[pickUpPointId]) {
-        pickUpPointMeta[pickUpPointId] += 1;
+    if (prevOrderMeta[key].pickupPointWDate) {
+      const pickupPointWDate = prevOrderMeta[key].pickupPointWDate;
+      if (pickUpPointMeta[pickupPointWDate]) {
+        pickUpPointMeta[pickupPointWDate] += 1;
       } else {
-        pickUpPointMeta[pickUpPointId] = 1;
+        pickUpPointMeta[pickupPointWDate] = 1;
         unqPickupPointsCount++;
       }
     }
@@ -972,9 +1004,10 @@ const getCheckoutV2 = async (req, res) => {
 
     let deliveryFee = 0;
 
+    let date = format(new Date(ki.item.eventDate), 'dd/MM/yyyy')
     if (prevOrderMeta[ki.item._id] && prevOrderMeta[ki.item._id].pickupPoint) {
       const pickupPointId = prevOrderMeta[ki.item._id].pickupPoint;
-      const count = pickUpPointMeta[pickupPointId];
+      const count = pickUpPointMeta[`${pickupPointId}|${date}`];
 
       deliveryFee = round(DELIVERY_FEE / count, 2);
     }
@@ -1130,9 +1163,10 @@ const getCheckoutV2 = async (req, res) => {
   ]);
 
   return res.status(StatusCodes.OK).json({ checkout: payment, orders });
+
 };
 
-// getCheckoutV2("63289a1a3bb5ba24e2efc4a4")
+// getCheckoutV2("6336ba18514f6da91439867c")
 //
 const updatePickupAddressOnOrder = async (req, res) => {
   const orders = req.body.orders;
