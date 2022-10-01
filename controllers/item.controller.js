@@ -64,14 +64,9 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
     });
   listQuery.push({
     $set: {
-      order_count: "$orders.count",
+      order_count: { $ifNull: ["$orders.count", 0] },
     },
   });
-  listQuery.push({
-    $set: {
-      order_count: { $ifNull: ["$order_count", 0] },
-    }
-  })
   listQuery.push({
     $sort: {
       eventDate: -1,
@@ -79,14 +74,9 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
   });
   listQuery.push({
     $addFields: {
-      order_left: { $subtract: [ '$minOrders' , '$order_count' ] }
-    }
-  })
-  // listQuery.push({
-  //   $sort: {
-  //     order_count: -1,
-  //   },
-  // });
+      order_left: { $subtract: ["$minOrders", "$order_count"] },
+    },
+  });
   listQuery.push({
     $sort: {
       order_left: 1,
@@ -113,6 +103,16 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
       eventVisibilityDate: { $first: "$eventVisibilityDate" },
       closingDate: { $first: "$closingDate" },
       closingTime: { $first: "$closingTime" },
+    },
+  });
+  listQuery.push({
+    $sort: {
+      eventDate: -1,
+    },
+  });
+  listQuery.push({
+    $sort: {
+      order_left: 1,
     },
   });
   listQuery.push({
@@ -167,7 +167,6 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
       order_left: 1,
     },
   });
-
   const countQuery = [];
   if (andQuery.length > 0) {
     countQuery.push({
@@ -259,7 +258,7 @@ const fetchItemsWithDateFilter = async (andQuery, skip, limit) => {
     });
   listQuery.push({
     $set: {
-      order_count: "$orders.count",
+      order_count: { $ifNull: ["$orders.count", 0] },
     },
   });
   listQuery.push({
@@ -268,8 +267,13 @@ const fetchItemsWithDateFilter = async (andQuery, skip, limit) => {
     },
   });
   listQuery.push({
+    $addFields: {
+      order_left: { $subtract: ["$minOrders", "$order_count"] },
+    },
+  });
+  listQuery.push({
     $sort: {
-      order_count: -1,
+      order_left: 1,
     },
   });
   listQuery.push({
@@ -320,7 +324,8 @@ const fetchItemsWithDateFilter = async (andQuery, skip, limit) => {
       eventVisibilityDate: 1,
       closingDate: 1,
       closingTime: 1,
-      order_count: { $ifNull: ["$order_count", 0] },
+      order_count: 1,
+      order_left: 1,
     },
   });
   listQuery.push({ $skip: skip });
