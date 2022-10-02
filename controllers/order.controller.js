@@ -10,9 +10,8 @@ const CustomError = require("../errors");
 const { default: mongoose, mongo } = require("mongoose");
 const { orderStatus, paymentStatus } = require("../constants");
 const payoutController = require("./payout.controller");
-const notificationController = require("./notification.controller");
 const kartController = require("../controllers/kart.controller");
-const { format } = require('date-fns');
+const { format } = require("date-fns");
 const {
   priceBreakdownItem,
   priceBreakdownCheckout,
@@ -22,6 +21,7 @@ const {
 const {
   convertToUniqueMongoIdArray,
   checkIfMongoIdInArray,
+  checkMongoIdsAreSame,
 } = require("../utils/objectId");
 const { PaymentIntentCreate } = require("../utils/stripe");
 const QRCode = require("qrcode");
@@ -889,7 +889,6 @@ check for pending checkout
 */
 
 const getCheckoutV2 = async (req, res) => {
-
   const { userId } = req.user;
   const kartResp = await kartController.userKart(userId);
   const { kart } = kartResp;
@@ -903,34 +902,37 @@ const getCheckoutV2 = async (req, res) => {
     {
       $match: {
         $and: [
-          { customer: mongoose.Types.ObjectId(userId) }, 
-          { status: "pending_checkout" }
-        ]
-      }
-    }, {
-        $lookup: {
-          from: "dishitems",
-          localField: "item",
-          foreignField: "_id",
-          as: "item"
-        }
-    }, {
+          { customer: mongoose.Types.ObjectId(userId) },
+          { status: "pending_checkout" },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "dishitems",
+        localField: "item",
+        foreignField: "_id",
+        as: "item",
+      },
+    },
+    {
       $unwind: "$item",
-    }, {
+    },
+    {
       $project: {
         _id: 1,
         item: `$item._id`,
         pickupPoint: 1,
         instruction: 1,
-        eventDate: `$item.eventDate`
-      }
-    }    
-  ])
+        eventDate: `$item.eventDate`,
+      },
+    },
+  ]);
 
   const prevOrderMeta = {};
   if (prevOrders && prevOrders.length > 0) {
     prevOrders.forEach((po) => {
-      let dateVal = format(new Date(po.eventDate), 'dd/MM/yyyy')
+      let dateVal = format(new Date(po.eventDate), "dd/MM/yyyy");
       prevOrderMeta[po.item] = {
         pickupPoint: po.pickupPoint,
         pickupPointWDate: `${po.pickupPoint}|${dateVal}`,
@@ -943,20 +945,22 @@ const getCheckoutV2 = async (req, res) => {
   const prevOrderIds = prevOrders.map((o) => o._id);
 
   kartItems.forEach((ki) => {
-    let dateVal = format(new Date(ki.item.eventDate), 'dd/MM/yyyy')    
+    let dateVal = format(new Date(ki.item.eventDate), "dd/MM/yyyy");
 
     if (prevOrderMeta[ki.item._id]) {
       if (!prevOrderMeta[ki.item._id].pickupPoint) {
         if (ki.item.clientPickups.length == 1) {
           prevOrderMeta[ki.item._id].pickupPoint = ki.item.clientPickups[0];
-          prevOrderMeta[ki.item._id].pickupPointWDate = `${ki.item.clientPickups[0]}|${dateVal}`;
+          prevOrderMeta[
+            ki.item._id
+          ].pickupPointWDate = `${ki.item.clientPickups[0]}|${dateVal}`;
         }
       }
     } else {
       if (ki.item.clientPickups.length == 1) {
         prevOrderMeta[ki.item._id] = {
           pickupPointWDate: `${ki.item.clientPickups[0]}|${dateVal}`,
-          pickupPoint: ki.item.clientPickups[0],          
+          pickupPoint: ki.item.clientPickups[0],
           instruction: "",
           orderId: new mongoose.Types.ObjectId(),
         };
@@ -1004,7 +1008,7 @@ const getCheckoutV2 = async (req, res) => {
 
     let deliveryFee = 0;
 
-    let date = format(new Date(ki.item.eventDate), 'dd/MM/yyyy')
+    let date = format(new Date(ki.item.eventDate), "dd/MM/yyyy");
     if (prevOrderMeta[ki.item._id] && prevOrderMeta[ki.item._id].pickupPoint) {
       const pickupPointId = prevOrderMeta[ki.item._id].pickupPoint;
       const count = pickUpPointMeta[`${pickupPointId}|${date}`];
@@ -1163,7 +1167,6 @@ const getCheckoutV2 = async (req, res) => {
   ]);
 
   return res.status(StatusCodes.OK).json({ checkout: payment, orders });
-
 };
 
 // getCheckoutV2("6336ba18514f6da91439867c")
@@ -1509,7 +1512,7 @@ const getSinglePaymentFrCustomer = async (req, res) => {
     },
     {
       $unwind: "$customer",
-    },    
+    },
     {
       $lookup: {
         from: "orders",
@@ -1540,7 +1543,7 @@ const getSinglePaymentFrCustomer = async (req, res) => {
             },
           },
           {
-            $unwind: "$pickupPoint",          
+            $unwind: "$pickupPoint",
           },
           {
             $lookup: {
@@ -1577,7 +1580,7 @@ const getSinglePaymentFrCustomer = async (req, res) => {
         "customer.fullName": 1,
         "customer.profileImg": 1,
         "customer.email": 1,
-        "customer.phone": 1,        
+        "customer.phone": 1,
         orders: 1,
       },
     },
@@ -1587,15 +1590,6 @@ const getSinglePaymentFrCustomer = async (req, res) => {
 
   return res.status(StatusCodes.OK).json({ payment });
 };
-
-function checkMongoIdsAreSame(_id1, _id2) {
-  const id1 = mongoose.Types.ObjectId(_id1);
-  const id2 = mongoose.Types.ObjectId(_id2);
-  if (id1.equals(id2)) {
-    return true;
-  }
-  return false;
-}
 
 const updateOrder = async (req, res) => {
   const orderId = req.params.orderId;
@@ -1757,6 +1751,92 @@ const getProductDeliveryQR = async (req, res) => {
   return;
 };
 
+const cancelOrder = async (orderId) => {
+  // fetch payment
+  let order = await orderModel.aggregate([
+    {
+      $match: {
+        _id: mongoose.Types.ObjectId(orderId),
+      },
+    },
+    {
+      $lookup: {
+        from: "payments",
+        localField: "payment",
+        foreignField: "_id",
+        as: "payment",
+      },
+    },
+    {
+      $unwind: "$payment",
+    },
+    {
+      $lookup: {
+        from: "orders",
+        let: { paymentId: "$payment._id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$payment", "$$paymentId"] },
+            },
+          },
+          {
+            $lookup: {
+              from: "dishitems",
+              localField: "item",
+              foreignField: "_id",
+              as: "item",
+            },
+          },
+          {
+            $unwind: "$item",
+          },
+          {
+            $lookup: {
+              from: "clientpickuppoints",
+              localField: "pickupPoint",
+              foreignField: "_id",
+              as: "pickupPoint",
+            },
+          },
+          {
+            $unwind: "$pickupPoint",
+          },
+        ],
+        as: "orders",
+      },
+    },
+  ]);
+
+  order = order[0];
+
+  const orderToCancel = order;
+  const currPaymentObj = order.payment;
+  const allorders = order.orders;
+
+  let ordersLeft = [];
+
+  allorders.forEach((o) => {
+    if (o.status == "cancelled" || checkMongoIdsAreSame(o._id, orderId)) {
+    } else {
+      ordersLeft.push(o);
+    }
+  });
+
+  // if zero item remain, cancel all orders, cancel payment, make amounts to 0
+  if (ordersLeft.length == 0) {
+    // await cancelCompleteOrders(order.payment._id);
+  }
+
+  // refresh the calculations based on the remaining orders "ordersLeft"
+
+  console.log(ordersLeft);
+};
+
+// cancelOrder("63382ffacaae7bd481dcd873");
+
+// 63382ffacaae7bd481dcd873
+
 module.exports = {
   updateOrder,
   getPaymentsFrCustomer,
@@ -1767,6 +1847,7 @@ module.exports = {
   getCustomerOrders,
   editOrder,
   deleteOrder,
+  cancelOrder,
   getCheckout,
   getCheckoutV2,
   placeOrder,
