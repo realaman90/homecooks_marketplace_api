@@ -957,7 +957,7 @@ const getCheckoutV2 = async (req, res) => {
         }
       }
     } else {
-      if (ki.item.clientPickups.length == 1) {
+      if (ki.item.clientPickups.length) {
         prevOrderMeta[ki.item._id] = {
           pickupPointWDate: `${ki.item.clientPickups[0]}|${dateVal}`,
           pickupPoint: ki.item.clientPickups[0],
