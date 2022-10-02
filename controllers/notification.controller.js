@@ -470,54 +470,6 @@ const OrderCreatedNotificationForAdmin = async(paymentId) => {
 }
 
 
-//     "date":"Tue,09/22",
-//     "startime": "12;00 pm",
-//     "endtime":"2:00 pm",
-//     "pickup-name":"Stanford University Entry Gate",
-//     "pickup-address":"235 hii st",
-//     "orderId":"67eryy",
-    
-//    "order": {
-//     "items": [
-//       {
-//         "name": "Jollof",
-//         "image": "https://s3.amazonaws.com/appforest_uf/f1663431404316x211097862709117340/Meat-trends-market-prospers-in-face-of-pandemic.jpg",
-//         "subTotal":"22",
-//         "price":"20",
-//         "quantity":"1"
-//       },
-//       {
-//         "name": "Beef mat kaho",
-//         "image": "https://s3.amazonaws.com/appforest_uf/f1663431404316x211097862709117340/Meat-trends-market-prospers-in-face-of-pandemic.jpg",
-//         "subTotal":"22",
-//         "price":"20",
-//         "quantity":"1"
-//       }
-//     ]
-//   },
-//   "subTotal":"44",
-//   "delivery":"4.99",
-//   "total":"92.99"
-// }
-
-
-// {
-//     "date": "2022-09-20T16:38:58.492Z",
-//     "orderId": "a77eb6",
-//     "delivery": "4.99",
-//     "total": "21.4",
-//     "order": {
-//       "items": [
-//         {
-//           "name": "Waakye",
-//           "image": "//s3.amazonaws.com/appforest_uf/f1663517865354x956243887444698400/bowl%2Bwaakye6.jpg",
-//           "price": "13",
-//           "quantity": 1
-//         }
-//       ]
-//     }
-//   }
-  
 const OrderCreatedNotificationForUser = async (paymentId) => {
 
     let payments = await PaymentModel.aggregate([
@@ -536,17 +488,6 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
         },
         {
           $unwind: "$customer",
-        },
-        {
-          $lookup: {
-            from: "suppliers",
-            localField: "supplier",
-            foreignField: "_id",
-            as: "supplier",
-          },
-        },
-        {
-          $unwind: "$supplier",
         },
         {
           $lookup: {
@@ -588,18 +529,24 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
           $project: {
             _id:1,
             viewId: 1,
-            subTotal: 1,
-            serviceFee: 1,
-            deliveryFee: 1,
-            tax: 1,
-            total: 1,
-            costToSupplier: 1,
-
-            createdAt: 1,
+            orderCount:1,
+            totalItemPrice:1,
+            subTotal:1,
+            serviceFee:1,
+            deliveryFee:1,
+            tax:1,
+            total:1,
+            costToSupplier:1,
+            createdAt:1,
             
-            // eventPickupAddressMapping: 1,
+            "orders.itemPrice":1,
+            "orders.itemSubTotal":1,
+            "orders.subTotal":1,
+            "orders.deliveryFee":1,
+            "orders.total":1,
+            "orders.itemCostToSupplier":1,
+            "orders.costToSupplier":1,
 
-            "orders.cost":1,
             "orders.quantity":1,
             "orders.pickupTime":1,
             "orders.item.name":1,
@@ -614,21 +561,12 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
             "customer.profileImg": 1,
             "customer.email": 1,
             "customer.phone": 1,
-            "customer.notificationSettings":1,
-            "supplier.businessName": 1,
-            "supplier.businessImages": 1,
-            "supplier.address": 1,
-            "supplier.contactInfo": 1,
-            // orders: 1,
+            "customer.notificationSettings":1,          
           },
         },
       ]);
 
-    // console.log(JSON.stringify(payments));
-
     payments = payments[0];
-
-    console.log(payments)
 
     let emailTempData = {};
 
@@ -644,8 +582,8 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
     payments.orders.forEach(o=>{
         let item = {
             "name": o.item.name,            
-            "subtotal":o.cost,
-            "price":o.item.pricePerOrder,
+            "subtotal":o.subTotal,
+            "price":o.itemSubTotal,
             "quantity":o.quantity,
             "pickup-name":o.pickupPoint.name,
             "pickup-address":o.pickupPoint.address.fullAddress,
@@ -662,6 +600,8 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
         items
     };
 
+    // return
+
     let subject = "order created";
     let emailMessage = "order created";
     let smsMessage = "order created";
@@ -670,9 +610,9 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
     let notificationRecod = {
         type: notificationTypes.ORDER_CREATED_FR_USER,
         toId: payments.customer._id,
-        toEmail: payments.customer.email,
+        // toEmail: payments.customer.email,
         // toEmail: "dev@noudada.com",
-        // toEmail: "utkarsh17ife@fastlanedevs.com",
+        toEmail: "utkarsh17ife@fastlanedevs.com",
         toPhone: payments.customer.phone,
         userNotificationSettings: payments.customer.notificationSettings,
         message: {
@@ -703,7 +643,7 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
     return null
 }
 
-// OrderCreatedNotificationForUser("632d2abbda7864177120e450")
+// OrderCreatedNotificationForUser("63382ffacaae7bd481dcd876")
 
 
 
