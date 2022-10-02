@@ -975,8 +975,7 @@ const getCheckoutV2 = async (req, res) => {
 
   // delivery fee calc
 
-  // number of unique pickup points
-  let unqPickupPointsCount = 0;
+  // number of unique pickup points  
   const pickUpPointMeta = {};
   for (const key in prevOrderMeta) {
     if (prevOrderMeta[key].pickupPointWDate) {
@@ -985,7 +984,6 @@ const getCheckoutV2 = async (req, res) => {
         pickUpPointMeta[pickupPointWDate] += 1;
       } else {
         pickUpPointMeta[pickupPointWDate] = 1;
-        unqPickupPointsCount++;
       }
     }
   }
@@ -1751,7 +1749,35 @@ const getProductDeliveryQR = async (req, res) => {
   return;
 };
 
-const cancelOrder = async (orderId) => {
+const cancelCompleteOrders = async (paymentId) => {
+
+  // cancel all orders
+  await orderModel.updateMany({
+    payment: paymentId
+  }, {
+    $set: {
+      status: "cancelled",
+      updatedAt: new Date()
+    }
+  })
+
+  // cancel payment
+  await paymentModel.updateOne({
+    _id: paymentId
+  }, {
+    $set: {
+      status: "cancelled",
+      updatedAt: new Date()
+    }
+  })
+
+  return
+}
+
+const cancelOrder = async (req, res) => {
+
+  const orderId = req.params.orderId;
+
   // fetch payment
   let order = await orderModel.aggregate([
     {
@@ -1790,18 +1816,7 @@ const cancelOrder = async (orderId) => {
           },
           {
             $unwind: "$item",
-          },
-          {
-            $lookup: {
-              from: "clientpickuppoints",
-              localField: "pickupPoint",
-              foreignField: "_id",
-              as: "pickupPoint",
-            },
-          },
-          {
-            $unwind: "$pickupPoint",
-          },
+          },          
         ],
         as: "orders",
       },
@@ -1825,15 +1840,103 @@ const cancelOrder = async (orderId) => {
 
   // if zero item remain, cancel all orders, cancel payment, make amounts to 0
   if (ordersLeft.length == 0) {
-    // await cancelCompleteOrders(order.payment._id);
+    await cancelCompleteOrders(currPaymentObj._id);
+    res.status(StatusCodes.OK).json({ message: 'Order cancelled!' });
+    return 
   }
 
   // refresh the calculations based on the remaining orders "ordersLeft"
 
-  console.log(ordersLeft);
+  // calculate delivery fee
+  const ordersMeta = {};
+  ordersLeft.forEach((po) => {
+    let dateVal = format(new Date(po.item.eventDate), "dd/MM/yyyy");
+    ordersMeta[po.item._id] = {
+      pickupPoint: po.pickupPoint,
+      pickupPointWDate: `${po.pickupPoint}|${dateVal}`,      
+      orderId: po._id,
+    };
+  });
+  
+  const pickUpPointMeta = {};
+  for (const key in ordersMeta) {
+    if (ordersMeta[key].pickupPointWDate) {
+      const pickupPointWDate = ordersMeta[key].pickupPointWDate;
+      if (pickUpPointMeta[pickupPointWDate]) {
+        pickUpPointMeta[pickupPointWDate] += 1;
+      } else {
+        pickUpPointMeta[pickupPointWDate] = 1;
+      }
+    }
+  }
+
+  ordersLeft.forEach((o) => {
+    let deliveryFee = 0;
+    let date = format(new Date(o.item.eventDate), "dd/MM/yyyy");
+    if (ordersMeta[o.item._id] && ordersMeta[o.item._id].pickupPoint) {
+      const pickupPointId = ordersMeta[o.item._id].pickupPoint;
+      const count = pickUpPointMeta[`${pickupPointId}|${date}`];
+      deliveryFee = round(DELIVERY_FEE / count, 2);
+    }
+    const total = round(sum(o.subTotal, deliveryFee), 2);
+    
+    o.deliveryFee = deliveryFee;
+    o.total = total
+  })
+
+  const calcObj = paymentCalcualtion(ordersLeft);
+
+  // cancel order
+  await orderModel.updateOne({
+    _id: orderId
+  }, {
+    $set: {
+      status: "cancelled",
+      updatedAt: new Date()
+    }
+  })
+
+  for (let i=0; i<ordersLeft.length; i++){
+    let order = ordersLeft[i];
+    await orderModel.updateOne({
+      _id: order._id
+    }, {
+      $set: {
+        deliveryFee: order.deliveryFee,
+        total: order.total,
+        updatedAt: new Date()
+      }
+    })
+  }
+
+  // updated orders
+  
+  // update payment model
+  await paymentModel.updateOne(
+    {
+      _id: currPaymentObj._id,
+    },
+    {
+      $set: {
+        totalItemPrice: calcObj.totalItemPrice,
+        serviceFee: calcObj.serviceFee,
+        tax: calcObj.tax,
+        subTotal: calcObj.subTotal,
+        deliveryFee: calcObj.deliveryFee,
+        total: calcObj.total,
+        costToSupplier: calcObj.costToSupplier,
+        orderCount: ordersLeft.length,
+        updatedAt: new Date()    
+      },
+    }
+  );
+
+  res.status(StatusCodes.OK).json({ message: 'Order cancelled!' });
+  return   
+
 };
 
-// cancelOrder("63382ffacaae7bd481dcd873");
+// cancelOrder("6338304acaae7bd481dcd889");
 
 // 63382ffacaae7bd481dcd873
 

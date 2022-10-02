@@ -10,6 +10,8 @@ router.get('/:orderId', orderController.getOrderById);
 router.put('/:orderId', orderController.editOrder);
 router.delete('/:orderId', orderController.deleteOrder);
 
+router.get('/:orderId/cancel', orderController.cancelOrder);
+
 router.get('/delivery-qr/product/:product', orderController.getProductDeliveryQR);
 
 // customer orders

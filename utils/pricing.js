@@ -70,9 +70,9 @@ const paymentCalcualtion = (orders) => {
     let costToSupplier = 0;
 
     orders.forEach((o) => {
-        totalItemPrice = totalItemPrice + multiply(o.quantity, o.itemPrice)        
-        costToSupplier = costToSupplier+ o.costToSupplier;
-        deliveryFee = deliveryFee+ o.deliveryFee;
+        totalItemPrice = sum(totalItemPrice, multiply(o.quantity, o.itemPrice))        
+        costToSupplier = sum(costToSupplier, o.costToSupplier);
+        deliveryFee = sum(deliveryFee, o.deliveryFee);
     });
 
     totalItemPrice = round(totalItemPrice,2)

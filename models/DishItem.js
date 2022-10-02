@@ -72,8 +72,7 @@ const DishItemSchema = mongoose.Schema({
     qrValue: String,
     status: {
         type: String,
-        enum: [eventStatus.PENDING, eventStatus.ACTIVE, eventStatus.DELIVERED, eventStatus.CANCELLED, eventStatus.FULFILLED],
-        default: eventStatus.PENDING
+        enum: [eventStatus.ACTIVE, eventStatus.CANCELLED, eventStatus.FULFILLED],
     },    
 }, {
     timestamps: true,
