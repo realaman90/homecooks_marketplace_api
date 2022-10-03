@@ -18,6 +18,9 @@ const {
   paymentCalcualtion,
   DELIVERY_FEE,
 } = require("../utils/pricing");
+const {calDateToPSTDate, PSTDateToCalDate} = require('../utils/datetime');
+
+
 const {
   convertToUniqueMongoIdArray,
   checkIfMongoIdInArray,
@@ -1050,6 +1053,7 @@ const getCheckoutV2 = async (req, res) => {
       costToSupplier,
       isPaid: false,
       status: paymentStatus.PENDING_CHECKOUT,
+      pickupDate: ki.item.eventDate,
       pickupPoint: prevOrderMeta[ki.item._id]
         ? prevOrderMeta[ki.item._id].pickupPoint
         : null,
@@ -1720,27 +1724,35 @@ const CreatePaymentIntent = async (req, res) => {
 };
 
 const markOrderDelivedThruQR = async (req, res) => {
-  const { qrValue } = req.params;
-  let { userId } = req.user;
+  
+  let {userId, pickupPoint, pickupDate} = req.params;
+  pickupDate = calDateToPSTDate(pickupDate)
 
-  await orderModel.updateOne(
-    {
-      $and: [{ customer: userId }, { qrValue }],
-    },
-    {
-      $set: {
-        status: orderStatus.DELIVERED,
-        updatedAt: new Date(),
-      },
+  const resp = await orderModel.updateMany({
+    $and: [
+      {customerId: userId},
+      {pickupPoint},
+      {pickupDate}
+    ]
+  }, {
+    $set: {
+      status: 'delivered',      
     }
-  );
+  })
 
-  return res.status(StatusCodes.OK).json({ message: "order delivered!" });
+  return res.status(StatusCodes.OK).json({ message: `${resp.modifiedCount} orders delivered!` });
 };
 
-const getProductDeliveryQR = async (req, res) => {
-  const { product } = req.params;
-  const { qrValue } = await dishItemModel.findById(product, `qrValue`);
+const getOrderDeliveryQR = async (req, res) => {
+  const { orderId } = req.params;
+  
+  const order = await orderModel.findById(orderId, `customer pickupPoint pickupDate`);
+
+  if (!order){
+    res.status(StatusCodes.OK).json({ message: `invalid order!` });
+  }
+
+  let qrValue = `${process.env.API_URL}/qr/${order.customer}/${order.pickupPoint}/${PSTDateToCalDate(order.pickupDate)}`
 
   QRCode.toDataURL(qrValue, function (err, url) {
     res.status(StatusCodes.OK).json({ url });
@@ -1959,5 +1971,5 @@ module.exports = {
   getPayments,
   CreatePaymentIntent,
   markOrderDelivedThruQR,
-  getProductDeliveryQR,
+  getOrderDeliveryQR,
 };

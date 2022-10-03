@@ -72,6 +72,7 @@ const CheckAndProcessQuorum = async (dishItemId) => {
 
   // min orders
   if (orders.length > dishItem.minOrders) {
+    
     console.log("Failed to reach quorum, closing the product");
 
     // update orders
@@ -104,8 +105,6 @@ const CheckAndProcessQuorum = async (dishItemId) => {
   }
   // if we are here, quorum is reached lets process payments
 
-  let deliverQRValue = randStr(5);
-
   for (let i = 0; i < orders.length; i++) {
     let order = orders[i];
 
@@ -128,7 +127,6 @@ const CheckAndProcessQuorum = async (dishItemId) => {
         },
         {
           $set: {
-            qrValue: deliverQRValue,
             status: orderStatus.CONFIRMED,
             updatedAt: new Date(),
           },
@@ -144,7 +142,6 @@ const CheckAndProcessQuorum = async (dishItemId) => {
     },
     {
       $set: {
-        qrValue: deliverQRValue,
         status: orderStatus.CONFIRMED,
         updatedAt: new Date(),
       },

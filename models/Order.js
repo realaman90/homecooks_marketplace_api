@@ -78,7 +78,6 @@ const OrderSchema = mongoose.Schema({
     pickupTime: String,
     instruction: String,
     cancelReason: String,
-    qrValue: String,
 }, {
     timestamps: true,
     strict: true

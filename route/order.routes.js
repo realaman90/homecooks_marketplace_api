@@ -12,7 +12,7 @@ router.delete('/:orderId', orderController.deleteOrder);
 
 router.get('/:orderId/cancel', orderController.cancelOrder);
 
-router.get('/delivery-qr/product/:product', orderController.getProductDeliveryQR);
+router.get('/delivery-qr/order/:orderId', orderController.getOrderDeliveryQR);
 
 // customer orders
 router.get('/customer/:customerId', orderController.getCustomerOrders);
