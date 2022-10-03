@@ -1004,9 +1004,11 @@ const getCheckoutV2 = async (req, res) => {
   let orders = [];
   kartItems.forEach((ki) => {
     const itemPrice = ki.item.pricePerOrder;
-    const itemSubTotal = ki.item.subTotal;
-    const subTotal = round(multiply(ki.item.subTotal, ki.quantity), 2);
-
+    let itemCalc = priceBreakdownItem(itemPrice);
+    const itemSubTotal = itemCalc.subTotal;
+    itemCalc = priceBreakdownItem(multiply(itemPrice, ki.quantity))
+    const subTotal = round(itemCalc.subTotal, 2);
+    
     let deliveryFee = 0;
 
     let date = format(new Date(ki.item.eventDate), "dd/MM/yyyy");
