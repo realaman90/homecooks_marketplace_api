@@ -69,7 +69,7 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
   });
   listQuery.push({
     $sort: {
-      eventDate: -1,
+      eventDate: 1,
     },
   });
   listQuery.push({
@@ -107,7 +107,7 @@ const fetchItemsWithOutDateFilter = async (andQuery, skip, limit) => {
   });
   listQuery.push({
     $sort: {
-      eventDate: -1,
+      eventDate: 1,
     },
   });
   listQuery.push({
@@ -263,7 +263,7 @@ const fetchItemsWithDateFilter = async (andQuery, skip, limit) => {
   });
   listQuery.push({
     $sort: {
-      eventDate: -1,
+      eventDate: 1,
     },
   });
   listQuery.push({
