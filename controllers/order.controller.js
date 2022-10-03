@@ -947,29 +947,29 @@ const getCheckoutV2 = async (req, res) => {
 
   const prevOrderIds = prevOrders.map((o) => o._id);
 
-  kartItems.forEach((ki) => {
-    let dateVal = format(new Date(ki.item.eventDate), "dd/MM/yyyy");
+  // kartItems.forEach((ki) => {
+  //   let dateVal = format(new Date(ki.item.eventDate), "dd/MM/yyyy");
 
-    if (prevOrderMeta[ki.item._id]) {
-      if (!prevOrderMeta[ki.item._id].pickupPoint) {
-        if (ki.item.clientPickups.length == 1) {
-          prevOrderMeta[ki.item._id].pickupPoint = ki.item.clientPickups[0];
-          prevOrderMeta[
-            ki.item._id
-          ].pickupPointWDate = `${ki.item.clientPickups[0]}|${dateVal}`;
-        }
-      }
-    } else {
-      if (ki.item.clientPickups.length) {
-        prevOrderMeta[ki.item._id] = {
-          pickupPointWDate: `${ki.item.clientPickups[0]}|${dateVal}`,
-          pickupPoint: ki.item.clientPickups[0],
-          instruction: "",
-          orderId: new mongoose.Types.ObjectId(),
-        };
-      }
-    }
-  });
+  //   if (prevOrderMeta[ki.item._id]) {
+  //     if (!prevOrderMeta[ki.item._id].pickupPoint) {
+  //       if (ki.item.clientPickups.length == 1) {
+  //         prevOrderMeta[ki.item._id].pickupPoint = ki.item.clientPickups[0];
+  //         prevOrderMeta[
+  //           ki.item._id
+  //         ].pickupPointWDate = `${ki.item.clientPickups[0]}|${dateVal}`;
+  //       }
+  //     }
+  //   } else {
+  //     if (ki.item.clientPickups.length) {
+  //       prevOrderMeta[ki.item._id] = {
+  //         pickupPointWDate: `${ki.item.clientPickups[0]}|${dateVal}`,
+  //         pickupPoint: ki.item.clientPickups[0],
+  //         instruction: "",
+  //         orderId: new mongoose.Types.ObjectId(),
+  //       };
+  //     }
+  //   }
+  // });
 
   // remove prev orders from db
   await orderModel.deleteMany({
