@@ -2,7 +2,7 @@ const { multiply, sum, round } = require("mathjs");
 
 const SERVICE_FEE_MULTIPLIER = 1.15;
 const TAX_RATE_MULTIPLIER = 1.0975;
-const DELIVERY_FEE = 5;
+const DELIVERY_FEE = 4.99;
 
 // Caterer Price	11
 // Caterer markup/plate	2
