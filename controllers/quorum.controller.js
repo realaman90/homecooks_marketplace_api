@@ -155,7 +155,7 @@ const CheckAndProcessQuorum = async (dishItemId) => {
   return "quorum is reached, orders are confirmed!";
 };
 
-// CheckAndProcessQuorum("633ab46c4b490852bf94892b")
+// CheckAndProcessQuorum("633ab5804b490852bf948b8c")
 
 const CheckAndProcessQuorumApi = async (req, res) => {
   const { dishItem } = req.params;
@@ -163,7 +163,7 @@ const CheckAndProcessQuorumApi = async (req, res) => {
   return res.status(StatusCodes.OK).json({ message });
 };
 
-// CheckAndProcessQuorum("632748f393f8f1dc58d4f4cb")
+// CheckAndProcessQuorum("633ab5804b490852bf948b8c")
 module.exports = {
   CheckAndProcessQuorumApi,
 };
