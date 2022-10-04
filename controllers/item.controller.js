@@ -846,8 +846,20 @@ const getItemByItemId = async (req, res) => {
       $unwind: "$customer",
     },
     {
+      $lookup: {
+        from: "payments",
+        localField: "payment",
+        foreignField: "_id",
+        as: "payment",
+      },
+    },
+    {
+      $unwind: "$payment",
+    },
+    {
       $project: {
         "customer.fullName": 1,
+        paymentViewId: "$payment.viewId",
         viewId: 1,
         quantity: 1,
         status: 1,
