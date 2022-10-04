@@ -1257,8 +1257,6 @@ const placeOrder = async (req, res) => {
     }
   );
 
-  await payoutController.createPayoutsForPaymentV2(paymentId);
-
   //clear user kart
   await kartModel.deleteMany({ customer: req.user.userId });
 

@@ -4,6 +4,7 @@ const dishItemModel = require("../models/DishItem");
 const ordersModel = require("../models/Order");
 const { MakePayment } = require("../utils/stripe");
 const { StatusCodes } = require("http-status-codes");
+const { createPayoutWithDishItem } = require('./payout.controller');
 
 function randStr(length) {
   var result = "";
@@ -16,7 +17,8 @@ function randStr(length) {
   return result;
 }
 
-const CheckAndProcessQuorum = async (dishItemId) => {
+// force = true, when the request comes from admin dashboard
+const CheckAndProcessQuorum = async (dishItemId, force) => {
   // fetch the dish item
   const dishItem = await dishItemModel.findById(
     dishItemId,
@@ -73,7 +75,7 @@ const CheckAndProcessQuorum = async (dishItemId) => {
   // min orders
   // if (orders.length > dishItem.minOrders) {
   // since this is forced from api UI we dnt have to stop the quorum if orders not reaching minimum
-  if (false) {  
+  if (!force && (orders.length > dishItem.minOrders)) {
 
     console.log("Failed to reach quorum, closing the product");
 
@@ -150,6 +152,9 @@ const CheckAndProcessQuorum = async (dishItemId) => {
     }
   );
 
+  // create payouts
+  await createPayoutWithDishItem(dishItemId)
+
   // setup deliver QR
 
   return "quorum is reached, orders are confirmed!";
@@ -159,7 +164,7 @@ const CheckAndProcessQuorum = async (dishItemId) => {
 
 const CheckAndProcessQuorumApi = async (req, res) => {
   const { dishItem } = req.params;
-  const message = await CheckAndProcessQuorum(dishItem);
+  const message = await CheckAndProcessQuorum(dishItem, true);
   return res.status(StatusCodes.OK).json({ message });
 };
 
