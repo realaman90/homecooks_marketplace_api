@@ -13,6 +13,7 @@ const NotificationSchema = mongoose.Schema({
             notificationTypes.NEW_DISH_CREATED_FR_ADMIN,
             notificationTypes.NEW_EVENT_CREATED_FR_ADMIN,
             notificationTypes.NEW_ORDER_CREATED_FR_ADMIN,
+            notificationTypes.ORDER_CANCELLED_FR_USER,
         ],
     },
     viewId: {

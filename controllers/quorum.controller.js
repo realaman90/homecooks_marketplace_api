@@ -62,7 +62,7 @@ const CheckAndProcessQuorum = async (dishItemId) => {
     {
       $project: {
         _id: 1,
-        cost: 1,
+        total: 1,
         status: 1,
         paymentMethod: "$payment.paymentMethod",
         stripeCustId: "$customer.stripeCustId"
@@ -71,8 +71,10 @@ const CheckAndProcessQuorum = async (dishItemId) => {
   ]);
 
   // min orders
-  if (orders.length > dishItem.minOrders) {
-    
+  // if (orders.length > dishItem.minOrders) {
+  // since this is forced from api UI we dnt have to stop the quorum if orders not reaching minimum
+  if (false) {  
+
     console.log("Failed to reach quorum, closing the product");
 
     // update orders
@@ -116,7 +118,7 @@ const CheckAndProcessQuorum = async (dishItemId) => {
 
     let paymentSuccess = false;
     if (order.stripeCustId && order.paymentMethod){
-        paymentSuccess = await MakePayment(order.paymentMethod, order.stripeCustId, order.cost);
+        paymentSuccess = await MakePayment(order.paymentMethod, order.stripeCustId, order.total);
     }
     
     if (paymentSuccess) {
@@ -152,6 +154,8 @@ const CheckAndProcessQuorum = async (dishItemId) => {
 
   return "quorum is reached, orders are confirmed!";
 };
+
+// CheckAndProcessQuorum("633ab46c4b490852bf94892b")
 
 const CheckAndProcessQuorumApi = async (req, res) => {
   const { dishItem } = req.params;

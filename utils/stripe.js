@@ -61,11 +61,12 @@ const PaymentIntentCreate = async (save_card, customer, amount) => {
 
 // make payment intent with confirm = true
 const MakePayment = async (payment_method, customer, amount) => {
-
+    
     let paymentSuccess = false;
+    let paymentIntent = null;
 
     try {
-        const paymentIntent = await stripe.paymentIntents.create({
+        paymentIntent = await stripe.paymentIntents.create({
           amount: round(multiply(amount, 100),0),
           currency: 'usd',
           customer,
@@ -74,7 +75,7 @@ const MakePayment = async (payment_method, customer, amount) => {
           confirm: true,
         });
         paymentSuccess = true;
-      } catch (err) {
+      } catch (err) {          
         // Error code will be authentication_required if authentication is needed
         console.log('Error code is: ', err.code);
         const paymentIntentRetrieved = await stripe.paymentIntents.retrieve(err.raw.payment_intent.id);

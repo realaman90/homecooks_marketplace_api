@@ -25,6 +25,7 @@ const paymentStatus = {
 const notificationTypes = {
   WELCOME_FR_USER: "welcome_fr_user",
   ORDER_CREATED_FR_USER:"order_created_fr_user",
+  ORDER_CANCELLED_FR_USER:"order_cancelled_fr_user",
   ORDER_CREATED_FR_ADMIN: "order_created_fr_admin",
 
   // admin notifications

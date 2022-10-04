@@ -11,6 +11,7 @@ const { default: mongoose, mongo } = require("mongoose");
 const { orderStatus, paymentStatus } = require("../constants");
 const payoutController = require("./payout.controller");
 const kartController = require("../controllers/kart.controller");
+const { cancelOrderNotificationWithOrderId } = require("../controllers/notification.controller");;
 const { format } = require("date-fns");
 const {
   priceBreakdownItem,
@@ -1749,6 +1750,14 @@ const markOrderDelivedThruQR = async (req, res) => {
   return res.status(StatusCodes.OK).json({ message: `${resp.modifiedCount} orders delivered!` });
 };
 
+const getQrFromOrder = (order) =>{
+  let qrValue = `${process.env.API_URL}/qr/${order.customer}/${order.pickupPoint}/${PSTDateToCalDate(order.pickupDate)}`
+
+  QRCode.toDataURL(qrValue, function (err, url) {
+    res.status(StatusCodes.OK).json({ url });
+  });
+}
+
 const getOrderDeliveryQR = async (req, res) => {
   const { orderId } = req.params;
   
@@ -1793,7 +1802,7 @@ const cancelCompleteOrders = async (paymentId) => {
 }
 
 const cancelOrder = async (req, res) => {
-
+  
   const orderId = req.params.orderId;
 
   // fetch payment
@@ -1950,6 +1959,11 @@ const cancelOrder = async (req, res) => {
   );
 
   res.status(StatusCodes.OK).json({ message: 'Order cancelled!' });
+
+  process.nextTick(()=>{
+    cancelOrderNotificationWithOrderId(orderId)
+  })
+
   return   
 
 };
@@ -1978,4 +1992,5 @@ module.exports = {
   CreatePaymentIntent,
   markOrderDelivedThruQR,
   getOrderDeliveryQR,
+  getQrFromOrder,
 };

@@ -36,6 +36,7 @@ const sendMultipleEmails = async (nrs) =>{
 }
 
 const sendEmailWithTemplate = async (nr) => {
+    
     if (!nr.userNotificationSettings.email){
         return
     }
@@ -46,7 +47,9 @@ const sendEmailWithTemplate = async (nr) => {
         templateId: nr.templateId, // nr.templateId
         dynamicTemplateData: nr.templateData, // nr.templateValues
     }
-    await sgMail.send(msg)        
+    
+    const resp = await sgMail.send(msg)        
+    
     return
 }
     

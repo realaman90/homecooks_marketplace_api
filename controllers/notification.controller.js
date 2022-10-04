@@ -1,4 +1,5 @@
 const UserModel = require('../models/User');
+const OrderModel = require('../models/Order');
 const SupplierModel = require('../models/Supplier');
 const DishModel = require('../models/Dish');
 const PaymentModel = require('../models/Payment');
@@ -643,19 +644,242 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
     return null
 }
 
-// OrderCreatedNotificationForUser("63382ffacaae7bd481dcd876")
+// OrderCreatedNotificationForUser("633ac05e4b490852bf94996b")
 
+// not required
+const cancelOrderNotificationWithPaymentId = async(paymentId) => {
+    
+}
 
+// cancelOrderNotificationWithPaymentId("633ac05e4b490852bf949967");
 
+const cancelOrderNotificationWithOrderId = async(orderId) => {
 
+    // fetch order details
+    let orders = await OrderModel.aggregate([
+    {
+        $match: {
+        _id: mongoose.Types.ObjectId(orderId),
+        },
+    },
+    {
+        $lookup: {
+        from: "users",
+        localField: "customer",
+        foreignField: "_id",
+        as: "customer",
+        },
+    },
+    {
+        $unwind: "$customer",
+    },
+    {
+        $lookup: {
+        from: "dishitems",
+        localField: "item",
+        foreignField: "_id",
+        as: "item",
+        },
+    },
+    {
+        $unwind: "$item",
+    },
+    {
+        $lookup: {
+        from: "payments",
+        localField: "payment",
+        foreignField: "_id",
+        as: "payment",
+        },
+    },
+    { $unwind: "$payment" },
+    {
+        $lookup: {
+        from: "suppliers",
+        localField: "item.supplier",
+        foreignField: "_id",
+        as: "item.supplier",
+        },
+    },
+    {
+        $unwind: "$item.supplier",
+    },
+    {
+        $lookup: {
+        from: "clientpickuppoints",
+        localField: "pickupPoint",
+        foreignField: "_id",
+        as: "pickupPoint",
+        },
+    },
+    {
+        $unwind: "$pickupPoint",
+    },
+    {
+        $project: {
+        _id: 1,
+        quantity: 1,
+        instruction: 1,
+        viewId: 1,
+        itemSubTotal:1,
+        deliveryFee:1,
+        total:1,
+        subTotal:1,
+        createdAt: 1,
+        "item._id": 1,
+        "item.name": 1,
+        "item.images": 1,
+        "item.viewId": 1,
+        "item.category": 1,
+        "item.cuisine": 1,
+        "item.mealTags": 1,
+        "item.minOrders": 1,
+        "item.maxOrders": 1,
+        "item.pricePerOrder": 1,
+        "item.costToSupplierPerOrder": 1,
+        "item.description": 1,
+        "item.eventDate": 1,
+        "item.eventVisibilityDate": 1,
+        "item.closingDate": 1,
+        "item.supplier.businessName": 1,
+        "item.supplier.businessImages": 1,
+        "item.supplier.address": 1,
+        "item.supplier.contactInfo": 1,
+        "customer._id": 1,
+        "customer.fullName": 1,
+        "customer.profileImg": 1,
+        "customer.email": 1,
+        "customer.phone": 1,
+        "customer.notificationSettings": 1,        
+        cost: 1,
+        isPaid: 1,
+        status: 1,
+        "pickupPoint.name": 1,
+        "pickupPoint.text": 1,
+        "pickupPoint.address": 1,
+        "pickupPoint.suitableTimes": 1,        
+        paymentViewId: "$payment.viewId",
+        },
+    },
+    ]);
 
+    if (orders.length < 1) {
+        console.log("notification controller: order not found!")
+        return
+    }
 
+    const order = orders[0];
 
-// setTimeout(()=>{
-//     OrderCreatedNotificationForAdmin("62ebd5cc3a0c0e4439b86bf5")
-//     }, 6000)
+    let subject = "order cancelled";
+    let emailMessage = "order cancelled";
+    let smsMessage = "order cancelled";
+    let appMessage = "order cancelled";
 
+/**
+    {
+        "cust-name":"Aman",
+        "date":"Tue,09/22",
+        "startime": "12;00 pm",
+        "endtime":"2:00 pm",
+        "pickup-name":"Stanford University Entry Gate",
+        "pickup-address":"235 hii st",
+        "qr":"https://sv.qr-code-generator.com/wp-content/themes/qr/new_structure/markets/basic_market/generator/dist/generator/assets/images/websiteQRCode_noFrame.png",
+        
+        
+       "order": {
+        "items": [
+          {
+            "name": "Jollof",
+            "image": "https://s3.amazonaws.com/appforest_uf/f1663431404316x211097862709117340/Meat-trends-market-prospers-in-face-of-pandemic.jpg",
+            "subtotal":"22",
+            "price":"20",
+            "quantity":"1"
+          },
+          {
+            "name": "Beef mat kaho",
+            "image": "https://s3.amazonaws.com/appforest_uf/f1663431404316x211097862709117340/Meat-trends-market-prospers-in-face-of-pandemic.jpg",
+            "subtotal":"22",
+            "price":"20",
+            "quantity":"1"
+          }
+        ]
+      },
+      "subtotal":"44",
+      "delivery":"4.99",
+      "total":"92.99"
+    }
+ */
+    const templateData = {
+        "cust-name":order.customer.fullName,
+        "date":format(new Date(order.item.eventDate), 'ccc,LL/dd'),
+        "pickup-name":order.pickupPoint.name,
+        "pickup-address":order.pickupPoint.address.fullAddress,
+        "subtotal":order.subTotal,
+        "delivery":order.deliveryFee,
+        "total":order.total,
+        "startime": order.pickupPoint.suitableTimes[0],
+        "endtime": order.pickupPoint.suitableTimes[1],
 
+    }
+
+    // attach orders
+    templateData.order = {};
+    templateData.order.items = [];
+
+    const item = {
+        "name":order.item.name,
+        "image":order.item.images[0],        
+        "subtotal":order.subTotal,
+        "price":order.itemSubTotal,
+        "quantity":order.quantity,        
+    }
+
+    if (order.item.images.length > 0 && order.item.images[0]){
+        item.image = `https:${order.item.images[0]}`
+    }
+
+    templateData.order.items.push(item);
+
+    // qr needs to be removed from this template
+    templateData.qr = item.image;
+
+    let notificationRecod = {
+        type: notificationTypes.ORDER_CANCELLED_FR_USER,
+        toId: order.customer._id,
+        toEmail: order.customer.email,        
+        // toEmail: "utkarsh17ife@fastlanedevs.com",
+        toPhone: order.customer.phone,
+        userNotificationSettings: order.customer.notificationSettings,
+        message: {
+            subject,
+            emailMessage,
+            smsMessage,
+            appMessage,
+        },
+        templateId: 'd-889dfd95cdc846849d031b64dbc84546',
+        templateData: templateData,
+        app_url: null,
+        refModel: 'Orders',
+        refId: order._id
+    }
+
+    notificationRecod.userNotificationSettings.email = true
+
+    await NotificationModel.create(notificationRecod);
+
+    if (notificationRecod.userNotificationSettings.email) {
+        // send email
+        sendEmailWithTemplate(notificationRecod)
+    }
+
+    // if (notificationRecod.userNotificationSettings.phone) {
+    //     // send sms
+    // }
+
+    return null
+}
+
+// cancelOrderNotificationWithOrderId("633ac05e4b490852bf949967");
 
 // notification http apis
 
@@ -753,4 +977,5 @@ module.exports = {
 
     // user notifications
     OrderCreatedNotificationForUser,
+    cancelOrderNotificationWithOrderId
 }
