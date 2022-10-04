@@ -101,20 +101,17 @@ const paymentCalcualtion = (orders) => {
   let tax_t = 0;
 
   orders.forEach((o) => {
-    totalItemPrice = sum(totalItemPrice, multiply(o.quantity, o.itemPrice));
-    let { subTotal, serviceFee, tax } = priceBreakdownItem(
-      multiply(o.quantity, o.itemPrice)
-    );
-    subTotal_t = sum(subTotal_t, subTotal);
-    serviceFee_t = sum(serviceFee_t, serviceFee);
-    tax_t = sum(tax_t, tax);
+    totalItemPrice = sum(totalItemPrice, multiply(o.quantity, o.itemPrice));    
+    subTotal_t = sum(subTotal_t, o.subTotal);
+    serviceFee_t = sum(serviceFee_t, o.serviceFee);
+    tax_t = sum(tax_t, o.tax);
     costToSupplier = sum(costToSupplier, o.costToSupplier);
     deliveryFee = sum(deliveryFee, o.deliveryFee);
   });
 
   totalItemPrice = round(totalItemPrice, 2);
   subTotal = round(subTotal_t, 2);
-  serviceFee = round(subTotal_t, 2);
+  serviceFee = round(serviceFee_t, 2);
   tax = round(tax_t, 2);
 
   total = round(sum(subTotal, deliveryFee), 2);

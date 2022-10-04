@@ -32,6 +32,12 @@ const OrderSchema = mongoose.Schema({
         type: String,
         required: [true, "Please enter itemPrice"]
     },    
+    serviceFee: {
+        type: String,        
+    },
+    tax: {
+        type: String
+    },
     itemSubTotal: {
         type: String,
         required: [true, "Please enter itemSubTotal"]

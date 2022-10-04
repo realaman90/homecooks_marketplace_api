@@ -14,6 +14,10 @@ const { date } = require('joi');
 const { IDGen } = require('../utils/viewId');
 const differenceInHours = require('date-fns/differenceInHours');
 const { contentSecurityPolicy } = require('helmet');
+const {
+    priceBreakdownItem,    
+  } = require("../utils/pricing");
+
 
 const createEvent = async(req, res) => {
 
@@ -544,6 +548,7 @@ const createEventUsingEventTemplate = async(req, res) => {
         const dishItemsIds = [];
         dishes.forEach(d => {
             const dishItemId = new mongoose.Types.ObjectId();
+            const {subTotal, serviceFee, tax} = priceBreakdownItem(d.pricePerOrder);
             dishItemsIds.push(dishItemId);
             dishItems.push({
                 _id: dishItemId,
@@ -564,6 +569,9 @@ const createEventUsingEventTemplate = async(req, res) => {
                 minOrders: d.minOrders,
                 maxOrders: d.maxOrders,
                 pricePerOrder: d.pricePerOrder,
+                subTotal,
+                serviceFee,
+                tax,
                 costToSupplierPerOrder: d.costToSupplierPerOrder,
                 bikerPickupPoint: d.bikerPickupPoint,
                 clientPickups: e.clientPickups,
@@ -599,6 +607,7 @@ const createEventUsingEventTemplate = async(req, res) => {
     // EventCreatedNotificationForAdmin(eventTemplate._id);
 
     return res.status(StatusCodes.CREATED).json({ msg: `${respEvents.length} event created, ${respDishItems.length} dish items created` });
+
 }
 
 // case: recurring

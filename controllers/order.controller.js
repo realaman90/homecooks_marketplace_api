@@ -1011,8 +1011,10 @@ const getCheckoutV2 = async (req, res) => {
     const itemPrice = ki.item.pricePerOrder;
     let itemCalc = priceBreakdownItem(itemPrice);
     const itemSubTotal = itemCalc.subTotal;
-    itemCalc = priceBreakdownItem(multiply(itemPrice, ki.quantity))
+    itemCalc = priceBreakdownItem(multiply(itemPrice, ki.quantity));
     const subTotal = round(itemCalc.subTotal, 2);
+    const serviceFee = round(itemCalc.serviceFee, 2);
+    const tax = round(itemCalc.tax, 2);
     
     let deliveryFee = 0;
 
@@ -1060,6 +1062,8 @@ const getCheckoutV2 = async (req, res) => {
       costToSupplier,
       isPaid: false,
       status: paymentStatus.PENDING_CHECKOUT,
+      serviceFee,
+      tax,
       pickupDate: ki.item.eventDate,
       pickupPoint: prevOrderMeta[ki.item._id]
         ? prevOrderMeta[ki.item._id].pickupPoint

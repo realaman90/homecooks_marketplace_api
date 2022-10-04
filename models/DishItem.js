@@ -48,6 +48,12 @@ const DishItemSchema = mongoose.Schema({
         type: String,
         required: [true, "Please enter price"]
     },
+    serviceFee: {
+        type: String,        
+    },
+    tax: {
+        type: String
+    },
     subTotal: {
         type: String,        
     },
