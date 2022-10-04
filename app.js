@@ -47,8 +47,9 @@ const paymentRouter = require('./route/payment.routes');
 const customerPaymentRouter = require('./route/customerPayment.routes');
 const wishlistRouter = require('./route/wishlist.routes');
 const quorumRouter = require('./route/quorum.routes');
+const { markOrderDelivedThruQR } = require('./controllers/order.controller');
 
-// require('./utils/pricing')
+require('./controllers/cron.controller');
 
 //middleware
 const notFoundMiddleware = require('./middleware/not-found');
@@ -75,6 +76,11 @@ app.use(expressFileUpload());
 app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/supplier', suppliersRouter);
 app.use('/api/v1/admin/user', usersRouter);
+
+// mark order delivered
+app.get('/qr/:userId/:pickupPoint/:pickupDate', markOrderDelivedThruQR);
+
+
 app.use('/api/v1/admin/event', authenticateUser, authorizePermissions('admin'), eventRouter);
 app.use('/api/v1/admin/dish', authenticateUser, authorizePermissions('admin'), dishRouter);
 app.use('/api/v1/admin/order', authenticateUser, authorizePermissions('admin', 'user'), orderRouter);
@@ -133,4 +139,112 @@ const start = async() => {
         console.log(error)
     }
 }
+
+
 start();
+
+// const {formatInTimeZone} = require('date-fns-tz');
+
+
+// var addHours = require('date-fns/addHours')
+// var format = require('date-fns/format')
+
+// const currentLocalDate = new Date();
+// console.log(currentLocalDate)
+// // Create a Date instance for 03:24 GMT-0200 on May 1st in 2016
+// const laborDay2016at0324GMTminus2 = new Date('2016-05-01T03:24:00Z-02:00');
+// console.log(laborDay2016at0324GMTminus2)
+// console.log(currentLocalDate.getTimezoneOffset() === laborDay2016at0324GMTminus2.getTimezoneOffset())
+
+
+// const dates = [
+//     'Mon Feb 17 2020 00:00:00 GMT+0530 (India Standard Time)',
+//     'Tue Feb 18 2020 00:00:00 GMT+0530 (India Standard Time)',
+//     'Wed Feb 19 2020 00:00:00 GMT+0530 (India Standard Time)',
+//     'Thu Feb 20 2020 00:00:00 GMT+0530 (India Standard Time)',
+//   ],
+//   result = dates.map(date => new Date(date.replace(/ GMT.*/,'')).toLocaleDateString('en-GB'))
+  
+// console.log(result)    
+
+
+
+// let today = new Date('2022', '2', '28');
+
+// console.log(today.toString()); 
+// console.log(today.toDateString()); 
+// console.log(today.toISOString()); 
+// console.log(today.toLocaleDateString()) 
+
+
+
+// // function changeTimezone() {
+      
+// //     let date = 
+// //         new Date(Date.UTC(2012, 11, 20, 3, 0, 0));
+// //     console.log('Given IST datetime: ' + date);
+  
+// //     let usaTime = 
+// //         date.toLocaleString("en-US", {
+// //             timeZone: "America/New_York" 
+// //         });
+// //     console.log('USA datetime: ' + usaTime);
+// // }
+// // changeTimezone()
+
+
+
+// // let moment = require('moment');
+// // var now = moment();
+// // var localOffset = now.utcOffset();
+
+// // now.tz("America/Chicago"); // your time zone, not necessarily the server's
+// // var centralOffset = now.utcOffset();
+// // var diffInMinutes = localOffset - centralOffset;
+
+
+
+// function getOffsetBetweenTimezonesForDate(date, timezone1, timezone2) {
+//     const timezone1Date = convertDateToAnotherTimeZone(date, timezone1);
+//     const timezone2Date = convertDateToAnotherTimeZone(date, timezone2);
+
+//     console.log(timezone1Date)
+//     console.log(timezone2Date)
+
+//     return timezone1Date.getTime() - timezone2Date.getTime();
+//   }
+  
+//   function convertDateToAnotherTimeZone(date, timezone) {
+//     const dateString = date.toLocaleString('en-US', {
+//       timeZone: timezone
+//     });
+//     return new Date(dateString);
+//   }
+
+
+
+//   const offset = getOffsetBetweenTimezonesForDate(today, 'America/Tijuana', 'Atlantic/Reykjavik');
+//   console.log(offset/3600000)
+
+
+//   today = addHours(today, offset/3600000)
+  
+//   console.log(`6:`,today)
+
+
+//   today = format(today, 'yyyy-MM-dd HH:mm:ssXXX', { timeZone: 'America/Tijuana' }) // 2014-10-25 06:46:20-04:00
+//   today = new Date(today)
+
+
+//   today = today.toLocaleString('en-US', {
+//     timeZone: 'America/Tijuana'
+//   });        
+
+//   console.log(`5:`,today)
+
+
+
+
+
+
+// //   addHours(offset/360000)
