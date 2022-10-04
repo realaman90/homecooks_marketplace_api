@@ -862,9 +862,9 @@ const getItemByItemId = async (req, res) => {
         paymentViewId: "$payment.viewId",
         viewId: 1,
         quantity: 1,
-        status: 1,
-        cost: 1,
+        status: 1,        
         costToSupplier: 1,
+        subTotal: 1
       },
     },
   ]);
