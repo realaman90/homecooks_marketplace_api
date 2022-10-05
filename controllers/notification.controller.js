@@ -14,20 +14,22 @@ const {
 } = require("./email.controller");
 const { default: mongoose } = require("mongoose");
 const { parseISO, format } = require("date-fns");
-const { PSTDateToCalDate } = require('../utils/datetime');
-const { uploadBase64AsImageFile } = require('../utils/s3.utils');
+const { PSTDateToCalDate } = require("../utils/datetime");
+const { uploadBase64AsImageFile } = require("../utils/s3.utils");
 
 const QRCode = require("qrcode");
 
-const getQrFromOrder = async (order) =>{
-  return new Promise((resolve, reject)=>{
-    let qrValue = `${process.env.API_URL}/qr/${order.customer}/${order.pickupPoint}/${PSTDateToCalDate(order.pickupDate)}`
+const getQrFromOrder = async (order) => {
+  return new Promise((resolve, reject) => {
+    let qrValue = `${process.env.API_URL}/qr/${order.customer}/${
+      order.pickupPoint
+    }/${PSTDateToCalDate(order.pickupDate)}`;
 
     QRCode.toDataURL(qrValue, function (err, url) {
-      resolve(url)
+      resolve(url);
     });
-  })
-}
+  });
+};
 
 // notification creation function
 
@@ -112,7 +114,6 @@ const CreateUserWelcomeNotification = async (userId) => {
 // }, 4000)
 
 ///////////////////////////////// Notification towards admin ////////////////////////////////
-
 
 // https://noudada.s3.amazonaws.com/8c1d9f6e-3575-4fb5-918c-9476833f765e
 
@@ -359,7 +360,6 @@ const EventCreatedNotificationForAdmin = async (eventTemplateId) => {
     .populate("supplier", `businessName viewId`)
     .populate("dishes", `name viewId description`);
   if (!eventTemplateDetails) {
-    
     // log this to analyse the scenario
     return;
   }
@@ -980,11 +980,11 @@ const TwentyFourHourPickupReminder = async (orderId) => {
         quantity: 1,
         instruction: 1,
         viewId: 1,
-        deliveryFee:1,
+        deliveryFee: 1,
         itemSubTotal: 1,
         pickupDate: 1,
         subTotal: 1,
-        total:1,
+        total: 1,
         createdAt: 1,
         "item._id": 1,
         "item.name": 1,
@@ -1010,7 +1010,7 @@ const TwentyFourHourPickupReminder = async (orderId) => {
         "customer.profileImg": 1,
         "customer.email": 1,
         "customer.phone": 1,
-        "customer.notificationSettings": 1,        
+        "customer.notificationSettings": 1,
         cost: 1,
         isPaid: 1,
         status: 1,
@@ -1105,7 +1105,7 @@ const TwentyFourHourPickupReminder = async (orderId) => {
     pickupDate: order.pickupDate,
   });
 
-  templateData.qr = await uploadBase64AsImageFile(templateData.qr)
+  templateData.qr = await uploadBase64AsImageFile(templateData.qr);
 
   let notificationRecord = {
     type: notificationTypes.TWENTY_FOUR_HOUR_DELIVERY_REMINDER_FR_USER,
