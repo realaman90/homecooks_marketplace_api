@@ -127,7 +127,7 @@ const UserEnquiryNotificationForAdmin = async (email, description) => {
     // get admin details
     adminDetails = await UserModel.find(
       {
-        type: "admin",
+        role: "admin",
       },
       `fullName email phone notificationSettings`
     );
