@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const orderModel = require("../models/Order");
 const kartModel = require("../models/Kart");
 const paymentModel = require("../models/Payment");
-const { multiply, sum, round, evaluate } = require("mathjs");
+const { multiply, sum, round, evaluate, i } = require("mathjs");
 const { StatusCodes } = require("http-status-codes");
 const CustomError = require("../errors");
 const { default: mongoose, mongo } = require("mongoose");
@@ -1741,6 +1741,84 @@ const CreatePaymentIntent = async (req, res) => {
   return res.status(StatusCodes.OK).json({ paymentIntent });
 };
 
+
+const tryIfPaymentIsCompleted = async (paymentId) => {
+
+  console.log("tryIfPaymentIsCompleted: ", paymentId)
+
+  const pendingOrdersCount = await orderModel.find({
+    $and: [
+      {payment: paymentId},
+      {status : "confirmed"}
+    ]
+  }).countDocuments()
+
+  if (!pendingOrdersCount){
+
+    // mark payment as completed
+    await paymentModel.updateOne({
+      _id: paymentId
+    }, {
+      $set: {
+        status: "completed"
+      }
+    })
+
+    console.log("payment completed: ", paymentId);
+  }
+
+}
+
+// all deliveries done
+const tryIfItemIsCompleted = async (itemId) => {
+
+  console.log("tryIfItemIsCompleted: ", itemId)
+
+  const pendingOrdersCount = await orderModel.find({
+    $and: [
+      {item: itemId},
+      {status : "confirmed"}
+    ]
+  }).countDocuments()
+
+  if (!pendingOrdersCount){
+
+    // mark payment as completed
+    await dishItemModel.updateOne({
+      _id: itemId
+    }, {
+      $set: {
+        status: "completed"
+      }
+    })
+
+    console.log("dish item completed: ", itemId);
+  }
+
+}
+
+const tryIfItemAndPaymentAreCompleted = async (query) => {
+
+  const orders = await orderModel.find(query);
+  
+  const paymentIds = orders.map(o=> o.payment);
+  const items = orders.map(o=> o.item);
+
+  console.log("paymentIds => ", paymentIds)
+  console.log("items => ", items)
+
+  for (let i=0; i< paymentIds.length; i++){
+    await tryIfPaymentIsCompleted(paymentIds[i])
+  }
+
+  for (let i=0; i< items.length; i++){
+    await tryIfItemIsCompleted(items[i])
+  }
+
+  console.log("tryIfPaymentsAreCompleted ended!");
+}
+
+
 const markOrderDelivedThruQR = async (req, res) => {
   
   let {userId, pickupPoint, pickupDate} = req.params;
@@ -1758,8 +1836,14 @@ const markOrderDelivedThruQR = async (req, res) => {
     }
   })
 
-  // if all orders done mark payment as completed
-  // if all deliveries done mark item as fulfilled
+  // if all orders done mark payment/item as completed
+  await tryIfItemAndPaymentAreCompleted({
+    $and: [
+      {customerId: userId},
+      {pickupPoint},
+      {pickupDate}
+    ]
+  })
 
   return res.status(StatusCodes.OK).json({ message: `${resp.modifiedCount} orders delivered!` });
 };

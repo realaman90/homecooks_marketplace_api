@@ -690,7 +690,7 @@ const getAllItemsForAdmin = async (req, res) => {
   // andQuery.push({"eventVisibilityDate":{"$lte": new Date()}})
 
   // manage filters
-  if (req.query.cuisine) {    
+  if (req.query.cuisine) {
     andQuery.push({
       cuisine: { $regex: req.query.cuisine, $options: "i" },
     });
