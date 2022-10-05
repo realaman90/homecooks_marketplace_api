@@ -11,7 +11,7 @@ const { default: mongoose, mongo } = require("mongoose");
 const { orderStatus, paymentStatus } = require("../constants");
 const payoutController = require("./payout.controller");
 const kartController = require("../controllers/kart.controller");
-const { cancelOrderNotificationWithOrderId } = require("../controllers/notification.controller");;
+const { cancelOrderNotificationWithOrderId, OrderCreatedNotificationForUser } = require("../controllers/notification.controller");;
 const { format } = require("date-fns");
 const {
   priceBreakdownItem,
@@ -1262,7 +1262,7 @@ const placeOrder = async (req, res) => {
 
   process.nextTick(() => {
   // notificationController.OrderCreatedNotificationForAdmin(paymentId);
-    notificationController.OrderCreatedNotificationForUser(paymentId);
+    OrderCreatedNotificationForUser(paymentId);
   });
 
   return res
@@ -1429,7 +1429,6 @@ const getPaymentsFrCustomer = async (req, res) => {
     {
       $unwind: "$customer",
     },
-
     {
       $lookup: {
         from: "orders",
