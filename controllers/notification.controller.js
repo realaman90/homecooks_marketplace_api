@@ -113,6 +113,70 @@ const CreateUserWelcomeNotification = async (userId) => {
 //     CreateUserWelcomeNotification("62f989526253b49a1bc0696a")
 // }, 4000)
 
+// user Enquiry notification
+const UserEnquiryNotificationForAdmin = async (email, description) => {
+  
+  let adminDetails = null;
+  if (HARDCODED_ADMIN_VALUES) {
+    adminDetails = _adminDetails;
+  } else {
+    // get admin details
+    adminDetails = await UserModel.find(
+      {
+        type: "admin",
+      },
+      `fullName email phone notificationSettings`
+    );
+  }
+
+  const subject = `User has submitted an enquiry.`;
+  const emailMessage = `Hi Admin
+        A user has submitted an enquiry.
+        
+        Email: ${email}
+        Description: ${description}
+        
+        Thanks,        
+    `;
+  const smsMessage = emailMessage;
+  const appMessage = emailMessage;
+
+  const app_url = `${process.env.APP_URL}`;
+
+  let notificationRecods = [];
+
+  adminDetails.forEach((admin) => {
+    notificationRecods.push({
+      type: notificationTypes.USER_ENQUIRY,
+      toId: admin._id,
+      toEmail: admin.email,
+      toPhone: admin.phone,
+      userNotificationSettings: admin.notificationSettings,
+      message: {
+        subject,
+        emailMessage,
+        smsMessage,
+        appMessage,
+      },
+      app_url,
+      refModel: "Enquiry"      
+    });
+  });
+
+  await NotificationModel.insertMany(notificationRecods);
+
+  await sendMultipleEmails(notificationRecods);
+
+  // if (notificationRecod.userNotificationSettings.phone){
+  //     // send sms
+
+  // }
+
+  return null;
+};
+
+// UserEnquiryNotificationForAdmin("enquirymaster@gmail.com","Testing enquiry messages!")
+
 ///////////////////////////////// Notification towards admin ////////////////////////////////
 
 // https://noudada.s3.amazonaws.com/8c1d9f6e-3575-4fb5-918c-9476833f765e
@@ -1246,4 +1310,6 @@ module.exports = {
   OrderCreatedNotificationForUser,
   cancelOrderNotificationWithOrderId,
   TwentyFourHourPickupReminder,
+
+  UserEnquiryNotificationForAdmin
 };

@@ -14,7 +14,8 @@ const NotificationSchema = mongoose.Schema({
             notificationTypes.NEW_EVENT_CREATED_FR_ADMIN,
             notificationTypes.NEW_ORDER_CREATED_FR_ADMIN,
             notificationTypes.ORDER_CANCELLED_FR_USER,
-            notificationTypes.TWENTY_FOUR_HOUR_DELIVERY_REMINDER_FR_USER
+            notificationTypes.TWENTY_FOUR_HOUR_DELIVERY_REMINDER_FR_USER,
+            notificationTypes.USER_ENQUIRY
         ],
     },
     viewId: {

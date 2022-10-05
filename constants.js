@@ -29,6 +29,7 @@ const notificationTypes = {
   ORDER_CANCELLED_FR_USER: "order_cancelled_fr_user",
   ORDER_CREATED_FR_ADMIN: "order_created_fr_admin",
   TWENTY_FOUR_HOUR_DELIVERY_REMINDER_FR_USER: "twenty_four_hour_delivery_reminder_fr_user",
+  USER_ENQUIRY: "user_enquiry",
 
   // admin notifications
   NEW_SUPPLIER_SIGNUP_FR_ADMIN: "new_supplier_signup_fr_admin",

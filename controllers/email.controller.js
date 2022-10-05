@@ -14,6 +14,11 @@ const { MemoryStore } = require('express-rate-limit');
 //         },
 
 const sendEmail = async (nr) => {    
+
+    if (!nr.toEmail){
+        return
+    }
+
     if (!nr.userNotificationSettings.email){
         return
     }
