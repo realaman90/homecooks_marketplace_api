@@ -160,10 +160,7 @@ const getListOfPayouts = async (req, res) => {
     },
   ]);
 
-  if (payouts.length === 0) {
-    itemCount = await paymentModel.find().countDocuments();
-  } else {
-    itemCount = await payoutModel.aggregate([
+  let itemCount = await payoutModel.aggregate([
       {
         $match: {
           status: status,
@@ -181,9 +178,9 @@ const getListOfPayouts = async (req, res) => {
         $count: "count",
       },
     ]);
-    itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0;
-  }
 
+  itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0;
+  
   return res.status(StatusCodes.OK).json({ payouts, itemCount });
 };
 

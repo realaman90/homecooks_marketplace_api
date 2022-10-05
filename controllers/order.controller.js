@@ -1260,10 +1260,10 @@ const placeOrder = async (req, res) => {
   //clear user kart
   await kartModel.deleteMany({ customer: req.user.userId });
 
-  // process.nextTick(() => {
+  process.nextTick(() => {
   // notificationController.OrderCreatedNotificationForAdmin(paymentId);
-  //   notificationController.OrderCreatedNotificationForUser(paymentId);
-  // });
+    notificationController.OrderCreatedNotificationForUser(paymentId);
+  });
 
   return res
     .status(StatusCodes.OK)
@@ -1296,6 +1296,11 @@ const getPayments = async (req, res) => {
     },
     {
       $limit: limit,
+    },
+    {
+      $sort: {
+        _id:-1
+      }
     },
     {
       $lookup: {
@@ -1407,6 +1412,11 @@ const getPaymentsFrCustomer = async (req, res) => {
     },
     {
       $limit: limit,
+    },
+    {
+      $sort: {
+        "updatedAt":-1
+      }
     },
     {
       $lookup: {

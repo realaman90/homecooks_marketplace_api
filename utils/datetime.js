@@ -49,9 +49,6 @@ function nowTimeToPSTDateP2Hour(){
     return date.toDate()
 }
 
-
-
-
 function PSTDateToCalDate(_date){   
     const date = moment(_date).tz("America/Los_Angeles")
     return `${date.year()}-${date.month()+1}-${date.date()}`
