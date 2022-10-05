@@ -678,6 +678,10 @@ const getAllItemsForAdmin = async (req, res) => {
   if (status == "closed") {
     andQuery.push({ status: eventStatus.CANCELLED });
   }
+  if (status == "confirmed") {
+    andQuery.push({ status: eventStatus.CONFIRMED });
+  }
+
 
   // andQuery.push({"eventVisibilityDate":{"$lte": new Date()}})
 
