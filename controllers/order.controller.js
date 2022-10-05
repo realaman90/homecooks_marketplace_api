@@ -1261,7 +1261,7 @@ const placeOrder = async (req, res) => {
   await kartModel.deleteMany({ customer: req.user.userId });
 
   process.nextTick(() => {
-  // notificationController.OrderCreatedNotificationForAdmin(paymentId);
+  //OrderCreatedNotificationForAdmin(paymentId);
     OrderCreatedNotificationForUser(paymentId);
   });
 

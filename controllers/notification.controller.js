@@ -14,7 +14,16 @@ const {
 } = require("./email.controller");
 const { default: mongoose } = require("mongoose");
 const { parseISO, format } = require("date-fns");
-const { getQrFromOrder } = require("./order.controller");
+
+const getQrFromOrder = async (order) =>{
+  return new Promise((resolve, reject)=>{
+    let qrValue = `${process.env.API_URL}/qr/${order.customer}/${order.pickupPoint}/${PSTDateToCalDate(order.pickupDate)}`
+
+    QRCode.toDataURL(qrValue, function (err, url) {
+      resolve(url)
+    });
+  })
+}
 
 // notification creation function
 
