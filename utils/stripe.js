@@ -78,6 +78,7 @@ const MakePayment = async (payment_method, customer, amount) => {
       } catch (err) {          
         // Error code will be authentication_required if authentication is needed
         console.log('Error code is: ', err.code);
+        console.log(err)
         const paymentIntentRetrieved = await stripe.paymentIntents.retrieve(err.raw.payment_intent.id);
         console.log('PI retrieved: ', paymentIntentRetrieved.id);
       }

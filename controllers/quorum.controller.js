@@ -160,7 +160,7 @@ const CheckAndProcessQuorum = async (dishItemId, force) => {
   return "quorum is reached, orders are confirmed!";
 };
 
-// CheckAndProcessQuorum("633ab5804b490852bf948b8c")
+// CheckAndProcessQuorum("633d82fbf5547cc009dff91c", true)
 
 const CheckAndProcessQuorumApi = async (req, res) => {
   const { dishItem } = req.params;
