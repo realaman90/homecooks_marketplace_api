@@ -170,5 +170,6 @@ const CheckAndProcessQuorumApi = async (req, res) => {
 
 // CheckAndProcessQuorum("633ab5804b490852bf948b8c")
 module.exports = {
+  CheckAndProcessQuorum,
   CheckAndProcessQuorumApi,
 };

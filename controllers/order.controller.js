@@ -1752,12 +1752,14 @@ const markOrderDelivedThruQR = async (req, res) => {
   return res.status(StatusCodes.OK).json({ message: `${resp.modifiedCount} orders delivered!` });
 };
 
-const getQrFromOrder = (order) =>{
-  let qrValue = `${process.env.API_URL}/qr/${order.customer}/${order.pickupPoint}/${PSTDateToCalDate(order.pickupDate)}`
+const getQrFromOrder = async (order) =>{
+  return new Promise((resolve, reject)=>{
+    let qrValue = `${process.env.API_URL}/qr/${order.customer}/${order.pickupPoint}/${PSTDateToCalDate(order.pickupDate)}`
 
-  QRCode.toDataURL(qrValue, function (err, url) {
-    res.status(StatusCodes.OK).json({ url });
-  });
+    QRCode.toDataURL(qrValue, function (err, url) {
+      resolve(url)
+    });
+  })
 }
 
 const getOrderDeliveryQR = async (req, res) => {

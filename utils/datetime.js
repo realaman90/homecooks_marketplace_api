@@ -39,6 +39,19 @@ function calDateToPSTDate(calDate){
     return date.toDate()
 }
 
+// precise to hour
+function nowTimeToPSTDateP2Hour(){       
+    let date = moment().tz("America/Los_Angeles")    
+    date.set('minute', 0);
+    date.set('second', 0);
+    date.set('millisecond', 0);  
+    console.log(date)  
+    return date.toDate()
+}
+
+
+
+
 function PSTDateToCalDate(_date){   
     const date = moment(_date).tz("America/Los_Angeles")
     return `${date.year()}-${date.month()+1}-${date.date()}`
@@ -48,5 +61,6 @@ module.exports = {
     calDateToPSTDate,
     parseWZeroTime,
     todayDateWithZeroTime,
-    PSTDateToCalDate
+    PSTDateToCalDate,
+    nowTimeToPSTDateP2Hour
 }
