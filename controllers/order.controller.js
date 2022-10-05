@@ -1758,6 +1758,9 @@ const markOrderDelivedThruQR = async (req, res) => {
     }
   })
 
+  // if all orders done mark payment as completed
+  // if all deliveries done mark item as fulfilled
+
   return res.status(StatusCodes.OK).json({ message: `${resp.modifiedCount} orders delivered!` });
 };
 

@@ -14,6 +14,10 @@ const {
 } = require("./email.controller");
 const { default: mongoose } = require("mongoose");
 const { parseISO, format } = require("date-fns");
+const {PSTDateToCalDate} = require('../utils/datetime');
+
+const QRCode = require("qrcode");
+
 
 const getQrFromOrder = async (order) =>{
   return new Promise((resolve, reject)=>{
@@ -352,7 +356,7 @@ const EventCreatedNotificationForAdmin = async (eventTemplateId) => {
     .populate("supplier", `businessName viewId`)
     .populate("dishes", `name viewId description`);
   if (!eventTemplateDetails) {
-    console.log("na paya");
+    
     // log this to analyse the scenario
     return;
   }
@@ -1134,7 +1138,7 @@ const TwentyFourHourPickupReminder = async (orderId) => {
   return null;
 };
 
-// TwentyFourHourPickupReminder("633acdf3989387bd9a921f4c");
+// TwentyFourHourPickupReminder("633bf273a222932e4b28454a");
 
 // notification http apis
 

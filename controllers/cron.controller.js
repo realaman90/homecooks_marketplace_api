@@ -14,7 +14,7 @@ const checkForQuorums = async () => {
     console.log("checkForQuorums started!");
 
     const closingDate = nowTimeToPSTDateP2Hour();
-    closingDate.setDate(pickUpTime.getDate()-1);
+    closingDate.setDate(closingDate.getDate()-1);
 
     const itemsFrQuorumProcess = await DishItem.find({
         $and: [
