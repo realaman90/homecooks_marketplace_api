@@ -6,6 +6,7 @@ const { StatusCodes } = require("http-status-codes");
 const CustomError = require("../errors");
 const { paymentStatus, orderStatus } = require("../constants");
 const { default: mongoose } = require("mongoose");
+const { query } = require("express");
 
 // currently manual payments require just one creat order api
 // this is will be udpate to have a checkout process one platform payments are enabled
@@ -97,87 +98,87 @@ const getListOfPayouts = async (req, res) => {
   // .limit(limit)
   // .sort({"_id":-1})
 
-  const payouts = await payoutModel.aggregate([
-    {
-      $match: {
-        status: status,
-      },
-    },
-    // dish data
-    {
-      $group: {
-        _id: {
-          item: "$item",
-          supplier: "$supplier",
-        },
-        supplier: { $first: "$supplier" },
-        item: { $first: "$item" },
-        totalOrders: { $sum: { $toDouble: "$quantity" } },
-        totalAmount: { $sum: { $toDouble: "$amount" } },
-      },
-    },
-    {
-      $skip: skip,
-    },
-    {
-      $limit: limit,
-    },
-    {
-      $lookup: {
-        from: "suppliers",
-        localField: "supplier",
-        foreignField: "_id",
-        as: "supplier",
-      },
-    },
-    {
-      $unwind: "$supplier",
-    },
-    {
-      $lookup: {
-        from: "dishitems",
-        localField: "item",
-        foreignField: "_id",
-        as: "item",
-      },
-    },
-    {
-      $unwind: "$item",
-    },
-    {
-      $project: {
-        _id: 0,
-        status: status,
-        "supplier._id": 1,
-        "supplier.businessName": 1,
-        "item._id": 1,
-        "item.name": 1,
-        "item.eventDate": 1,
-        "item.viewId": 1,
-        totalOrders: 1,
-        totalAmount: 1,
-      },
-    },
-  ]);
+  let aggQuery = [];
 
-  let itemCount = await payoutModel.aggregate([
-      {
-        $match: {
-          status: status,
-        },
+  aggQuery.push({
+    $match: {
+      status: status,
+    },
+  })
+  aggQuery.push({
+    $group: {
+      _id: {
+        item: "$item",
+        supplier: "$supplier",
       },
-      {
-        $group: {
-          _id: {
-            item: "$item",
-            supplier: "$supplier",
-          },
-        },
-      },
-      {
-        $count: "count",
-      },
-    ]);
+      supplier: { $first: "$supplier" },
+      item: { $first: "$item" },
+      totalOrders: { $sum: { $toDouble: "$quantity" } },
+      totalAmount: { $sum: { $toDouble: "$amount" } },
+    },
+  })
+  aggQuery.push({
+    $lookup: {
+      from: "suppliers",
+      localField: "supplier",
+      foreignField: "_id",
+      as: "supplier",
+    },
+  })
+  aggQuery.push({
+    $unwind: "$supplier",
+  })
+  aggQuery.push({
+    $lookup: {
+      from: "dishitems",
+      localField: "item",
+      foreignField: "_id",
+      as: "item",
+    },
+  })
+  aggQuery.push({
+    $unwind: "$item",
+  })
+  if (req.query.search){
+    aggQuery.push({
+      $match: {
+        "$or": [
+          { 'item.name': { $regex: req.query.search, $options: "i" } },
+          { 'supplier.businessName': { $regex: req.query.search, $options: "i" } },        
+        ],
+      }      
+    });
+  }
+  aggQuery.push({
+    $skip: skip,
+  })
+  aggQuery.push( {
+    $limit: limit,
+  })
+  aggQuery.push({
+    $project: {
+      _id: 0,
+      status: status,
+      "supplier._id": 1,
+      "supplier.businessName": 1,
+      "item._id": 1,
+      "item.name": 1,
+      "item.eventDate": 1,
+      "item.viewId": 1,
+      totalOrders: 1,
+      totalAmount: 1,
+    },
+  })
+
+  const payouts = await payoutModel.aggregate(aggQuery)
+    
+  aggQuery= aggQuery.slice(0, -3)
+  
+  aggQuery.push({
+      $count: "count",
+  })
+
+  let itemCount = await payoutModel.aggregate(aggQuery);
 
   itemCount = itemCount && itemCount.length > 0 ? itemCount[0].count : 0;
   
