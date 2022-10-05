@@ -21,18 +21,12 @@ function randStr(length) {
 // force = true, when the request comes from admin dashboard
 const CheckAndProcessQuorum = async (dishItemId, force) => {
 
-  console.log("CheckAndProcessQuorum")
-  console.log(dishItemId, force)
-
 
   // fetch the dish item
   const dishItem = await dishItemModel.findById(
     dishItemId,
     `minOrders closingDate closingTime status`
   );
-
-  console.log("dishItem")
-  console.log(dishItem)
 
   if (dishItem.status != "active") {
     return `Product is not active cannot process quorum!`;
@@ -81,13 +75,10 @@ const CheckAndProcessQuorum = async (dishItemId, force) => {
     },
   ]);
 
-  console.log("orders")
-  console.log(orders)
-
   // min orders
   // if (orders.length > dishItem.minOrders) {
   // since this is forced from api UI we dnt have to stop the quorum if orders not reaching minimum
-  if (!force && (orders.length > dishItem.minOrders)) {
+  if (!force && (orders.length < dishItem.minOrders)) {
 
     console.log("Failed to reach quorum, closing the product");
 
@@ -117,15 +108,13 @@ const CheckAndProcessQuorum = async (dishItemId, force) => {
       }
     );
 
-    ordersModel.forEach(o=>{
+    orders.forEach(o=>{
       cancelOrderNotificationWithOrderId(o._id);
     })
     
     return "minimum orders not received, hence orders are cancelled!";
   }
   // if we are here, quorum is reached lets process payments
-
-  console.log("processing orders!")
 
   for (let i = 0; i < orders.length; i++) {
     let order = orders[i];
@@ -159,7 +148,7 @@ const CheckAndProcessQuorum = async (dishItemId, force) => {
   }
 
   // update dish item
-  let resp = await dishItemModel.updateOne(
+  await dishItemModel.updateOne(
     {
       _id: dishItemId,
     },
@@ -170,8 +159,6 @@ const CheckAndProcessQuorum = async (dishItemId, force) => {
       },
     }
   );
-
-  console.log(resp)
 
   // create payouts
   try{
@@ -185,7 +172,7 @@ const CheckAndProcessQuorum = async (dishItemId, force) => {
   return "quorum is reached, orders are confirmed!";
 };
 
-// CheckAndProcessQuorum("633d82fbf5547cc009dff91c", true)
+// CheckAndProcessQuorum("633dabe4b9d9a9398c806ab7", false)
 
 const CheckAndProcessQuorumApi = async (req, res) => {
   const { dishItem } = req.params;

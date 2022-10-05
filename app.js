@@ -65,7 +65,6 @@ app.use(helmet());
 app.use(cors());
 app.use(mongoSanatize());
 
-
 app.use(morgan('tiny'));
 app.use(express.json());
 app.use(cookieParser(process.env.JWT_SECRET));
@@ -80,7 +79,6 @@ app.use('/api/v1/admin/user', usersRouter);
 
 // mark order delivered
 app.get('/qr/:userId/:pickupPoint/:pickupDate', markOrderDelivedThruQR);
-
 
 app.use('/api/v1/admin/event', authenticateUser, authorizePermissions('admin'), eventRouter);
 app.use('/api/v1/admin/dish', authenticateUser, authorizePermissions('admin'), dishRouter);

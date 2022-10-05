@@ -28,7 +28,7 @@ const getQrFromOrder = async (order) => {
     let qrValue = `${process.env.API_URL}/qr/${order.customer}/${
       order.pickupPoint
     }/${PSTDateToCalDate(order.pickupDate)}`;
-
+    console.log(qrValue)
     QRCode.toDataURL(qrValue, function (err, url) {
       resolve(url);
     });
@@ -1215,7 +1215,7 @@ View your order here https://www.noudada.com/user-profile?up=orders.`
   return null;
 };
 
-// TwentyFourHourPickupReminder("633d86289892184cc11d90e0");
+// TwentyFourHourPickupReminder("633dac3db9d9a9398c806b65");
 
 // notification http apis
 
