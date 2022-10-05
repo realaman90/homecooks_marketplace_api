@@ -686,7 +686,6 @@ const getAllItemsForAdmin = async (req, res) => {
     andQuery.push({ status: eventStatus.CONFIRMED });
   }
 
-
   // andQuery.push({"eventVisibilityDate":{"$lte": new Date()}})
 
   // manage filters

@@ -4,7 +4,8 @@ const eventStatus = {
   CANCELLED: "cancelled",
   FULFILLED: "fulfilled",
   DELIVERED: "delivered",
-  CONFIRMED: "confirmed"
+  CONFIRMED: "confirmed",
+  COMPLETED: "completed", 
 };
 
 const orderStatus = {
