@@ -632,9 +632,9 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
   let notificationRecod = {
     type: notificationTypes.ORDER_CREATED_FR_USER,
     toId: payments.customer._id,
-    // toEmail: payments.customer.email,
+    toEmail: payments.customer.email,
     // toEmail: "dev@noudada.com",
-    toEmail: "utkarsh17ife@fastlanedevs.com",
+    // toEmail: "utkarsh17ife@fastlanedevs.com",
     toPhone: payments.customer.phone,
     userNotificationSettings: payments.customer.notificationSettings,
     message: {
@@ -665,7 +665,7 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
   return null;
 };
 
-// OrderCreatedNotificationForUser("633ac05e4b490852bf94996b")
+// OrderCreatedNotificationForUser("633d42177d311fabe7b6c31c")
 
 // not required
 const cancelOrderNotificationWithPaymentId = async (paymentId) => {};
