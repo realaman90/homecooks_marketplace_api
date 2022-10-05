@@ -677,7 +677,7 @@ const getAllItemsForAdmin = async (req, res) => {
     });
   }
   if (status == "completed") {
-    andQuery.push({ status: eventStatus.FULFILLED });
+    andQuery.push({ status: eventStatus.COMPLETED });
   }
   if (status == "closed") {
     andQuery.push({ status: eventStatus.CANCELLED });
