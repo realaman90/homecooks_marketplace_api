@@ -5,6 +5,7 @@ const ordersModel = require("../models/Order");
 const { MakePayment } = require("../utils/stripe");
 const { StatusCodes } = require("http-status-codes");
 const { createPayoutWithDishItem } = require('./payout.controller');
+const { cancelOrderNotificationWithOrderId } = require('./notification.controller');
 
 function randStr(length) {
   var result = "";
@@ -116,6 +117,10 @@ const CheckAndProcessQuorum = async (dishItemId, force) => {
       }
     );
 
+    ordersModel.forEach(o=>{
+      cancelOrderNotificationWithOrderId(o._id);
+    })
+    
     return "minimum orders not received, hence orders are cancelled!";
   }
   // if we are here, quorum is reached lets process payments

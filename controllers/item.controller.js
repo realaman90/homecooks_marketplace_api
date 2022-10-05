@@ -371,9 +371,11 @@ const getAllItems = async (req, res) => {
 
   // manage filters
   if (req.query.cuisine) {
-    andQuery.push({
-      cuisine: { $regex: req.query.cuisine, $options: "i" },
-    });
+    if (req.query.cuisine !== "all"){
+      andQuery.push({
+        cuisine: { $regex: req.query.cuisine, $options: "i" },
+      });
+    }
   }
 
   if (req.query.category) {
@@ -485,10 +487,12 @@ const getAllItemsBySupplier = async (req, res) => {
   });
 
   // manage filters
-  if (req.query.cuisine) {
-    andQuery.push({
-      cuisine: { $regex: req.query.cuisine, $options: "i" },
-    });
+  if (req.query.cuisine) {    
+    if (req.query.cuisine !== "all"){
+      andQuery.push({
+        cuisine: { $regex: req.query.cuisine, $options: "i" },
+      });
+    }
   }
   if (req.query.category) {
     andQuery.push({
@@ -686,7 +690,7 @@ const getAllItemsForAdmin = async (req, res) => {
   // andQuery.push({"eventVisibilityDate":{"$lte": new Date()}})
 
   // manage filters
-  if (req.query.cuisine) {
+  if (req.query.cuisine) {    
     andQuery.push({
       cuisine: { $regex: req.query.cuisine, $options: "i" },
     });
@@ -904,9 +908,11 @@ const ListProducts = async (req, res) => {
 
   // manage filters
   if (req.query.cuisine) {
-    andQuery.push({
-      cuisine: { $regex: req.query.cuisine, $options: "i" },
-    });
+    if (req.query.cuisine !== "all"){
+      andQuery.push({
+        cuisine: { $regex: req.query.cuisine, $options: "i" },
+      });
+    }
   }
 
   if (req.query.category) {
@@ -1177,9 +1183,11 @@ const ListProductsV2 = async (req, res) => {
 
   // manage filters
   if (req.query.cuisine) {
-    andQuery.push({
-      cuisine: { $regex: req.query.cuisine, $options: "i" },
-    });
+    if (req.query.cuisine !== "all"){
+      andQuery.push({
+        cuisine: { $regex: req.query.cuisine, $options: "i" },
+      });  
+    }    
   }
 
   if (req.query.category) {
@@ -1519,7 +1527,9 @@ const getAvailableEventDates = async (req, res) => {
   }
 
   if (req.query.cuisine) {
-    matchQuery.cuisine = req.query.cuisine;
+    if (req.query.cuisine !== "all"){
+      matchQuery.cuisine = req.query.cuisine;
+    }        
   }
 
   matchQuery.eventVisibilityDate = { $lte: new Date() };

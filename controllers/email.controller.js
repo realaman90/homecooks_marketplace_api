@@ -42,20 +42,28 @@ const sendMultipleEmails = async (nrs) =>{
 
 const sendEmailWithTemplate = async (nr) => {
     
-    if (!nr.userNotificationSettings.email){
-        return
-    }
-    const msg = {
-        to: `${nr.toEmail}`, // recipient
-        from: `${process.env.SGSENDER}`, //  sender
+    try {
 
-        templateId: nr.templateId, // nr.templateId
-        dynamicTemplateData: nr.templateData, // nr.templateValues
+        if (!nr.userNotificationSettings.email){
+            return
+        }
+        const msg = {
+            to: `${nr.toEmail}`, // recipient
+            from: `${process.env.SGSENDER}`, //  sender
+
+            templateId: nr.templateId, // nr.templateId
+            dynamicTemplateData: nr.templateData, // nr.templateValues
+        }
+        
+        const resp = await sgMail.send(msg)
+        
+        return
+
+    } catch(err){
+
+        console.log(err.response.body)
     }
-    
-    const resp = await sgMail.send(msg)        
-    
-    return
+
 }
     
 const sendMultipleEmailsWithTemplates = async (nrs) =>{

@@ -12,6 +12,10 @@ const {
   sendMultipleEmails,
   sendEmailWithTemplate,
 } = require("./email.controller");
+const {
+  sendSMS
+} = require('./sms.controller');
+
 const { default: mongoose } = require("mongoose");
 const { parseISO, format } = require("date-fns");
 const { PSTDateToCalDate } = require("../utils/datetime");
@@ -706,7 +710,9 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
 
   let subject = "order created";
   let emailMessage = "order created";
-  let smsMessage = "order created";
+  let smsMessage = `Hey ${payments.customer.fullName},
+Thanks for joining our group order. See your order details here link. https://www.noudada.com/user-profile?up=orders
+Abla`;
   let appMessage = "order created";
 
   let notificationRecod = {
@@ -737,15 +743,14 @@ const OrderCreatedNotificationForUser = async (paymentId) => {
     sendEmailWithTemplate(notificationRecod);
   }
 
-  // if (notificationRecod.userNotificationSettings.phone) {
-  //     // send sms
-
-  // }
+  if (notificationRecod.userNotificationSettings.phone) {
+      sendSMS(notificationRecod)
+  }
 
   return null;
 };
 
-// OrderCreatedNotificationForUser("633d42177d311fabe7b6c31c")
+// OrderCreatedNotificationForUser("633d86289892184cc11d90df")
 
 // not required
 const cancelOrderNotificationWithPaymentId = async (paymentId) => {};
@@ -870,7 +875,10 @@ const cancelOrderNotificationWithOrderId = async (orderId) => {
 
   let subject = "order cancelled";
   let emailMessage = "order cancelled";
-  let smsMessage = "order cancelled";
+  let smsMessage = `Hey ${order.customer.fullName}
+Your food order (${order.paymentViewId}) has been canceled as we didn’t have enough orders to proceed further. We sincerely apologize. Join other group orders here https://www.noudada.com/user-profile?up=orders.
+Thanks for understanding.
+Abla`;
   let appMessage = "order cancelled";
 
   /**
@@ -960,8 +968,6 @@ const cancelOrderNotificationWithOrderId = async (orderId) => {
     refId: order._id,
   };
 
-  notificationRecod.userNotificationSettings.email = true;
-
   await NotificationModel.create(notificationRecod);
 
   if (notificationRecod.userNotificationSettings.email) {
@@ -969,14 +975,14 @@ const cancelOrderNotificationWithOrderId = async (orderId) => {
     sendEmailWithTemplate(notificationRecod);
   }
 
-  // if (notificationRecod.userNotificationSettings.phone) {
-  //     // send sms
-  // }
+  if (notificationRecod.userNotificationSettings.phone) {
+    sendSMS(notificationRecod)
+  }
 
   return null;
 };
 
-// cancelOrderNotificationWithOrderId("633ac05e4b490852bf949967");
+// cancelOrderNotificationWithOrderId("633d86289892184cc11d90e0");
 
 const TwentyFourHourPickupReminder = async (orderId) => {
   let orders = await OrderModel.aggregate([
@@ -1097,7 +1103,11 @@ const TwentyFourHourPickupReminder = async (orderId) => {
 
   let subject = "pick up reminder!";
   let emailMessage = "pick up reminder!";
-  let smsMessage = "pick up reminder!";
+  let smsMessage = `${order.customer.fullName}
+Your food will be available for pickup tomorrow between *pickup time ${order.pickupPoint.suitableTimes[0]} and ${order.pickupPoint.suitableTimes[1]} @ pickup spot ${order.pickupPoint.address.fullAddress}.
+View your order here https://www.noudada.com/user-profile?up=orders.`
+
+
   let appMessage = "pick up reminder!";
 
   /**
@@ -1191,8 +1201,6 @@ const TwentyFourHourPickupReminder = async (orderId) => {
     refId: order._id,
   };
 
-  notificationRecord.userNotificationSettings.email = true;
-
   await NotificationModel.create(notificationRecord);
 
   if (notificationRecord.userNotificationSettings.email) {
@@ -1200,14 +1208,14 @@ const TwentyFourHourPickupReminder = async (orderId) => {
     sendEmailWithTemplate(notificationRecord);
   }
 
-  // if (notificationRecord.userNotificationSettings.phone) {
-  //     // send sms
-  // }
+  if (notificationRecord.userNotificationSettings.phone) {
+    sendSMS(notificationRecord)
+  }
 
   return null;
 };
 
-// TwentyFourHourPickupReminder("633bf273a222932e4b28454a");
+// TwentyFourHourPickupReminder("633d86289892184cc11d90e0");
 
 // notification http apis
 
@@ -1272,6 +1280,7 @@ const readAll = async (req, res) => {
     .status(StatusCodes.OK)
     .json({ message: "notifications marked read" });
 };
+
 const deleteNotification = async (req, res) => {
   const notificationId = req.params.notificationId;
 
