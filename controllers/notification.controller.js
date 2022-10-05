@@ -14,10 +14,10 @@ const {
 } = require("./email.controller");
 const { default: mongoose } = require("mongoose");
 const { parseISO, format } = require("date-fns");
-const {PSTDateToCalDate} = require('../utils/datetime');
+const { PSTDateToCalDate } = require('../utils/datetime');
+const { uploadBase64AsImageFile } = require('../utils/s3.utils');
 
 const QRCode = require("qrcode");
-
 
 const getQrFromOrder = async (order) =>{
   return new Promise((resolve, reject)=>{
@@ -112,6 +112,9 @@ const CreateUserWelcomeNotification = async (userId) => {
 // }, 4000)
 
 ///////////////////////////////// Notification towards admin ////////////////////////////////
+
+
+// https://noudada.s3.amazonaws.com/8c1d9f6e-3575-4fb5-918c-9476833f765e
 
 // admin notification for user signup
 // working
@@ -1101,6 +1104,8 @@ const TwentyFourHourPickupReminder = async (orderId) => {
     pickupPoint: order.pickupPoint._id,
     pickupDate: order.pickupDate,
   });
+
+  templateData.qr = await uploadBase64AsImageFile(templateData.qr)
 
   let notificationRecord = {
     type: notificationTypes.TWENTY_FOUR_HOUR_DELIVERY_REMINDER_FR_USER,

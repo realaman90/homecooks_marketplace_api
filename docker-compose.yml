@@ -28,6 +28,9 @@ services:
       - SUPER_ADMIN_EMAIL=amanrawatamg@gmail.com
       - PUBLISHABLE_KEY=pk_test_51L88PoHuM2wzausDq5lbGMU4MeL5losu8iLNBUYAXaAJyFOkxKuBNXaLOEw8BY3HWDZpErFpjo8ErkF3XwxK4DVr005t4vn4bJ
       - SECRET_KEY=sk_test_51L88PoHuM2wzausDnMPC4b1AzllPmOav3yW5DsF7ddtNFZTKSWAAOp6PcjCutQlig2p1drlog7vfJVBUDiaD54RJ00YHuiwSAC
+      - AWS_ACCESS_KEY_ID=AKIA3VDXCGPIDATK6ZKA
+      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_BUCKET_NAME=noudada
     networks:
       - noudata_net
 

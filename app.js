@@ -20,6 +20,7 @@ const app = express();
 
 // Database
 const connectDB = require('./db/connect');
+require("./utils/s3.utils");
 
 // router
 const authRouter = require('./route/authRoutes');
@@ -126,7 +127,6 @@ app.use('/api/v1/admin/', verificationOTP)
 //Error Middlewares
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
-
 
 const port = process.env.PORT || 3000
 const start = async() => {
